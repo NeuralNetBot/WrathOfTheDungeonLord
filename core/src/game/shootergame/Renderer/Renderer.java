@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Texture;
@@ -35,7 +36,7 @@ public class Renderer {
     float yaw = 0.0f;
 
     
-    float fov = 45.0f;
+    float fov = 60.0f;
 
     float aspect;
 
@@ -51,6 +52,7 @@ public class Renderer {
     ArrayList<Wall> walls = new ArrayList<>();
 
     public Renderer(int screnX) {
+
         walls.add(new Wall(1.5177f, 3.4569f, 3.9219f, 3.5477f));
         walls.add(new Wall(3.9219f, 3.5477f, 3.8766f, 0.9279f));
         walls.add(new Wall(3.8766f, 0.9279f, 4.0353f, -1.5330f));
@@ -71,11 +73,14 @@ public class Renderer {
         walls.add(new Wall(-1.6805f, 2.2321f, -1.0227f, -1.0113f));
         walls.get(0).height = 2.0f;
 
-        ShooterGame.getInstance().am.load("brick.png", Texture.class);
+        TextureParameter param = new TextureParameter();
+        param.minFilter = TextureFilter.Linear;
+        param.magFilter = TextureFilter.Linear;
+
+        ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("brick.png", Texture.class);
+        tex = ShooterGame.getInstance().am.get("brickwall.jpg", Texture.class);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
-        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 
         resize(screnX, 0);
 
@@ -175,17 +180,21 @@ public class Renderer {
         rayData[index * 4 + 3] = height;
     }
     float wx = 0.0f;
+    int lastX = 0;
     public void render() {
+
+        if(Gdx.input.isKeyJustPressed(Keys.T)) {
+            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+        }
+
+        int currentX = Gdx.input.getX();
+        int delta = lastX - currentX;
+        lastX = currentX;
+        yaw -= (float)delta / 20.0f;
+
         wx += 1.0f / 144.0f;
 
         walls.get(0).yOffset = (float)Math.sin(wx) + 1.0f;
-
-        if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
-            yaw += 60.0 / 144.0;
-        }
-        if(Gdx.input.isKeyPressed(Keys.LEFT)) {
-            yaw -= 60.0 / 144.0;
-        }
 
         float speed = 3.0f / 144.0f;
 
