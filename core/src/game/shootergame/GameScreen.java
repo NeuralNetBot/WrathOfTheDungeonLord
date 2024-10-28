@@ -1,7 +1,5 @@
 package game.shootergame;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -9,13 +7,18 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import game.shootergame.Renderer.Renderer;
+
 
 public class GameScreen extends ScreenAdapter {
     
     private HUD hud;
 
+    private Renderer renderer;
+
     public GameScreen() {
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
+        renderer = new Renderer(Gdx.graphics.getWidth());
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -57,12 +60,14 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-
         if (!hud.isOpen()) {
 
         }
 
         ScreenUtils.clear(0, 0, 0, 1);
+
+
+        renderer.render();
 
         SpriteBatch coreBatch = ShooterGame.getInstance().coreBatch;
         ShooterGame.getInstance().coreCamera.update();
@@ -70,10 +75,10 @@ public class GameScreen extends ScreenAdapter {
         coreBatch.begin();
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
-
         //we always want the hud to be visible
         hud.draw(coreBatch);
         coreBatch.end();
+
     }
 
 	@Override
@@ -83,5 +88,7 @@ public class GameScreen extends ScreenAdapter {
         ShooterGame.getInstance().coreCamera = new OrthographicCamera(2f / aspect, 2f);
         OrthographicCamera camera = ShooterGame.getInstance().coreCamera;
         camera.position.set(pos);
+
+        renderer.resize(width, height);
 	}
 }
