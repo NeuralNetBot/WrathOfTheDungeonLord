@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
@@ -180,42 +178,15 @@ public class Renderer {
         rayData[index * 4 + 3] = height;
     }
     float wx = 0.0f;
-    int lastX = 0;
+    
+    public void update(float x, float y, float rotation) {
+        camX = x; camY = y; yaw = rotation;
+    }
+
     public void render() {
-
-        if(Gdx.input.isKeyJustPressed(Keys.T)) {
-            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
-        }
-
-        int currentX = Gdx.input.getX();
-        int delta = lastX - currentX;
-        lastX = currentX;
-        yaw -= (float)delta / 20.0f;
-
         wx += 1.0f / 144.0f;
 
         walls.get(0).yOffset = (float)Math.sin(wx) + 1.0f;
-
-        float speed = 3.0f / 144.0f;
-
-        float yawR = (float)Math.toRadians(yaw);
-
-        if(Gdx.input.isKeyPressed(Keys.W)) {
-            camX += Math.cos(yawR) * speed;
-            camY += Math.sin(yawR) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.S)) {
-            camX -= Math.cos(yawR) * speed;
-            camY -= Math.sin(yawR) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.A)) {
-            camX -= Math.cos(yawR + Math.PI / 2.0f) * speed;
-            camY -= Math.sin(yawR + Math.PI / 2.0f) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.D)) {
-            camX += Math.cos(yawR + Math.PI / 2.0f) * speed;
-            camY += Math.sin(yawR + Math.PI / 2.0f) * speed;
-        }
         
         for (int i = 0; i < numWorkers; i++) {
             semStart.release();

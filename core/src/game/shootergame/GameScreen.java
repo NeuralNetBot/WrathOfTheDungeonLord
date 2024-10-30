@@ -1,6 +1,7 @@
 package game.shootergame;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
@@ -15,10 +16,12 @@ public class GameScreen extends ScreenAdapter {
     private HUD hud;
 
     private Renderer renderer;
+    private Player player;
 
     public GameScreen() {
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
         renderer = new Renderer(Gdx.graphics.getWidth());
+        player = new Player();
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
@@ -60,6 +63,14 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
+
+        if(Gdx.input.isKeyJustPressed(Keys.T)) {
+            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+        }
+
+        player.update(delta);
+        renderer.update(player.x(), player.y(), player.rotation());
+
         if (!hud.isOpen()) {
 
         }
