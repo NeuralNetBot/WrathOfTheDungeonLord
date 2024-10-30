@@ -1,6 +1,7 @@
 package game.shootergame;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 
 import game.shootergame.Item.MeleeWeapon;
@@ -9,6 +10,8 @@ import game.shootergame.Item.RangedWeapon;
 public class Player {
     MeleeWeapon melee;
     RangedWeapon ranged;
+
+    int selectedWeapon = 1;//1 melee, 2 ranged if equiped
 
     float health;
     float stamina;
@@ -29,7 +32,8 @@ public class Player {
 
     int lastMouse = 0;
 
-    public Player() {
+    public Player(MeleeWeapon melee) {
+        this.melee = melee;
         ranged = null;
 
         health = 100.0f;
@@ -61,6 +65,36 @@ public class Player {
         }
         if(Gdx.input.isKeyPressed(Keys.D)) {
             moveDirY += 1;
+        }
+
+        if(Gdx.input.isKeyPressed(Keys.NUM_1)) {
+            selectedWeapon = 1;
+        }
+        if(ranged != null && Gdx.input.isKeyPressed(Keys.NUM_2)) {
+            selectedWeapon = 2;
+        }
+
+        if(Gdx.input.isButtonJustPressed(Buttons.LEFT)) {
+            switch (selectedWeapon) {
+            case 1:
+                melee.attackLight();
+                break;
+            case 2:
+                ranged.fire();
+                break;
+            default:
+                break;
+            }
+        }
+
+        if(Gdx.input.isButtonJustPressed(Buttons.LEFT)) {
+            switch (selectedWeapon) {
+            case 1:
+                melee.attackHeavy();
+                break;
+            default:
+                break;
+            }
         }
     }
 

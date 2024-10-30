@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Renderer.Renderer;
 
 
@@ -21,7 +22,7 @@ public class GameScreen extends ScreenAdapter {
     public GameScreen() {
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
         renderer = new Renderer(Gdx.graphics.getWidth());
-        player = new Player();
+        player = new Player(new SwordWeapon());
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
