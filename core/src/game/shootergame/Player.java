@@ -108,6 +108,32 @@ public class Player {
 
         x += moveX * speed;
         y += moveY * speed;
+
+        switch (selectedWeapon) {
+        case 1:
+        melee.update(delta);
+            break;
+        case 2:
+        if(ranged != null) {
+            ranged.update(delta);
+        }
+        default:
+            break;
+        }
+    }
+
+    void render() {
+        switch (selectedWeapon) {
+        case 1:
+        melee.renderFirstPerson();
+            break;
+        case 2:
+        if(ranged != null) {
+            ranged.renderFirstPerson();
+        }
+        default:
+            break;
+        }
     }
 
     void applyDamage(float damage) {
