@@ -21,7 +21,8 @@ import game.shootergame.ShooterGame;
 
 public class Renderer {
 
-    ShaderProgram shader;
+    ShaderProgram wallShader;
+    ShaderProgram floorShader;
     Mesh mesh;
 
     int screenX;
@@ -47,6 +48,7 @@ public class Renderer {
     AtomicBoolean running;
 
     Texture tex;
+    Texture floor;
 
 
     ArrayList<Wall> walls = new ArrayList<>();
@@ -78,9 +80,12 @@ public class Renderer {
         param.magFilter = TextureFilter.Linear;
 
         ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
+        ShooterGame.getInstance().am.load("brick.png", Texture.class, param);
         ShooterGame.getInstance().am.finishLoading();
         tex = ShooterGame.getInstance().am.get("brickwall.jpg", Texture.class);
+        floor = ShooterGame.getInstance().am.get("brick.png", Texture.class);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        floor.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
         resize(screnX, 0);
 
@@ -228,29 +233,41 @@ public class Renderer {
             }
         }
 
-        shader.bind();
+        wallShader.bind();
         tex.bind(0);
 
-        shader.setUniformi("texture", 0);
+        wallShader.setUniformi("texture", 0);
 
-        shader.setUniform4fv("rayData", rayData, 0, rayData.length);
-        shader.setUniformf("numRays", rayData.length / 4);
-        shader.setUniformf("aspect", aspect);
+        wallShader.setUniform4fv("rayData", rayData, 0, rayData.length);
+        wallShader.setUniformf("numRays", rayData.length / 4);
+        wallShader.setUniformf("cameraInfo", camX, camY, aspect, 0);
 
-        mesh.render(shader, GL20.GL_TRIANGLES);
+        mesh.render(wallShader, GL20.GL_TRIANGLES);
+
+        floorShader.bind();
+        floor.bind(0);
+
+        floorShader.setUniformi("texture", 0);
+
+        floorShader.setUniform4fv("rayData", rayData, 0, rayData.length);
+        floorShader.setUniformf("numRays", rayData.length / 4);
+        floorShader.setUniformf("cameraInfo", camX, camY, aspect, (float)Math.tan(Math.toRadians(fov) * 0.5));
+        floorShader.setUniformf("cameraDir", yawR);
+        
+        mesh.render(floorShader, GL20.GL_TRIANGLES);
     }
 
     public void resize(int x, int y) {
         aspect = (float)x / (float)y;
         screenX = x;
-        if(screenX > 1021) {
-            screenX = 1021;
+        if(screenX > 1020) {
+            screenX = 1020;
         }
 
         rayData = new float[screenX * 4];
 
-        if(shader != null) {
-            shader.dispose();
+        if(wallShader != null) {
+            wallShader.dispose();
         }
 
         String vertexShader = 
@@ -262,14 +279,14 @@ public class Renderer {
             + "   v_texCoords = " + ShaderProgram.TEXCOORD_ATTRIBUTE + ";\n"
             + "   gl_Position = vec4(" + ShaderProgram.POSITION_ATTRIBUTE + ", 0.0, 1.0);\n"
             + "}\n";
-        String fragmentShader = 
+        String wallFragmentShader = 
               "#ifdef GL_ES\n"
             + "precision mediump float;\n"
             + "#endif\n"
             + "varying vec2 v_texCoords;\n"
             + "uniform vec4 rayData[" + screenX + "];\n"
             + "uniform float numRays;\n"
-            + "uniform float aspect;\n"
+            + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w tanhalffov
             + "uniform sampler2D texture;\n"
             + "void main()\n"
             + "{\n"
@@ -280,12 +297,45 @@ public class Renderer {
             + "  bool isWall = current > wallBottom && current < wallTop;\n"
             + "  float color = isWall ? max(min(1.0 * dat.x, 1.0), 0.3) : 0.0;\n"
             + "  float texY = dat.w * (current - wallBottom) / (wallTop - wallBottom);\n"
-            + "  gl_FragColor = vec4(texture2D(texture, vec2(aspect * dat.y, texY)).rgb * color, 1.0);\n"
-            + "}";
-        shader = new ShaderProgram(vertexShader, fragmentShader);
+            + "  gl_FragColor = vec4(texture2D(texture, vec2(cameraInfo.z * dat.y, texY)).rgb * color, 1.0);\n"
+            + "}\n";
 
-        if (!shader.isCompiled()) {
-            System.err.println("Shader compilation failed:\n" + shader.getLog());
+        String floorFragmentShader = 
+            "#ifdef GL_ES\n"
+          + "precision mediump float;\n"
+          + "#endif\n"
+          + "varying vec2 v_texCoords;\n"
+          + "uniform vec4 rayData[" + screenX + "];\n"
+          + "uniform float numRays;\n"
+          + "uniform vec4 cameraInfo;\n"
+          + "uniform float cameraDir;\n"
+          + "uniform sampler2D texture;\n"
+          + "void main()\n"
+          + "{\n"
+          + "  vec2 screenPos = v_texCoords * 2.0 - 1.0;"
+          + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
+          + "  float wallTop = (dat.w * 2.0 + dat.z - 1.0) * dat.x;\n"
+          + "  float wallBottom = (dat.z - 1.0) * dat.x;\n"
+          + "  float current = v_texCoords.y - 0.5;"
+          + "  bool isWall = current > wallBottom && current < wallTop;\n"
+          + "  float rayAngle = cameraDir + atan(screenPos.x * cameraInfo.w);\n"
+          + "  vec2 worldDir = vec2(cos(rayAngle), sin(rayAngle)) * abs(1.0 / screenPos.y);\n"
+          + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
+          + "  vec3 fColor = texture2D(texture, worldPos * 2.0).rgb * 0.2;\n"
+          + "  if(!isWall) {\n"
+          + "      gl_FragColor = vec4(fColor, 1.0);\n"
+          + "   } else { discard; }\n"
+          + "}\n";
+
+        wallShader = new ShaderProgram(vertexShader, wallFragmentShader);
+        floorShader = new ShaderProgram(vertexShader, floorFragmentShader);
+
+        if (!wallShader.isCompiled()) {
+            System.err.println("Shader compilation failed:\n" + wallShader.getLog());
+        }
+
+        if (!floorShader.isCompiled()) {
+            System.err.println("Shader compilation failed:\n" + wallShader.getLog());
         }
     }
 }
