@@ -68,12 +68,12 @@ public class GameScreen extends ScreenAdapter {
             Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
         }
 
+        if (!hud.isOpen()) {
+            player.processInput();
+        }
+
         player.update(delta);
         renderer.update(player.x(), player.y(), player.rotation());
-
-        if (!hud.isOpen()) {
-
-        }
 
         ScreenUtils.clear(0, 0, 0, 1);
 

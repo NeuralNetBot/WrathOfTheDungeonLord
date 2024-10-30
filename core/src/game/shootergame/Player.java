@@ -20,6 +20,9 @@ public class Player {
     float x, y;
     float rotation;
 
+    float moveDirX;
+    float moveDirY;
+
     final float moveSpeed = 2.0f;
 
     boolean isDodging;
@@ -41,28 +44,36 @@ public class Player {
     public float y() { return y; }
     public float rotation() { return rotation; }
 
-    void update(float delta) {
+    void processInput() {
+
         rotation += Gdx.input.getDeltaX() * 0.1f;
 
+        moveDirX = 0.0f;
+        moveDirY = 0.0f;
+        if(Gdx.input.isKeyPressed(Keys.W)) {
+            moveDirX += 1;
+        }
+        if(Gdx.input.isKeyPressed(Keys.S)) {
+            moveDirX -= 1;
+        }
+        if(Gdx.input.isKeyPressed(Keys.A)) {
+            moveDirY -= 1;
+        }
+        if(Gdx.input.isKeyPressed(Keys.D)) {
+            moveDirY += 1;
+        }
+    }
+
+    void update(float delta) {
         float rotationR = (float)Math.toRadians(rotation);
 
         float speed = moveSpeed * delta;
-        if(Gdx.input.isKeyPressed(Keys.W)) {
-            x += Math.cos(rotationR) * speed;
-            y += Math.sin(rotationR) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.S)) {
-            x -= Math.cos(rotationR) * speed;
-            y -= Math.sin(rotationR) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.A)) {
-            x -= Math.cos(rotationR + Math.PI / 2.0f) * speed;
-            y -= Math.sin(rotationR + Math.PI / 2.0f) * speed;
-        }
-        if(Gdx.input.isKeyPressed(Keys.D)) {
-            x += Math.cos(rotationR + Math.PI / 2.0f) * speed;
-            y += Math.sin(rotationR + Math.PI / 2.0f) * speed;
-        }
+
+        float moveX = moveDirX * (float)Math.cos(rotationR) - moveDirY * (float)Math.sin(rotationR);
+        float moveY = moveDirX * (float)Math.sin(rotationR) + moveDirY * (float)Math.cos(rotationR);
+
+        x += moveX * speed;
+        y += moveY * speed;
     }
 
     void applyDamage(float damage) {
