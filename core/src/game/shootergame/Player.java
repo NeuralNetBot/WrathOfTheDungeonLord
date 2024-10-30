@@ -68,10 +68,6 @@ public class Player {
         activePowerups = new LinkedList<>();
     }
 
-    public float x() { return x; }
-    public float y() { return y; }
-    public float rotation() { return rotation; }
-
     void processInput() {
 
         rotation += Gdx.input.getDeltaX() * 0.1f;
@@ -122,14 +118,19 @@ public class Player {
         }
     }
 
+    public float x() { return x; }
+    public float y() { return y; }
+    public float rotation() { return rotation; }
+
     void update(float delta) {
+        rotation += Gdx.input.getDeltaX() * 0.1f;
+
+        float rotationR = (float)Math.toRadians(rotation);
 
         x += dx;
         y += dy;
         collider.x = x;
         collider.y = y;
-
-        float rotationR = (float)Math.toRadians(rotation);
 
         float speed = moveSpeed * delta;
 
