@@ -37,7 +37,7 @@ public class Renderer {
     float yaw = 0.0f;
 
     
-    float fov = 60.0f;
+    float fov = 75.0f;
 
     float aspect;
 
@@ -251,7 +251,7 @@ public class Renderer {
 
         floorShader.setUniform4fv("rayData", rayData, 0, rayData.length);
         floorShader.setUniformf("numRays", rayData.length / 4);
-        floorShader.setUniformf("cameraInfo", camX, camY, aspect, (float)Math.tan(Math.toRadians(fov) * 0.5));
+        floorShader.setUniformf("cameraInfo", camX, camY, aspect, (float)Math.toRadians(fov) * 0.5f);
         floorShader.setUniformf("cameraDir", yawR);
         
         mesh.render(floorShader, GL20.GL_TRIANGLES);
@@ -316,12 +316,12 @@ public class Renderer {
           + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
           + "  float wallTop = (dat.w * 2.0 + dat.z - 1.0) * dat.x;\n"
           + "  float wallBottom = (dat.z - 1.0) * dat.x;\n"
-          + "  float current = v_texCoords.y - 0.5;"
+          + "  float current = v_texCoords.y - 0.5;\n"
           + "  bool isWall = current > wallBottom && current < wallTop;\n"
-          + "  float rayAngle = cameraDir + atan(screenPos.x * cameraInfo.w);\n"
+          + "  float rayAngle = cameraDir + (screenPos.x * cameraInfo.w);\n"
           + "  vec2 worldDir = vec2(cos(rayAngle), sin(rayAngle)) * abs(1.0 / screenPos.y);\n"
           + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
-          + "  vec3 fColor = texture2D(texture, worldPos * 2.0).rgb * 0.2;\n"
+          + "  vec3 fColor = texture2D(texture, worldPos * 2.0).rgb * 0.3;\n"
           + "  if(!isWall) {\n"
           + "      gl_FragColor = vec4(fColor, 1.0);\n"
           + "   } else { discard; }\n"
@@ -335,7 +335,7 @@ public class Renderer {
         }
 
         if (!floorShader.isCompiled()) {
-            System.err.println("Shader compilation failed:\n" + wallShader.getLog());
+            System.err.println("Shader compilation failed:\n" + floorShader.getLog());
         }
     }
 }
