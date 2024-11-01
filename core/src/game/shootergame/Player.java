@@ -21,6 +21,7 @@ public class Player {
     public float attackSpeed;
 
     float x, y;
+    
     float rotation;
 
     float moveDirX;
