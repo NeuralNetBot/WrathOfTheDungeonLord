@@ -207,16 +207,18 @@ public class Renderer {
             }
         }
         
-        float dst = 1.0f / hitPos.sub(rayOrigin).dot(forward);
-        float wallTop = (height * 2.0f + yOffset - 1.0f) * dst;
-        float wallBottom = (yOffset - 1.0f) * dst;
+        float dst = hitPos.sub(rayOrigin).dot(forward);
+        float idst = 1.0f / dst;
+        float wallTop = (height * 2.0f + yOffset - 1.0f) * idst;
+        float wallBottom = (yOffset - 1.0f) * idst;
 
         rayData[index * 4] = height;
         rayData[index * 4 + 1] = deltaX;
         rayData[index * 4 + 2] = wallTop;
         rayData[index * 4 + 3] = wallBottom;
 
-        rayWallTex[index] = textureID;
+        rayWallTex[index * 2] = textureID;
+        rayWallTex[index * 2 + 1] = idst;
 
         rayData2[index * 4] = dX; //specifically using the non normalized rays for distance stretching
         rayData2[index * 4 + 1] = dY;
@@ -287,10 +289,10 @@ public class Renderer {
 
         //render the screen one half at a time so we can have more uniform slots
         wallShader.setUniform4fv("rayData", rayData, 0, rayData.length / 2);
-        wallShader.setUniform1fv("rayTex", rayWallTex, 0, rayWallTex.length / 2);
+        wallShader.setUniform2fv("rayTex", rayWallTex, 0, rayWallTex.length / 2);
         meshLeft.render(wallShader, GL20.GL_TRIANGLES);
         wallShader.setUniform4fv("rayData", rayData, rayData.length / 2, rayData.length / 2);
-        wallShader.setUniform1fv("rayTex", rayWallTex, rayWallTex.length / 2, rayWallTex.length / 2);
+        wallShader.setUniform2fv("rayTex", rayWallTex, rayWallTex.length / 2, rayWallTex.length / 2);
         meshRight.render(wallShader, GL20.GL_TRIANGLES);
 
         floorShader.bind();
@@ -316,7 +318,7 @@ public class Renderer {
         int numRayData = screenX / 2;
 
         rayData = new float[screenX * 4];
-        rayWallTex = new float[screenX];
+        rayWallTex = new float[screenX * 2];
         rayData2 = new float[screenX * 4];
 
         if(wallShader != null) {
@@ -338,7 +340,7 @@ public class Renderer {
             + "#endif\n"
             + "varying vec2 v_texCoords;\n"
             + "uniform vec4 rayData[" + numRayData + "];\n"
-            + "uniform float rayTex[" + numRayData + "];\n"
+            + "uniform vec2 rayTex[" + numRayData + "];\n"
             + "uniform float numRays;\n"
             + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w tanhalffov
             + "uniform sampler2D texture0;\n"
@@ -355,11 +357,12 @@ public class Renderer {
             + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
             + "  vec2 texCoords = vec2(cameraInfo.z * dat.y, texY);\n"
             + "  vec3 texColor;\n"
-            + "  switch(rayTex[index]) {\n"
+            + "  switch(rayTex[index].x) {\n"
             + "  case 0.0: texColor = texture2D(texture0, texCoords).rgb; break;\n"
             + "  case 1.0: texColor = texture2D(texture1, texCoords).rgb; break;\n"
             + "  }\n"
-            + "  gl_FragColor = vec4(texColor * color, 1.0);\n"
+            + "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
+            + "  gl_FragColor = vec4(mix(texColor, vec3(0.0, 0.0, 0.0), dst * dst) * color, 1.0);\n"
             + "}\n";
 
         String floorFragmentShader = 
@@ -381,7 +384,8 @@ public class Renderer {
           + "  bool isWall = current > wallBottom && current < wallTop;\n"
           + "  vec2 worldDir = vec2(dat.x, dat.y) * abs(1.0 / screenPos.y);\n"
           + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
-          + "  vec3 fColor = texture2D(texture, worldPos).rgb * 0.3;\n"
+          + "  float dst = 1.0 - abs(screenPos.y);\n"
+          + "  vec3 fColor = mix(texture2D(texture, worldPos).rgb, vec3(0.0, 0.0, 0.0), dst * dst);\n"
           + "  if(!isWall) {\n"
           + "      gl_FragColor = vec4(fColor, 1.0);\n"
           + "   } else { discard; }\n"
