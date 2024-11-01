@@ -77,8 +77,8 @@ public class Renderer {
         walls.get(0).height = 2.0f;
 
         TextureParameter param = new TextureParameter();
-        param.minFilter = TextureFilter.Linear;
-        param.magFilter = TextureFilter.Linear;
+        param.minFilter = TextureFilter.Nearest;
+        param.magFilter = TextureFilter.Nearest;
 
         ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
         ShooterGame.getInstance().am.load("brick.png", Texture.class, param);
@@ -179,7 +179,7 @@ public class Renderer {
                 if(dst < minDistance) {
                     hitPos = wall.b.cpy().lerp(wall.a, u);
                     minDistance = dst;
-                    deltaX = u / wall.widthScaler;
+                    deltaX = u * wall.widthScaler / 4.0f;
                     yOffset = wall.yOffset;
                     height = wall.height;
                 }
