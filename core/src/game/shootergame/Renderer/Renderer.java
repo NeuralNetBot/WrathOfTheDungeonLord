@@ -23,11 +23,13 @@ public class Renderer {
 
     ShaderProgram wallShader;
     ShaderProgram floorShader;
-    Mesh mesh;
+    Mesh meshLeft;
+    Mesh meshRight;
 
     int screenX;
 
     float[] rayData;
+    float[] rayWallTex;
     float[] rayData2;
 
     
@@ -75,6 +77,7 @@ public class Renderer {
         walls.add(new Wall(0.2475f, 2.2095f, -1.6805f, 2.2321f));
         walls.add(new Wall(-1.6805f, 2.2321f, -1.0227f, -1.0113f));
         walls.get(0).height = 2.0f;
+        walls.get(0).textureID = 1.0f;
 
         TextureParameter param = new TextureParameter();
         param.minFilter = TextureFilter.Nearest;
@@ -90,17 +93,31 @@ public class Renderer {
 
         resize(screnX, 0);
 
-        mesh = new Mesh(true, 4, 6,
+        //splitting the mesh into left and right halfs for more scene data
+        meshLeft = new Mesh(true, 4, 6,
          new VertexAttribute(Usage.Position, 2, ShaderProgram.POSITION_ATTRIBUTE),
          new VertexAttribute(Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE));
-        mesh.setVertices(new float[] {
+         meshLeft.setVertices(new float[] {
             -1, -1, 0, 0,
-            1, 1, 1, 1,
+            0, 1, 1, 1,
             -1, 1, 0, 1,
-            1, -1, 1, 0
+            0, -1, 1, 0
         });
-        mesh.setIndices(new short[] {
+        meshLeft.setIndices(new short[] {
             0, 1, 2, 1, 0, 3
+        });
+
+        meshRight = new Mesh(true, 4, 6,
+        new VertexAttribute(Usage.Position, 2, ShaderProgram.POSITION_ATTRIBUTE),
+        new VertexAttribute(Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE));
+        meshRight.setVertices(new float[] {
+           0, -1, 0, 0,
+           1, 1, 1, 1,
+           0, 1, 0, 1,
+           1, -1, 1, 0
+        });
+        meshRight.setIndices(new short[] {
+           0, 1, 2, 1, 0, 3
         });
 
         running = new AtomicBoolean(true);
@@ -142,11 +159,13 @@ public class Renderer {
         public float widthScaler;
         public float yOffset;
         public float height;
+        public float textureID;
         Wall(float xa, float ya, float xb, float yb) {
              a = new Vector2(xa, ya); b = new Vector2(xb, yb);
              widthScaler = a.dst(b);
              yOffset = 0.0f;
              height = 1.0f;
+             textureID = 0.0f;
         }
     }
 
@@ -167,6 +186,7 @@ public class Renderer {
         float deltaX = 0.0f;
         float yOffset = 0.0f;
         float height = 1.0f;
+        float textureID = 0.0f;
         Vector2 hitPos = new Vector2(Float.MAX_VALUE, Float.MAX_VALUE);
         for (Wall wall : walls) {
             Vector2 segDir = new Vector2(wall.a).sub(wall.b);
@@ -182,6 +202,7 @@ public class Renderer {
                     deltaX = u * wall.widthScaler / 4.0f;
                     yOffset = wall.yOffset;
                     height = wall.height;
+                    textureID = wall.textureID;
                 }
             }
         }
@@ -194,6 +215,8 @@ public class Renderer {
         rayData[index * 4 + 1] = deltaX;
         rayData[index * 4 + 2] = wallTop;
         rayData[index * 4 + 3] = wallBottom;
+
+        rayWallTex[index] = textureID;
 
         rayData2[index * 4] = dX; //specifically using the non normalized rays for distance stretching
         rayData2[index * 4 + 1] = dY;
@@ -216,6 +239,7 @@ public class Renderer {
         wx += 1.0f / 144.0f;
 
         walls.get(0).yOffset = (float)Math.sin(wx) + 1.0f;
+        walls.get(0).height = 1.0f - walls.get(0).yOffset / 2.0f;
 
         float speed = 3.0f / 144.0f;
 
@@ -249,37 +273,50 @@ public class Renderer {
             }
         }
 
-        wallShader.bind();
+
         tex.bind(0);
+        floor.bind(1);
 
-        wallShader.setUniformi("texture", 0);
+        wallShader.bind();
 
-        wallShader.setUniform4fv("rayData", rayData, 0, rayData.length);
-        wallShader.setUniformf("numRays", rayData.length / 4);
+        wallShader.setUniformi("texture0", 0);
+        wallShader.setUniformi("texture1", 1);
+
+        wallShader.setUniformf("numRays", rayData.length / 4 / 2);
         wallShader.setUniformf("cameraInfo", camX, camY, aspect, 0);
 
-        mesh.render(wallShader, GL20.GL_TRIANGLES);
+        //render the screen one half at a time so we can have more uniform slots
+        wallShader.setUniform4fv("rayData", rayData, 0, rayData.length / 2);
+        wallShader.setUniform1fv("rayTex", rayWallTex, 0, rayWallTex.length / 2);
+        meshLeft.render(wallShader, GL20.GL_TRIANGLES);
+        wallShader.setUniform4fv("rayData", rayData, rayData.length / 2, rayData.length / 2);
+        wallShader.setUniform1fv("rayTex", rayWallTex, rayWallTex.length / 2, rayWallTex.length / 2);
+        meshRight.render(wallShader, GL20.GL_TRIANGLES);
 
         floorShader.bind();
-        floor.bind(0);
 
-        floorShader.setUniformi("texture", 0);
+        floorShader.setUniformi("texture", 1);
 
-        floorShader.setUniform4fv("rayData", rayData2, 0, rayData.length);
-        floorShader.setUniformf("numRays", rayData.length / 4);
+        floorShader.setUniformf("numRays", rayData.length / 4 / 2);
         floorShader.setUniformf("cameraInfo", camX, camY, yawR, 0.0f);
         
-        mesh.render(floorShader, GL20.GL_TRIANGLES);
+        floorShader.setUniform4fv("rayData", rayData2, 0, rayData.length / 2);
+        meshLeft.render(floorShader, GL20.GL_TRIANGLES);
+        floorShader.setUniform4fv("rayData", rayData2, rayData.length / 2, rayData.length / 2);
+        meshRight.render(floorShader, GL20.GL_TRIANGLES);
     }
 
     public void resize(int x, int y) {
         aspect = (float)x / (float)y;
         screenX = x;
-        if(screenX > 1020) {
-            screenX = 1020;
+        if(screenX > 2040) {
+            screenX = 2040;
         }
 
+        int numRayData = screenX / 2;
+
         rayData = new float[screenX * 4];
+        rayWallTex = new float[screenX];
         rayData2 = new float[screenX * 4];
 
         if(wallShader != null) {
@@ -300,20 +337,29 @@ public class Renderer {
             + "precision mediump float;\n"
             + "#endif\n"
             + "varying vec2 v_texCoords;\n"
-            + "uniform vec4 rayData[" + screenX + "];\n"
+            + "uniform vec4 rayData[" + numRayData + "];\n"
+            + "uniform float rayTex[" + numRayData + "];\n"
             + "uniform float numRays;\n"
             + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w tanhalffov
-            + "uniform sampler2D texture;\n"
+            + "uniform sampler2D texture0;\n"
+            + "uniform sampler2D texture1;\n"
             + "void main()\n"
             + "{\n"
-            + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
+            + "  int index = int(v_texCoords.x * numRays);\n"
+            + "  vec4 dat = rayData[index];\n"
             + "  float wallTop = dat.z;\n"
             + "  float wallBottom = dat.w;\n"
             + "  float current = v_texCoords.y - 0.5;"
             + "  bool isWall = current > wallBottom && current < wallTop;\n"
             + "  float color = isWall ? 1.0 : 0.0;\n"
             + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
-            + "  gl_FragColor = vec4(texture2D(texture, vec2(cameraInfo.z * dat.y, texY)).rgb * color, 1.0);\n"
+            + "  vec2 texCoords = vec2(cameraInfo.z * dat.y, texY);\n"
+            + "  vec3 texColor;\n"
+            + "  switch(rayTex[index]) {\n"
+            + "  case 0.0: texColor = texture2D(texture0, texCoords).rgb; break;\n"
+            + "  case 1.0: texColor = texture2D(texture1, texCoords).rgb; break;\n"
+            + "  }\n"
+            + "  gl_FragColor = vec4(texColor * color, 1.0);\n"
             + "}\n";
 
         String floorFragmentShader = 
@@ -321,7 +367,7 @@ public class Renderer {
           + "precision mediump float;\n"
           + "#endif\n"
           + "varying vec2 v_texCoords;\n"
-          + "uniform vec4 rayData[" + screenX + "];\n"
+          + "uniform vec4 rayData[" + numRayData + "];\n"
           + "uniform float numRays;\n"
           + "uniform vec4 cameraInfo;\n"
           + "uniform sampler2D texture;\n"
