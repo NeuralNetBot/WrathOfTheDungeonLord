@@ -54,7 +54,6 @@ public class Renderer {
 
     Texture tex;
     Texture floor;
-    Texture door;
 
 
     ArrayList<Wall> walls = new ArrayList<>();
@@ -93,10 +92,9 @@ public class Renderer {
         ShooterGame.getInstance().am.finishLoading();
         tex = ShooterGame.getInstance().am.get("brickwall.jpg", Texture.class);
         floor = ShooterGame.getInstance().am.get("brick.png", Texture.class);
-        door = ShooterGame.getInstance().am.get("transparent.png", Texture.class);
+        floor = ShooterGame.getInstance().am.get("transparent.png", Texture.class);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         floor.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
-        door.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
         resize(screnX, 0);
 
@@ -280,7 +278,6 @@ public class Renderer {
 
         tex.bind(0);
         floor.bind(1);
-        door.bind(2);
 
         floorShader.bind();
 
@@ -297,7 +294,7 @@ public class Renderer {
         wallShader.bind();
 
         wallShader.setUniformi("texture0", 0);
-        wallShader.setUniformi("texture1", 2);
+        wallShader.setUniformi("texture1", 1);
 
         wallShader.setUniformf("numRays", rayData.length / 4 / 2);
         wallShader.setUniformf("cameraInfo", camX, camY, aspect, 0);
