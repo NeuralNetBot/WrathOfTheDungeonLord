@@ -28,6 +28,7 @@ public class Renderer {
     int screenX;
 
     float[] rayData;
+    float[] rayData2;
 
     
     float camX = 0.0f;
@@ -37,7 +38,7 @@ public class Renderer {
     float yaw = 0.0f;
 
     
-    float fov = 75.0f;
+    float fov = 90.0f;
 
     float aspect;
 
@@ -151,18 +152,22 @@ public class Renderer {
 
 
     private void rayCast(int index) {
-        float anglePerRay = fov / (screenX - 1);
-        float angle = (float)Math.toRadians(yaw - (fov / 2.0f) + index * anglePerRay);
+        float yawR = (float)Math.toRadians(yaw);
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+        Vector2 right = new Vector2(forward.y, -forward.x);
+        float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
+        float offset = ((screenX - index) * 2.0f / (screenX - 1.0f)) - 1.0f;
 
-        float dX = (float)Math.cos(angle);
-        float dY = (float)Math.sin(angle);
-        Vector2 rayDir = new Vector2(dX, dY);
+        float dX = forward.x + offset * right.x * halfWidth;
+        float dY = forward.y + offset * right.y * halfWidth;
+        Vector2 rayDir = new Vector2(dX, dY).nor();
         Vector2 rayOrigin = new Vector2(camX, camY);
 
         float minDistance = Float.MAX_VALUE;
         float deltaX = 0.0f;
         float yOffset = 0.0f;
         float height = 1.0f;
+        Vector2 hitPos = new Vector2(Float.MAX_VALUE, Float.MAX_VALUE);
         for (Wall wall : walls) {
             Vector2 segDir = new Vector2(wall.a).sub(wall.b);
             Vector2 segToRay = new Vector2(wall.b).sub(rayOrigin);
@@ -172,6 +177,7 @@ public class Renderer {
             if(crossDir != 0 && t >= 0 && u >= 0 && u <= 1) {
                 float dst = t * rayDir.len();
                 if(dst < minDistance) {
+                    hitPos = wall.b.cpy().lerp(wall.a, u);
                     minDistance = dst;
                     deltaX = u * wall.widthScaler;
                     yOffset = wall.yOffset;
@@ -179,10 +185,20 @@ public class Renderer {
                 }
             }
         }
-        rayData[index * 4] = 1.0f / minDistance;
+        
+        float dst = 1.0f / hitPos.sub(rayOrigin).dot(forward);
+        float wallTop = (height * 2.0f + yOffset - 1.0f) * dst;
+        float wallBottom = (yOffset - 1.0f) * dst;
+
+        rayData[index * 4] = height;
         rayData[index * 4 + 1] = deltaX;
-        rayData[index * 4 + 2] = yOffset;
-        rayData[index * 4 + 3] = height;
+        rayData[index * 4 + 2] = wallTop;
+        rayData[index * 4 + 3] = wallBottom;
+
+        rayData2[index * 4] = dX; //specifically using the non normalized rays for distance stretching
+        rayData2[index * 4 + 1] = dY;
+        rayData2[index * 4 + 2] = wallTop;
+        rayData2[index * 4 + 3] = wallBottom;
     }
     float wx = 0.0f;
     int lastX = 0;
@@ -249,10 +265,9 @@ public class Renderer {
 
         floorShader.setUniformi("texture", 0);
 
-        floorShader.setUniform4fv("rayData", rayData, 0, rayData.length);
+        floorShader.setUniform4fv("rayData", rayData2, 0, rayData.length);
         floorShader.setUniformf("numRays", rayData.length / 4);
-        floorShader.setUniformf("cameraInfo", camX, camY, aspect, (float)Math.toRadians(fov) * 0.5f);
-        floorShader.setUniformf("cameraDir", yawR);
+        floorShader.setUniformf("cameraInfo", camX, camY, yawR, 0.0f);
         
         mesh.render(floorShader, GL20.GL_TRIANGLES);
     }
@@ -265,6 +280,7 @@ public class Renderer {
         }
 
         rayData = new float[screenX * 4];
+        rayData2 = new float[screenX * 4];
 
         if(wallShader != null) {
             wallShader.dispose();
@@ -291,12 +307,12 @@ public class Renderer {
             + "void main()\n"
             + "{\n"
             + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
-            + "  float wallTop = (dat.w * 2.0 + dat.z - 1.0) * dat.x;\n"
-            + "  float wallBottom = (dat.z - 1.0) * dat.x;\n"
+            + "  float wallTop = dat.z;\n"
+            + "  float wallBottom = dat.w;\n"
             + "  float current = v_texCoords.y - 0.5;"
             + "  bool isWall = current > wallBottom && current < wallTop;\n"
-            + "  float color = isWall ? max(min(1.0 * dat.x, 1.0), 0.3) : 0.0;\n"
-            + "  float texY = dat.w * (current - wallBottom) / (wallTop - wallBottom);\n"
+            + "  float color = isWall ? 1.0 : 0.0;\n"
+            + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
             + "  gl_FragColor = vec4(texture2D(texture, vec2(cameraInfo.z * dat.y, texY)).rgb * color, 1.0);\n"
             + "}\n";
 
@@ -308,20 +324,18 @@ public class Renderer {
           + "uniform vec4 rayData[" + screenX + "];\n"
           + "uniform float numRays;\n"
           + "uniform vec4 cameraInfo;\n"
-          + "uniform float cameraDir;\n"
           + "uniform sampler2D texture;\n"
           + "void main()\n"
           + "{\n"
           + "  vec2 screenPos = v_texCoords * 2.0 - 1.0;"
           + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
-          + "  float wallTop = (dat.w * 2.0 + dat.z - 1.0) * dat.x;\n"
-          + "  float wallBottom = (dat.z - 1.0) * dat.x;\n"
+          + "  float wallTop = dat.z;\n"
+          + "  float wallBottom = dat.w;\n"
           + "  float current = v_texCoords.y - 0.5;\n"
           + "  bool isWall = current > wallBottom && current < wallTop;\n"
-          + "  float rayAngle = cameraDir + (screenPos.x * cameraInfo.w);\n"
-          + "  vec2 worldDir = vec2(cos(rayAngle), sin(rayAngle)) * abs(1.0 / screenPos.y);\n"
+          + "  vec2 worldDir = vec2(dat.x, dat.y) * abs(1.0 / screenPos.y);\n"
           + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
-          + "  vec3 fColor = texture2D(texture, worldPos * 2.0).rgb * 0.3;\n"
+          + "  vec3 fColor = texture2D(texture, worldPos).rgb * 0.3;\n"
           + "  if(!isWall) {\n"
           + "      gl_FragColor = vec4(fColor, 1.0);\n"
           + "   } else { discard; }\n"
