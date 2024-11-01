@@ -1,7 +1,8 @@
 package game.shootergame.Renderer;
 
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.badlogic.gdx.Gdx;
@@ -47,13 +48,14 @@ public class Renderer {
     float aspect;
 
     int numWorkers;
-    Semaphore semStart;
-    Semaphore semEnd;
+    CyclicBarrier startBarrier;
+    CyclicBarrier doneBarrier;
     Thread[] workers;
     AtomicBoolean running;
 
     Texture tex;
     Texture floor;
+    Texture door;
 
 
     ArrayList<Wall> walls = new ArrayList<>();
@@ -92,9 +94,10 @@ public class Renderer {
         ShooterGame.getInstance().am.finishLoading();
         tex = ShooterGame.getInstance().am.get("brickwall.jpg", Texture.class);
         floor = ShooterGame.getInstance().am.get("brick.png", Texture.class);
-        floor = ShooterGame.getInstance().am.get("transparent.png", Texture.class);
+        door = ShooterGame.getInstance().am.get("transparent.png", Texture.class);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         floor.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        door.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
         resize(screnX, 0);
 
@@ -127,8 +130,8 @@ public class Renderer {
 
         running = new AtomicBoolean(true);
         numWorkers = Runtime.getRuntime().availableProcessors() - 1;
-        semStart = new Semaphore(0);
-        semEnd = new Semaphore(0);
+        startBarrier = new CyclicBarrier(numWorkers + 1 /* +main thread */);
+        doneBarrier = new CyclicBarrier(numWorkers + 1 /* +main thread */);
         workers = new Thread[numWorkers];
 
         for (int i = 0; i < numWorkers; i++) {
@@ -140,7 +143,7 @@ public class Renderer {
                         int numTasks = screenX % numWorkers;
                         int start = idx * numPerThread + Math.min(idx, numTasks);
                         int end = (idx + 1) * numPerThread + Math.min(idx + 1, numTasks);
-                        semStart.acquire();
+                        startBarrier.await();
 
                         if(!running.get()) break;
 
@@ -148,7 +151,7 @@ public class Renderer {
                             rayCast(j);
                         }
 
-                        semEnd.release();
+                        doneBarrier.await();
                     }
                 } catch (Exception e) {
                     Thread.currentThread().interrupt();
@@ -263,21 +266,17 @@ public class Renderer {
         walls.get(0).height = 1.0f - walls.get(0).yOffset / 2.0f;
 
         float yawR = (float)Math.toRadians(yaw);
-        
-        for (int i = 0; i < numWorkers; i++) {
-            semStart.release();
-        }
-        for (int i = 0; i < numWorkers; i++) {
-            try {
-                semEnd.acquire();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
 
+        try {
+            startBarrier.await();
+            doneBarrier.await();
+        } catch (InterruptedException | BrokenBarrierException e) {
+            e.printStackTrace();
+        }
 
         tex.bind(0);
         floor.bind(1);
+        door.bind(2);
 
         floorShader.bind();
 
@@ -294,7 +293,7 @@ public class Renderer {
         wallShader.bind();
 
         wallShader.setUniformi("texture0", 0);
-        wallShader.setUniformi("texture1", 1);
+        wallShader.setUniformi("texture1", 2);
 
         wallShader.setUniformf("numRays", rayData.length / 4 / 2);
         wallShader.setUniformf("cameraInfo", camX, camY, aspect, 0);
