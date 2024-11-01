@@ -179,7 +179,7 @@ public class Renderer {
                 if(dst < minDistance) {
                     hitPos = wall.b.cpy().lerp(wall.a, u);
                     minDistance = dst;
-                    deltaX = u * wall.widthScaler;
+                    deltaX = u / wall.widthScaler;
                     yOffset = wall.yOffset;
                     height = wall.height;
                 }
