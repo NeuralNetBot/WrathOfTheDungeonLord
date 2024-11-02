@@ -138,14 +138,12 @@ public class Renderer {
             final int idx = i;
             workers[i] = new Thread(() -> {
                 try {
-                    while (true) {
+                    while (running.get()) {
                         int numPerThread = screenX / numWorkers;
                         int numTasks = screenX % numWorkers;
                         int start = idx * numPerThread + Math.min(idx, numTasks);
                         int end = (idx + 1) * numPerThread + Math.min(idx + 1, numTasks);
                         startBarrier.await();
-
-                        if(!running.get()) break;
 
                         for (int j = start; j < end; j++) {
                             rayCast(j);
@@ -153,6 +151,7 @@ public class Renderer {
 
                         doneBarrier.await();
                     }
+                    System.out.println("Render thread: " + idx + " shutting down.");
                 } catch (Exception e) {
                     Thread.currentThread().interrupt();
                 }
@@ -406,6 +405,18 @@ public class Renderer {
 
         if (!floorShader.isCompiled()) {
             System.err.println("Shader compilation failed:\n" + floorShader.getLog());
+        }
+    }
+
+    public void shutdown() {
+        running.set(false);
+
+        //force threads to loop to make them exit
+        try {
+            startBarrier.await();
+            doneBarrier.await();
+        } catch (InterruptedException | BrokenBarrierException e) {
+            e.printStackTrace();
         }
     }
 }

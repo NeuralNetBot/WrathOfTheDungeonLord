@@ -56,5 +56,6 @@ public class ShooterGame extends Game {
     public void dispose() {
         coreBatch.dispose();
         am.dispose();
+        screen.dispose();
     }
 }

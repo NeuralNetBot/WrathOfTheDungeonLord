@@ -103,4 +103,9 @@ public class GameScreen extends ScreenAdapter {
 
         renderer.resize(width, height);
 	}
+
+    @Override
+    public void dispose() {
+        renderer.shutdown();
+    }
 }
