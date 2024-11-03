@@ -319,8 +319,8 @@ public class Renderer {
     public void resize(int x, int y) {
         aspect = (float)x / (float)y;
         screenX = x;
-        if(screenX > 2040) {
-            screenX = 2040;
+        if(screenX > 1020) {
+            screenX = 1020;
         }
 
         int numRayData = screenX / 2;
