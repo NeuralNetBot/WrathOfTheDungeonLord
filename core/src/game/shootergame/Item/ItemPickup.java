@@ -44,7 +44,6 @@ public class ItemPickup {
     private void createCollider() {
         collider = new Collider(x, y, 1.0f, (Collider collider)->{
             if(collider == World.getPlayerCollider()) {
-                System.out.println("Collide!");
                 World.showPickupPrompt(this);
             }
         });

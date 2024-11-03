@@ -3,7 +3,9 @@ package game.shootergame;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
@@ -52,7 +54,8 @@ public class World {
         if(instance.itemPrompt != null) {
             String name = instance.itemPrompt.getName();
             BitmapFont font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT);
-            font.draw(ShooterGame.getInstance().coreBatch, "Press (E) to pickup: " + name, 0.0f, 0.0f);
+            GlyphLayout layout = new GlyphLayout(font, "Press (E) to pickup: " + name);
+            font.draw(ShooterGame.getInstance().coreBatch, layout, (Gdx.graphics.getWidth() / 2) - (layout.width / 2), 100.0f);
         }
     }
 
