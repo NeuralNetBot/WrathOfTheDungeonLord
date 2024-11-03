@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input.Keys;
 
 import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.RangedWeapon;
+import game.shootergame.Physics.Collider;
 
 public class Player {
     MeleeWeapon melee;
@@ -33,6 +34,8 @@ public class Player {
 
     int lastMouse = 0;
 
+    Collider collider;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
@@ -43,6 +46,9 @@ public class Player {
         damageMultiplier = 1.0f;
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
+
+        collider = new Collider(x, y, 1.0f, null);
+        World.getPhysicsWorld().addCollider(collider);
     }
 
     public float x() { return x; }
@@ -121,6 +127,9 @@ public class Player {
         default:
             break;
         }
+
+        collider.x = x;
+        collider.y = y;
     }
 
     void render() {
@@ -140,5 +149,9 @@ public class Player {
     void applyDamage(float damage) {
         if(!isDodging)
             health -= damage * resistanceMultiplier;
+    }
+
+    public Collider getCollider() {
+        return collider;
     }
 }

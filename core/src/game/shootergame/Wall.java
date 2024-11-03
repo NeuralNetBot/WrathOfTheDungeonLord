@@ -1,4 +1,4 @@
-package game.shootergame.Renderer;
+package game.shootergame;
 
 import com.badlogic.gdx.math.Vector2;
 
@@ -10,7 +10,7 @@ public class Wall {
     public float height;
     public float textureID;
     public boolean transparentDoor;
-    Wall(float xa, float ya, float xb, float yb) {
+    public Wall(float xa, float ya, float xb, float yb) {
          a = new Vector2(xa, ya); b = new Vector2(xb, yb);
          widthScaler = a.dst(b);
          yOffset = 0.0f;
