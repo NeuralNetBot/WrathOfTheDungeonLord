@@ -86,6 +86,8 @@ public class GameScreen extends ScreenAdapter {
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
+        player.render();
+
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         //we always want the hud to be visible
         hud.draw(coreBatch);
