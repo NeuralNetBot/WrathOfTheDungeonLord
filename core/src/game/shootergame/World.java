@@ -9,7 +9,9 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
+import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
+import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
@@ -112,5 +114,7 @@ public class World {
 
         items.add(new ItemPickup(5.0f, 0.0f, (new DamagePowerup())));
         items.add(new ItemPickup(-5.0f, 0.0f, (new HealthPowerup())));
+        items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
+        items.add(new ItemPickup(10.0f, 0.0f, (new AttackSpeedPowerup())));
     }
 }
