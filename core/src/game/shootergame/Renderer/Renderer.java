@@ -64,7 +64,7 @@ public class Renderer {
 
     ArrayList<Wall> walls;
 
-    
+    boolean debugRayDraw = false;
     ShapeRenderer sr = new ShapeRenderer();
 
     public Renderer(int screnX, ArrayList<Wall> walls) {
@@ -236,6 +236,10 @@ public class Renderer {
         rayFloorData[index * 4 + 2] = 0;
         rayFloorData[index * 4 + 3] = 0;
     }
+
+    public void setDebugRayDraw(boolean debugRayDraw) {
+        this.debugRayDraw = debugRayDraw;
+    }
     
     public void update(float x, float y, float rotation) {
         camX = x; camY = y; yaw = rotation;
@@ -308,17 +312,18 @@ public class Renderer {
 
         sr.begin(ShapeType.Line);
 
-
-        for (int i = 0; i < screenX; i++) {
-            sr.setColor(Color.ORANGE);
-            float idst = rayWallTex[i*2+1];
-            float dx = rayFloorData[i*4];
-            float dy = rayFloorData[i*4+1];
-            float x = (-dx / idst / scale);
-            float y = (dy / idst / scale);
-            x = Math.min(Math.max(x, -wx), wx);
-            y = Math.min(Math.max(y, -wy), wy);
-            sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
+        if(debugRayDraw) {
+            for (int i = 0; i < screenX; i++) {
+                sr.setColor(Color.ORANGE);
+                float idst = rayWallTex[i*2+1];
+                float dx = rayFloorData[i*4];
+                float dy = rayFloorData[i*4+1];
+                float x = (-dx / idst / scale);
+                float y = (dy / idst / scale);
+                x = Math.min(Math.max(x, -wx), wx);
+                y = Math.min(Math.max(y, -wy), wy);
+                sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
+            }
         }
 
         for (Wall wall : walls) {

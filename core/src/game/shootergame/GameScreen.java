@@ -29,12 +29,14 @@ public class GameScreen extends ScreenAdapter {
         hud.setDataVisibility(HUDViewCommand.Visibility.WHEN_OPEN);
 
         hud.registerAction("debug", new HUDActionCommand() {
-            static final String help = "Usage: debug";
+            static final String help = "Usage: debug [true|false]";
 
             @Override
             public String execute(String[] cmd) {
                 try {
-                    return "";
+                    boolean b = Boolean.parseBoolean(cmd[1]);
+                    renderer.setDebugRayDraw(b);
+                    return "debug: " + b;
                 } catch (Exception e) {
                     return help;
                 }
