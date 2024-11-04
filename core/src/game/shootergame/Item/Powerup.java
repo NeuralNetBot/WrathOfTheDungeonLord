@@ -8,4 +8,5 @@ public interface Powerup {
     void onTimeout(Player player);
     float getRemainingTime();
     boolean isActive();
+    String getName();
 }

@@ -1,5 +1,7 @@
 package game.shootergame.Item;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import game.shootergame.World;
 import game.shootergame.Physics.Collider;
 
@@ -14,6 +16,8 @@ public class ItemPickup {
     RangedWeapon weapon;
     Powerup powerup;
     Collider collider;
+    String name;
+    boolean isActive;
 
     float x, y;
 
@@ -23,6 +27,7 @@ public class ItemPickup {
         powerup = null;
         this.x = x; this.y = y;
         createCollider();
+        isActive = true;
     }
 
     public ItemPickup(float x, float y, Powerup powerup) {
@@ -31,6 +36,8 @@ public class ItemPickup {
         this.powerup = powerup;
         this.x = x; this.y = y;
         createCollider();
+        this.name = powerup.getName();
+        isActive = true;
     }
 
     public ItemPickup(float x, float y) {
@@ -42,9 +49,17 @@ public class ItemPickup {
     }
 
     private void createCollider() {
-        collider = new Collider(x, y, 1.0f, (Collider collider, float newDX, float newDY)->{
-            if(collider == World.getPlayerCollider()) {
-                World.showPickupPrompt(this);
+        collider = new Collider(x, y, 1.0f, (Collider collider, float newDx, float newDy)->{
+            if (collider == World.getPlayerCollider()) {
+                if (isActive) {
+                    World.showPickupPrompt(this);
+                    if (payload == Payload.POWERUP && powerup.isActive()) {
+                        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+                            World.getPlayer().addPowerup(powerup);
+                            isActive = false;
+                        }
+                    }
+                }
             }
         });
         World.getPhysicsWorld().addCollider(collider);
@@ -63,7 +78,7 @@ public class ItemPickup {
     }
 
     public String getName() {
-        return "";
+        return this.name;
     }
 
 }

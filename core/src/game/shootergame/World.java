@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
+import game.shootergame.Item.Powerups.DamagePowerup;
+import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
 
@@ -159,6 +161,7 @@ public class World {
 
         player = new Player(new SwordWeapon());
 
-        items.add(new ItemPickup(5.0f, 0.0f));
+        items.add(new ItemPickup(5.0f, 0.0f, (new DamagePowerup())));
+        items.add(new ItemPickup(-5.0f, 0.0f, (new HealthPowerup())));
     }
 }
