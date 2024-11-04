@@ -5,8 +5,12 @@ import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 
 import game.shootergame.Item.MeleeWeapon;
+import game.shootergame.Item.Powerup;
 import game.shootergame.Item.RangedWeapon;
 import game.shootergame.Physics.Collider;
+
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Player {
     MeleeWeapon melee;
@@ -36,11 +40,13 @@ public class Player {
 
     Collider collider;
 
+    LinkedList<Powerup> activePowerups;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
 
-        health = 100.0f;
+        health = 50.0f;
         stamina = 100.0f;
 
         damageMultiplier = 1.0f;
@@ -49,6 +55,8 @@ public class Player {
 
         collider = new Collider(x, y, 1.0f, null);
         World.getPhysicsWorld().addCollider(collider);
+
+        activePowerups = new LinkedList<>();
     }
 
     public float x() { return x; }
@@ -116,6 +124,8 @@ public class Player {
         x += moveX * speed;
         y += moveY * speed;
 
+
+
         switch (selectedWeapon) {
         case 1:
         melee.update(delta);
@@ -130,6 +140,16 @@ public class Player {
 
         collider.x = x;
         collider.y = y;
+
+        Iterator<Powerup> iterator = activePowerups.iterator();
+        while (iterator.hasNext()) {
+            Powerup powerup = iterator.next();
+            powerup.update(delta);
+            if (!powerup.isActive()) {
+                powerup.onTimeout(this);
+                iterator.remove();
+            }
+        }
     }
 
     void render() {
@@ -154,4 +174,17 @@ public class Player {
     public Collider getCollider() {
         return collider;
     }
+
+    public void addPowerup(Powerup powerup) {
+        activePowerups.add(powerup);
+        powerup.onActivate(this);
+    }
+
+    public float getHealth() { return health; }
+
+    public void addHealth(float health) {
+        this.health = Math.min(this.health + health, 100.0f);
+    }
+
+    public LinkedList<Powerup> getActivePowerups() { return activePowerups; }
 }
