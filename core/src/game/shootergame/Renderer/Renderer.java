@@ -293,12 +293,21 @@ public class Renderer {
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
 
-        sr.begin(ShapeType.Line);
         sr.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         float scale = 50.0f;
-        float offsetX = -0.65f * ((float)Gdx.graphics.getWidth() / (float)Gdx.graphics.getHeight()), offsetY = -0.65f;
         float wx = 15.0f / scale;
         float wy = 15.0f / scale;
+        float offsetX = ((float)Gdx.graphics.getWidth() / (float)Gdx.graphics.getHeight()) - 0.33f, offsetY = 0.67f;
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        sr.begin(ShapeType.Filled);
+        sr.setColor(0.0f, 0.0f, 0.0f, 0.3f);
+        sr.rect(-wx + offsetX, -wy + offsetY, wx * 2, wy * 2);
+        sr.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        sr.begin(ShapeType.Line);
+
 
         for (int i = 0; i < screenX; i++) {
             sr.setColor(Color.ORANGE);
