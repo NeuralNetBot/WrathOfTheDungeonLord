@@ -22,14 +22,14 @@ public class Player {
     public float attackSpeed;
 
     float x, y;
-    float lastX, lastY;
+    float dx = 0.0f, dy = 0.0f;
 
     float rotation;
 
     float moveDirX;
     float moveDirY;
 
-    final float moveSpeed = 2.0f;
+    final float moveSpeed = 4.0f;
 
     boolean isDodging;
 
@@ -48,9 +48,9 @@ public class Player {
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
 
-        collider = new Collider(x, y, 0.5f,  (Collider collider)->{
+        collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY)->{
             if(collider == null) { //wall coll
-                x = lastX; y = lastY;
+                dx = newDX; dy = newDY;
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
@@ -112,18 +112,19 @@ public class Player {
 
     void update(float delta) {
 
-        lastX = x;
-        lastY = y;
+        x += dx;
+        y += dy;
+        collider.x = x;
+        collider.y = y;
 
         float rotationR = (float)Math.toRadians(rotation);
 
         float speed = moveSpeed * delta;
 
-        float moveX = moveDirX * (float)Math.cos(rotationR) - moveDirY * (float)Math.sin(rotationR);
-        float moveY = moveDirX * (float)Math.sin(rotationR) + moveDirY * (float)Math.cos(rotationR);
-
-        x += moveX * speed;
-        y += moveY * speed;
+        dx = speed * (moveDirX * (float)Math.cos(rotationR) - moveDirY * (float)Math.sin(rotationR));
+        dy = speed * (moveDirX * (float)Math.sin(rotationR) + moveDirY * (float)Math.cos(rotationR));
+        collider.dx = dx;
+        collider.dy = dy;
 
         switch (selectedWeapon) {
         case 1:
@@ -136,9 +137,6 @@ public class Player {
         default:
             break;
         }
-
-        collider.x = x;
-        collider.y = y;
     }
 
     void render() {

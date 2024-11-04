@@ -42,7 +42,7 @@ public class ItemPickup {
     }
 
     private void createCollider() {
-        collider = new Collider(x, y, 1.0f, (Collider collider)->{
+        collider = new Collider(x, y, 1.0f, (Collider collider, float newDX, float newDY)->{
             if(collider == World.getPlayerCollider()) {
                 World.showPickupPrompt(this);
             }
