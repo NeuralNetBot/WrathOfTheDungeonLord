@@ -22,7 +22,8 @@ public class Player {
     public float attackSpeed;
 
     float x, y;
-    
+    float lastX, lastY;
+
     float rotation;
 
     float moveDirX;
@@ -47,7 +48,11 @@ public class Player {
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
 
-        collider = new Collider(x, y, 1.0f, null);
+        collider = new Collider(x, y, 0.5f,  (Collider collider)->{
+            if(collider == null) { //wall coll
+                x = lastX; y = lastY;
+            }
+        }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
     }
 
@@ -106,6 +111,10 @@ public class Player {
     }
 
     void update(float delta) {
+
+        lastX = x;
+        lastY = y;
+
         float rotationR = (float)Math.toRadians(rotation);
 
         float speed = moveSpeed * delta;
