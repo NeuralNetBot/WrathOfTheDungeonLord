@@ -140,11 +140,10 @@ public class PhysicsWorld {
                     totalWeight += weight;
                     effectiveSlide.add(-normal.y * weight, normal.x * weight);
                 }
+                if(totalWeight == 0.0f) { totalWeight = 0.00001f; }
                 effectiveSlide.scl(1.0f / totalWeight);
 
                 float d = new Vector2(collider.dx, collider.dy).dot(effectiveSlide);
-
-                System.out.printf("%f   %f    %f   %f\n", effectiveSlide.x, effectiveSlide.y, collider.dx, collider.dy);
 
                 Vector2 slide = effectiveSlide.scl(d);
                 
