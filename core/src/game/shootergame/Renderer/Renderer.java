@@ -314,14 +314,24 @@ public class Renderer {
 
         if(debugRayDraw) {
             for (int i = 0; i < screenX; i++) {
-                sr.setColor(Color.ORANGE);
-                float idst = rayWallTex[i*2+1];
+                sr.setColor((float)i / (float)screenX, 0.0f, 1.0f - (float)i / (float)screenX, 1.0f);
+                float idst = 1.0f / rayWallTex[i*2+1];
                 float dx = rayFloorData[i*4];
                 float dy = rayFloorData[i*4+1];
-                float x = (-dx / idst / scale);
-                float y = (dy / idst / scale);
-                x = Math.min(Math.max(x, -wx), wx);
-                y = Math.min(Math.max(y, -wy), wy);
+
+
+                float tx = wx / Math.abs(dx);
+                float ty = wy / Math.abs(dy);
+                float t = Math.min(tx, ty) * scale;
+                if(t < idst) {
+                    idst = t;
+                }
+
+                float x = (-dx * idst / scale);
+                float y = (dy * idst / scale);
+
+                //x = Math.min(Math.max(x, -wx), wx);
+                //y = Math.min(Math.max(y, -wy), wy);
                 sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
             }
         }
