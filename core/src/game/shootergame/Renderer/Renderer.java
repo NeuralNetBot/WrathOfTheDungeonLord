@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Texture;
@@ -15,6 +16,8 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
@@ -60,6 +63,9 @@ public class Renderer {
 
 
     ArrayList<Wall> walls;
+
+    
+    ShapeRenderer sr = new ShapeRenderer();
 
     public Renderer(int screnX, ArrayList<Wall> walls) {
         this.walls = walls;
@@ -230,19 +236,12 @@ public class Renderer {
         rayFloorData[index * 4 + 2] = 0;
         rayFloorData[index * 4 + 3] = 0;
     }
-    float wx = 0.0f;
     
     public void update(float x, float y, float rotation) {
         camX = x; camY = y; yaw = rotation;
     }
 
     public void render() {
-        wx += 1.0f / 144.0f;
-
-        walls.get(0).yOffset = (float)Math.sin(wx) + 1.0f;
-
-        walls.get(0).height = 1.0f - walls.get(0).yOffset / 2.0f;
-
         float yawR = (float)Math.toRadians(yaw);
 
         try {
@@ -293,6 +292,58 @@ public class Renderer {
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
+
+        sr.begin(ShapeType.Line);
+        sr.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
+        float scale = 50.0f;
+        float offsetX = -0.65f * ((float)Gdx.graphics.getWidth() / (float)Gdx.graphics.getHeight()), offsetY = -0.65f;
+        float wx = 15.0f / scale;
+        float wy = 15.0f / scale;
+
+        for (int i = 0; i < screenX; i++) {
+            sr.setColor(Color.ORANGE);
+            float idst = rayWallTex[i*2+1];
+            float dx = rayFloorData[i*4];
+            float dy = rayFloorData[i*4+1];
+            float x = (-dx / idst / scale);
+            float y = (dy / idst / scale);
+            x = Math.min(Math.max(x, -wx), wx);
+            y = Math.min(Math.max(y, -wy), wy);
+            sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
+        }
+
+        for (Wall wall : walls) {
+            if(wall.transparentDoor) {
+                sr.setColor(Color.RED);
+            } else {
+                sr.setColor(Color.WHITE);
+            }
+            float ax = (-wall.a.x - -camX) / scale;
+            float ay = (wall.a.y - camY) / scale;
+            float bx = (-wall.b.x - -camX) / scale;
+            float by = (wall.b.y - camY) / scale;
+            if(Math.abs(ax) > wx && Math.abs(bx) > wx)
+                continue;
+            if(Math.abs(ay) > wy && Math.abs(by) > wy)
+                continue;
+                
+            ax = Math.min(Math.max(ax, -wx), wx);
+            ay = Math.min(Math.max(ay, -wy), wy);
+            bx = Math.min(Math.max(bx, -wx), wx);
+            by = Math.min(Math.max(by, -wy), wy);
+
+            sr.line(ax + offsetX, ay + offsetY, bx + offsetX, by + offsetY);
+        }
+        sr.setColor(Color.GRAY);
+        sr.line(-wx + offsetX, -wy + offsetY, -wx + offsetX, wy + offsetY);
+        sr.line(-wx + offsetX, wy + offsetY, wx + offsetX, wy + offsetY);
+        sr.line(wx + offsetX, wy + offsetY, wx + offsetX, -wy + offsetY);
+        sr.line(-wx + offsetX, -wy + offsetY, wx + offsetX, -wy + offsetY);
+        sr.setColor(Color.GREEN);
+        sr.circle(offsetX, offsetY, 0.01f, 8);
+        sr.line(offsetX, offsetY, offsetX + -(float)Math.cos(yawR) / 25, offsetY + (float)Math.sin(yawR) / 25);
+
+        sr.end();
     }
 
     public void resize(int x, int y) {

@@ -39,11 +39,19 @@ public class World {
         instance.player.processInput();
     }
 
+    float wx = 0.0f;
     public static void update(float delta) {
         instance.itemPrompt = null;
         instance.physicsWorld.update();
 
         instance.player.update(delta);
+
+
+        instance.wx += 1.0f / 144.0f;
+
+        instance.walls.get(15).yOffset = (float)Math.sin(instance.wx) + 1.0f;
+
+        instance.walls.get(15).height = 1.0f - instance.walls.get(15).yOffset / 2.0f;
     }
 
     public static void render() {
@@ -81,27 +89,70 @@ public class World {
     }
 
     private void init() {
-        walls.add(new Wall(1.5177f, 3.4569f, 3.9219f, 3.5477f));
-        walls.add(new Wall(3.9219f, 3.5477f, 3.8766f, 0.9279f));
-        walls.add(new Wall(3.8766f, 0.9279f, 4.0353f, -1.5330f));
-        walls.add(new Wall(1.3929f, 1.0187f, 1.5177f, 3.4569f));
-        walls.add(new Wall(-1.0000f, 1.0527f, 1.3929f, 1.0187f));
-        walls.add(new Wall(-1.0227f, -1.0113f, -1.0000f, 1.0527f));
-        walls.add(new Wall(4.0353f, -1.5330f, 1.2908f, -1.2608f));
-        walls.add(new Wall(1.2908f, -1.2608f, 1.3702f, -4.4703f));
-        walls.add(new Wall(1.3702f, -4.4703f, -5.9900f, -3.8465f));
-        walls.add(new Wall(-5.9900f, -3.8465f, -5.8539f, -1.3175f));
-        walls.add(new Wall(-5.8539f, -1.3175f, -3.1434f, 2.2662f));
-        walls.add(new Wall(-3.1434f, 2.2662f, -3.4836f, -1.7712f));
-        walls.add(new Wall(-3.4836f, -1.7712f, -2.4630f, -1.8959f));
-        walls.add(new Wall(-2.4630f, -1.8959f, -2.4403f, 3.4683f));
-        walls.add(new Wall(-2.4403f, 3.4683f, 0.3949f, 3.5023f));
-        walls.add(new Wall(0.3949f, 3.5023f, 0.2475f, 2.2095f));
-        walls.add(new Wall(0.2475f, 2.2095f, -1.6805f, 2.2321f));
-        walls.add(new Wall(-1.6805f, 2.2321f, -1.0227f, -1.0113f));
-        walls.get(0).height = 2.0f;
-        walls.get(0).textureID = 1.0f;
-        walls.get(0).transparentDoor = true;
+        walls.add(new Wall(-1.1262f, 5.6620f, 0.0000f, 5.7729f));
+        walls.add(new Wall(-2.2092f, 5.3334f, -1.1262f, 5.6620f));
+        walls.add(new Wall(-3.2072f, 4.8000f, -2.2092f, 5.3334f));
+        walls.add(new Wall(-4.0820f, 4.0820f, -3.2072f, 4.8000f));
+        walls.add(new Wall(-4.8000f, 3.2072f, -4.0820f, 4.0820f));
+        walls.add(new Wall(-5.3334f, 2.2092f, -4.8000f, 3.2072f));
+        walls.add(new Wall(-5.6620f, 1.1262f, -5.3334f, 2.2092f));
+        walls.add(new Wall(-5.7729f, -0.0000f, -5.6620f, 1.1262f));
+        walls.add(new Wall(-5.6620f, -1.1262f, -5.7729f, -0.0000f));
+        walls.add(new Wall(-5.3334f, -2.2092f, -5.6620f, -1.1262f));
+        walls.add(new Wall(-4.8000f, -3.2072f, -5.3334f, -2.2092f));
+        walls.add(new Wall(-4.0820f, -4.0820f, -4.8000f, -3.2072f));
+        walls.add(new Wall(-3.2072f, -4.8000f, -4.0820f, -4.0820f));
+        walls.add(new Wall(-2.2092f, -5.3334f, -3.2072f, -4.8000f));
+        walls.add(new Wall(-1.1262f, -5.6620f, -2.2092f, -5.3334f));
+        walls.add(new Wall(-1.1262f, -5.6620f, 1.1262f, -5.6620f));//
+        walls.add(new Wall(2.2092f, -5.3334f, 1.1262f, -5.6620f));
+        walls.add(new Wall(3.2072f, -4.8000f, 2.2092f, -5.3334f));
+        walls.add(new Wall(4.0820f, -4.0820f, 3.2072f, -4.8000f));
+        walls.add(new Wall(4.8000f, -3.2072f, 4.0820f, -4.0820f));
+        walls.add(new Wall(5.3334f, -2.2092f, 4.8000f, -3.2072f));
+        walls.add(new Wall(5.6620f, -1.1262f, 5.3334f, -2.2092f));
+        walls.add(new Wall(5.7729f, -0.0000f, 5.6620f, -1.1262f));
+        walls.add(new Wall(5.6620f, 1.1262f, 5.7729f, -0.0000f));
+        walls.add(new Wall(5.3334f, 2.2092f, 5.6620f, 1.1262f));
+        walls.add(new Wall(4.8000f, 3.2072f, 5.3334f, 2.2092f));
+        walls.add(new Wall(4.0820f, 4.0820f, 4.8000f, 3.2072f));
+        walls.add(new Wall(3.2072f, 4.8000f, 4.0820f, 4.0820f));
+        walls.add(new Wall(2.2092f, 5.3334f, 3.2072f, 4.8000f));
+        walls.add(new Wall(1.1262f, 5.6620f, 2.2092f, 5.3334f));
+        walls.add(new Wall(0.0000f, 5.7729f, 1.1262f, 5.6620f));
+        walls.add(new Wall(1.1262f, -5.6620f, 1.1262f, -11.7762f));
+        walls.add(new Wall(-1.1262f, -14.1082f, 6.4566f, -14.1082f));
+        walls.add(new Wall(1.1262f, -11.7762f, 6.4566f, -11.7762f));
+        walls.add(new Wall(-1.1262f, -12.0725f, -1.1262f, -14.1082f));
+        walls.add(new Wall(13.0804f, -9.1815f, 13.0804f, -16.7029f));
+        walls.add(new Wall(6.4566f, -9.1815f, 13.0804f, -9.1815f));
+        walls.add(new Wall(13.0804f, -16.7029f, 6.4566f, -16.7029f));
+        walls.add(new Wall(6.4566f, -16.7029f, 6.4566f, -14.1082f));
+        walls.add(new Wall(6.4566f, -11.7762f, 6.4566f, -9.1815f));
+        walls.add(new Wall(-1.1262f, -5.6620f, -1.1262f, -6.8295f));
+        walls.add(new Wall(-1.1262f, -12.0725f, -14.7606f, -12.0725f));
+        walls.add(new Wall(-30.4897f, -22.5585f, -30.4897f, -12.0725f));
+        walls.add(new Wall(-30.4897f, -12.0725f, -35.7327f, -12.0725f));
+        walls.add(new Wall(-25.2467f, -22.5585f, -25.2467f, -12.0725f));
+        walls.add(new Wall(-20.0037f, -22.5585f, -20.0037f, -12.0725f));
+        walls.add(new Wall(-20.0037f, -12.0725f, -25.2467f, -12.0725f));
+        walls.add(new Wall(-14.7606f, -22.5585f, -14.7606f, -12.0725f));
+        walls.add(new Wall(-17.3822f, 3.6566f, -12.1391f, 3.6566f));
+        walls.add(new Wall(-27.8682f, -6.8295f, -35.7327f, -6.8295f));
+        walls.add(new Wall(-17.3822f, -6.8295f, -22.6252f, -6.8295f));
+        walls.add(new Wall(-1.1262f, -6.8295f, -12.1391f, -6.8295f));
+        walls.add(new Wall(-27.8682f, -6.8295f, -27.8682f, 3.6566f));
+        walls.add(new Wall(-27.8682f, 3.6566f, -22.6252f, 3.6566f));
+        walls.add(new Wall(-22.6252f, -6.8295f, -22.6252f, 3.6566f));
+        walls.add(new Wall(-35.7327f, -12.0725f, -35.7327f, -6.8295f));
+        walls.add(new Wall(-17.3822f, -6.8295f, -17.3822f, 3.6566f));
+        walls.add(new Wall(-20.0037f, -22.5585f, -14.7606f, -22.5585f));
+        walls.add(new Wall(-12.1391f, -6.8295f, -12.1391f, 3.6566f));
+        walls.add(new Wall(-30.4897f, -22.5585f, -25.2467f, -22.5585f));
+
+        walls.get(15).height = 2.0f;
+        walls.get(15).textureID = 1.0f;
+        walls.get(15).transparentDoor = true;
 
         physicsWorld = new PhysicsWorld(walls);
         itemPrompt = null;
