@@ -314,7 +314,8 @@ public class Renderer {
 
         if(debugRayDraw) {
             for (int i = 0; i < screenX; i++) {
-                sr.setColor((float)i / (float)screenX, 0.0f, 1.0f - (float)i / (float)screenX, 1.0f);
+                Color c = new Color(0xffa500ff);
+                sr.setColor(c.lerp(Color.CYAN, (float)i / (float)screenX));
                 float idst = 1.0f / rayWallTex[i*2+1];
                 float dx = rayFloorData[i*4];
                 float dy = rayFloorData[i*4+1];
