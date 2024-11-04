@@ -120,14 +120,15 @@ public class PhysicsWorld {
 
         for (Collider collider : colliders) {
             if(collider.isStatic) { continue; }
-            ArrayList<Vector2> normals = new ArrayList<>();
+            Vector2[] normals = new Vector2[3];//3 collisions should handle every case for our needs
             int count = 0;
             for (Wall wall : walls) {
                 if(collider.height > wall.yOffset) {
                     WallIntersectionResult res = isIntersecting(collider, wall);
                     if(res.intersect) {
-                        normals.add(new Vector2(res.nx, res.ny));
+                        normals[count] = new Vector2(res.nx, res.ny);
                         count += 1;
+                        if(count >= 2) break;
                     }
                 }
             }
@@ -135,10 +136,10 @@ public class PhysicsWorld {
             if(count > 0) {
                 Vector2 effectiveSlide = new Vector2();
                 float totalWeight = 0.0f;
-                for (Vector2 normal : normals) {
-                    float weight = new Vector2(collider.dx, collider.dy).dot(normal);
+                for (int i = 0; i < count; i++) {
+                    float weight = new Vector2(collider.dx, collider.dy).dot(normals[i]);
                     totalWeight += weight;
-                    effectiveSlide.add(-normal.y * weight, normal.x * weight);
+                    effectiveSlide.add(-normals[i].y * weight, normals[i].x * weight);
                 }
                 if(totalWeight == 0.0f) { totalWeight = 0.00001f; }
                 effectiveSlide.scl(1.0f / totalWeight);
