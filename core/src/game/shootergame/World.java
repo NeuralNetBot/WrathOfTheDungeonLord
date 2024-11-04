@@ -42,10 +42,9 @@ public class World {
     float wx = 0.0f;
     public static void update(float delta) {
         instance.itemPrompt = null;
-        instance.physicsWorld.update();
-
+        
         instance.player.update(delta);
-
+        instance.physicsWorld.update();
 
         instance.wx += 1.0f / 144.0f;
 
