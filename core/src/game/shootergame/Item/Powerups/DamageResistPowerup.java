@@ -3,12 +3,12 @@ package game.shootergame.Item.Powerups;
 import game.shootergame.Item.Powerup;
 import game.shootergame.Player;
 
-public class DamagePowerup implements Powerup {
+public class DamageResistPowerup implements Powerup {
 
     private float remainingTime;
     private boolean isActive;
 
-    public DamagePowerup() {
+    public DamageResistPowerup() {
         this.remainingTime = 10.0f;
         this.isActive = true;
     }
@@ -25,14 +25,14 @@ public class DamagePowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.damageMultiplier = 2.0f;
-        System.out.println("Damage Boost Initiated: Multiplier is " + player.damageMultiplier);
+        player.resistanceMultiplier = 2.0f;
+        System.out.println("Damage Resist Initiated: Multiplier is " + player.resistanceMultiplier);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.damageMultiplier = 1.0f;
-        System.out.println("Damage Boost Ended: Multiplier is " + player.damageMultiplier);
+        player.resistanceMultiplier = 1.0f;
+        System.out.println("Damage Resist Ended: Multiplier is " + player.resistanceMultiplier);
     }
 
     @Override
@@ -47,6 +47,6 @@ public class DamagePowerup implements Powerup {
 
     @Override
     public String getName() {
-        return "Damage Boost";
+        return "Damage Resist";
     }
 }
