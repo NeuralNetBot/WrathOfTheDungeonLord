@@ -15,7 +15,7 @@ public class ItemPickup {
     Payload payload;
     RangedWeapon weapon;
     Powerup powerup;
-    Collider collider;
+    public Collider collider;
     String name;
     boolean isActive;
 

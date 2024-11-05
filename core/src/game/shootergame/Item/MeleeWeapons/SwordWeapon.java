@@ -1,12 +1,18 @@
 package game.shootergame.Item.MeleeWeapons;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
+import com.badlogic.gdx.math.Vector2;
+import game.shootergame.Item.ItemPickup;
+import game.shootergame.Physics.Collider;
 import game.shootergame.ShooterGame;
 import game.shootergame.Item.MeleeWeapon;
+import game.shootergame.World;
 
 public class SwordWeapon implements MeleeWeapon{
 
@@ -16,6 +22,11 @@ public class SwordWeapon implements MeleeWeapon{
     Sprite sprite;
 
     boolean attackingLight = false;
+
+    private Collider collider;
+    private float swingAngle;
+    private float swingRange;
+    private float weaponLength;
 
     public SwordWeapon() {
         ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
@@ -34,6 +45,12 @@ public class SwordWeapon implements MeleeWeapon{
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
         sprite.setOriginCenter();
         sprite.setOriginBasedPosition(0.0f, 0.0f);
+
+        this.weaponLength = 1.0f;
+        this.swingRange = 0.7f;
+        createCollider();
+
+        World.getPhysicsWorld().addCollider(collider);
     }
 
     @Override
@@ -45,7 +62,34 @@ public class SwordWeapon implements MeleeWeapon{
                 animTime = 0.0f;
                 attackingLight = false;
             }
+
+            swingAngle += delta;
+            if (swingAngle > swingRange) {
+                swingAngle = 0;
+            }
+
+            float angle = (float) Math.toRadians(World.getPlayer().rotation() + swingAngle);
+            float weaponEndX = World.getPlayer().x() + weaponLength * (float) Math.cos(angle);
+            float weaponEndY = World.getPlayer().y() + weaponLength * (float) Math.sin(angle);
+
+            collider.setPosition(weaponEndX, weaponEndY);
+            collider.setRotation(angle);
+
+
+
+            System.out.println("X: " + weaponEndX + "  Y: " + weaponEndY);
         }
+    }
+
+    private void createCollider() {
+        Collider tempCollider = new Collider(5.0f, 0.0f, 0.1f, null);
+        World.getPhysicsWorld().addCollider(tempCollider);
+        collider = new Collider(0, 0, weaponLength, (Collider collider)->{
+
+            if (collider == tempCollider) {
+                System.out.println("Damage");
+            }
+        });
     }
 
     @Override
