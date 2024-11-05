@@ -112,8 +112,8 @@ public class PhysicsWorld {
                 Collider colliderB = colliders.get(j);
                 if(colliderA.isStatic && colliderB.isStatic) continue;
                 if(isOverlap(colliderA, colliderB)) {
-                    colliderA.Callback(colliderB, 0.0f, 0.0f);
-                    colliderB.Callback(colliderA, 0.0f, 0.0f);
+                    colliderA.Callback(colliderB, 0.0f, 0.0f, 0.0f);
+                    colliderB.Callback(colliderA, 0.0f, 0.0f, 0.0f);
                 }
             }
         }
@@ -148,9 +148,28 @@ public class PhysicsWorld {
 
                 Vector2 slide = effectiveSlide.scl(d);
                 
-                collider.Callback(null, slide.x, slide.y);
+                collider.Callback(null, slide.x, slide.y, 0.0f);
             } else {
-                collider.Callback(null, collider.dx, collider.dy);
+                collider.Callback(null, collider.dx, collider.dy, 0.0f);
+            }
+        }
+    }
+
+    public void runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+        for (Collider collider : colliders) {
+            if(collider == self) continue;
+            float dst = Vector2.dst(x, y, collider.x, collider.y);
+            if(dst <= distance + collider.radius) {
+                float angleBetweenCenters = (float)Math.atan2(collider.y - y, collider.x - x);
+                direction = direction % (2.0f * (float)Math.PI);
+                float angleMax = direction + (angle / 2.0f);
+                angleMax = angleMax % (2.0f * (float)Math.PI);
+                float angleMin = direction - (angle / 2.0f);
+                angleMin = angleMin % (2.0f * (float)Math.PI);
+
+                if(angleBetweenCenters > angleMin && angleBetweenCenters < angleMax) {
+                    collider.Callback(collider, x, y, damage);
+                }
             }
         }
     }

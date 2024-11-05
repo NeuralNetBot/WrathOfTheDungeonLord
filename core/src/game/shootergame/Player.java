@@ -54,9 +54,13 @@ public class Player {
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
 
-        collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY)->{
+        collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
                 dx = newDX; dy = newDY;
+            }
+            if(damage != 0.0f) {
+                float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
+                health -= damageDone;
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);

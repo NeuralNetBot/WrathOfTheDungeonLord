@@ -25,12 +25,12 @@ public class Collider {
     }
 
     public interface ColliderCallback {
-        void callback(Collider collider, float newDX, float newDY);
+        void callback(Collider collider, float newDX, float newDY, float damage);
     }
 
     private ColliderCallback callback;
-    public void Callback(Collider collider, float newDX, float newDY) {
+    public void Callback(Collider collider, float newDX, float newDY, float damage) {
         if(callback != null)
-            callback.callback(collider, newDX, newDY);
+            callback.callback(collider, newDX, newDY, damage);
     }
 }
