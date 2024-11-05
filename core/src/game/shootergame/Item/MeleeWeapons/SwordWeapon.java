@@ -75,8 +75,6 @@ public class SwordWeapon implements MeleeWeapon{
             //collider.setPosition(weaponEndX, weaponEndY);
            // collider.setRotation(angle);
 
-
-
             System.out.println("X: " + weaponEndX + "  Y: " + weaponEndY);
         }
     }
@@ -84,8 +82,8 @@ public class SwordWeapon implements MeleeWeapon{
     private void createCollider() {
         Collider tempCollider = new Collider(5.0f, 0.0f, 0.1f, null);
         World.getPhysicsWorld().addCollider(tempCollider);
-        collider = new Collider(0, 0, weaponLength, (Collider collider, float newDx, float newDy)->{
 
+        collider = new Collider(0, 0, weaponLength, (Collider collider, float newDx, float newDy)->{
             if (collider == tempCollider) {
                 System.out.println("Damage");
             }
