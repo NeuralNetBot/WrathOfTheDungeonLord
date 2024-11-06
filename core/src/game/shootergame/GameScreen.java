@@ -88,6 +88,8 @@ public class GameScreen extends ScreenAdapter {
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
+        renderer.processSpriteDraws();
+
         World.render();
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
