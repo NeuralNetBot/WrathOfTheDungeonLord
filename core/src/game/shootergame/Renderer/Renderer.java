@@ -3,6 +3,7 @@ package game.shootergame.Renderer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,14 +68,17 @@ public class Renderer {
 
     ArrayList<Wall> walls;
 
+    
+    LinkedList<Sprite2_5D> sprites2_5d = new LinkedList<>();
+
     boolean debugRayDraw = false;
     ShapeRenderer sr = new ShapeRenderer();
 
     public Renderer(int screnX, ArrayList<Wall> walls) {
         this.walls = walls;
         TextureParameter param = new TextureParameter();
-        param.minFilter = TextureFilter.Nearest;
-        param.magFilter = TextureFilter.Nearest;
+        param.minFilter = TextureFilter.Linear;
+        param.magFilter = TextureFilter.Linear;
 
         ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
         ShooterGame.getInstance().am.load("brick.png", Texture.class, param);
@@ -88,6 +92,9 @@ public class Renderer {
         door.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
         resize(screnX, 0);
+
+        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 2.0f));
+        //sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0.5f, 0.5f, 1.0f, 1.0f));
 
         //splitting the mesh into left and right halfs for more scene data
         meshLeft = new Mesh(true, 4, 6,
@@ -334,8 +341,6 @@ public class Renderer {
                 float x = (-dx * idst / scale);
                 float y = (dy * idst / scale);
 
-                //x = Math.min(Math.max(x, -wx), wx);
-                //y = Math.min(Math.max(y, -wy), wy);
                 sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
             }
         }
@@ -374,31 +379,84 @@ public class Renderer {
         sr.end();
     }
 
-    class SpriteDrawInfo {
-        float dst;
-        float u1, v1, u2, v2;
-        float visHeight, visWidth;
-        Texture texture;
-        public float getDst() { return dst; }
-    }
+    public void processSpriteDraws() {
+        float yawR = (float)Math.toRadians(yaw);
 
-    private void processSpriteDraws() {
-        ArrayList<SpriteDrawInfo> sprites = new ArrayList<>();
-        Collections.sort(sprites, Comparator.comparingDouble(SpriteDrawInfo::getDst).reversed());
-        for (SpriteDrawInfo spriteInfo : sprites) {
+        Vector2 cameraDir = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+
+        float fovR = (float)Math.toRadians(fov);
+
+        for (Sprite2_5D sprite : sprites2_5d) {
+            sprite.dst = Vector2.dst(sprite.x, sprite.y, camX, camY);
+            sprite.visHeight = sprite.height / sprite.dst;
+            sprite.visWidth = sprite.width / sprite.dst;
+
+            Vector2 toSprite = new Vector2(sprite.x - camX, sprite.y - camY);//.nor();
+            Vector2 relCam = new Vector2(cameraDir.x * toSprite.x + cameraDir.y * toSprite.y, cameraDir.x * toSprite.y - cameraDir.y * toSprite.x);
+
+            sprite.scrX = (relCam.y / relCam.x) / fovR;
+
+            
+            sprite.scrY = 0.0f;//-1.0f / sprite.dst;
+
+            float left = sprite.scrX - sprite.visWidth / 2.0f;
+            float right = sprite.scrX + sprite.visWidth / 2.0f;
+
+            sprite.isVis = !(Math.abs(left) > aspect && Math.abs(right) > aspect);
+            
+            if(sprite.isVis) {
+                int leftRayIndex = (int)((left + aspect) / (aspect * 2) * (screenX - 1));
+                int rightRayIndex = (int)((right + aspect) / (aspect * 2) * (screenX - 1));
+                
+                float deltaU = sprite.texture.getU2() - sprite.texture.getU();
+                float raysPerU = (deltaU / (float)(rightRayIndex - leftRayIndex));
+                float raysPerWidth = (sprite.visWidth / (float)(rightRayIndex - leftRayIndex));
+
+                int stopIndexLeft = leftRayIndex;
+                for (int i = leftRayIndex; i <= rightRayIndex; i++) {
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float sdst = sprite.dst;
+                    if(idst > sdst) {
+                        stopIndexLeft = i;
+                        break;
+                    }
+                }
+
+                int stopIndexRight = rightRayIndex;
+                for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float sdst = sprite.dst;
+                    if(i == stopIndexLeft) { sprite.isVis = false; }
+                    if(idst > sdst) {
+                        stopIndexRight = i;
+                        break;
+                    }
+                }
+
+                sprite.textureCalc.setU(sprite.texture.getU() + (stopIndexLeft - leftRayIndex) * raysPerU);
+                sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);
+                
+                left = ((float)(stopIndexLeft - (screenX / 2))) * raysPerWidth;
+                right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
+                sprite.scrX = (left + right) / 2.0f;
+                sprite.visWidth = (right - left);
+            }
+        }
+        Collections.sort(sprites2_5d, Comparator.comparingDouble(Sprite2_5D::getDst).reversed());
+
+        for (Sprite2_5D sprite : sprites2_5d) {
+            if(sprite.isVis) {
+                ShooterGame.getInstance().coreBatch.draw(sprite.textureCalc, sprite.scrX - (sprite.visWidth / 2.0f), sprite.scrY - (sprite.visHeight / 2.0f), sprite.visWidth, sprite.visHeight);
+            }
         }
     }
 
-    public void submitSpriteDraw(TextureRegion texture, float x, float y, float height, float width) {
-        SpriteDrawInfo info = new SpriteDrawInfo();
-        info.dst = Vector2.dst(x, y, camX, camY);
-        info.visHeight = height * 1.0f / info.dst;
-        info.visWidth = width * 1.0f / info.dst;
-        info.u1 = texture.getU();
-        info.u2 = texture.getU2();
-        info.v1 = texture.getV();
-        info.v2 = texture.getV2();
-        info.texture = texture.getTexture();
+    public void addSprite(Sprite2_5D sprite) {
+        sprites2_5d.add(sprite);
+    }
+
+    public void removeSprite(Sprite2_5D sprite) {
+        sprites2_5d.remove(sprite);
     }
 
     public void resize(int x, int y) {
