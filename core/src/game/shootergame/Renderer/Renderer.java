@@ -1,6 +1,8 @@
 package game.shootergame.Renderer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,6 +17,7 @@ import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -369,6 +372,33 @@ public class Renderer {
         sr.line(offsetX, offsetY, offsetX + -(float)Math.cos(yawR) / 25, offsetY + (float)Math.sin(yawR) / 25);
 
         sr.end();
+    }
+
+    class SpriteDrawInfo {
+        float dst;
+        float u1, v1, u2, v2;
+        float visHeight, visWidth;
+        Texture texture;
+        public float getDst() { return dst; }
+    }
+
+    private void processSpriteDraws() {
+        ArrayList<SpriteDrawInfo> sprites = new ArrayList<>();
+        Collections.sort(sprites, Comparator.comparingDouble(SpriteDrawInfo::getDst).reversed());
+        for (SpriteDrawInfo spriteInfo : sprites) {
+        }
+    }
+
+    public void submitSpriteDraw(TextureRegion texture, float x, float y, float height, float width) {
+        SpriteDrawInfo info = new SpriteDrawInfo();
+        info.dst = Vector2.dst(x, y, camX, camY);
+        info.visHeight = height * 1.0f / info.dst;
+        info.visWidth = width * 1.0f / info.dst;
+        info.u1 = texture.getU();
+        info.u2 = texture.getU2();
+        info.v1 = texture.getV();
+        info.v2 = texture.getV2();
+        info.texture = texture.getTexture();
     }
 
     public void resize(int x, int y) {
