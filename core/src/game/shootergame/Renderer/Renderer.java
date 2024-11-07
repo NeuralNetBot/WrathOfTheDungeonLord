@@ -111,7 +111,7 @@ public class Renderer {
 
         resize(screnX, 0);
 
-        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 2.0f));
+        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 0.5f));
         //sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0.5f, 0.5f, 1.0f, 1.0f));
 
         //splitting the mesh into left and right halfs for more scene data
