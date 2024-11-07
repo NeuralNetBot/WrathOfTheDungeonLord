@@ -93,7 +93,7 @@ public class Renderer {
 
         resize(screnX, 0);
 
-        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 2.0f));
+        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 0.5f));
         //sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0.5f, 0.5f, 1.0f, 1.0f));
 
         //splitting the mesh into left and right halfs for more scene data
@@ -380,24 +380,44 @@ public class Renderer {
     }
 
     public void processSpriteDraws() {
+
         float yawR = (float)Math.toRadians(yaw);
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR)).scl(0.01f);//scaling so our "near" plane is closer
+        Vector2 rightV = new Vector2(forward.y, -forward.x);
+        float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
 
-        Vector2 cameraDir = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+        Vector2 leftPoint = new Vector2(
+            forward.x + -1.0f * rightV.x * halfWidth,
+            forward.y + -1.0f * rightV.y * halfWidth
+        );
 
-        float fovR = (float)Math.toRadians(fov);
+        Vector2 rightPoint = new Vector2(
+            forward.x + 1.0f * rightV.x * halfWidth,
+            forward.y + 1.0f * rightV.y * halfWidth
+        );
+
+        Vector2 lineVec = rightPoint.cpy().sub(leftPoint);
 
         for (Sprite2_5D sprite : sprites2_5d) {
+
+            //ray intersect sprite back to cameras projected "plane", i.e. the same plane we used to cast the rays for the walls
+            Vector2 fromSprite = new Vector2(camX - sprite.x, camY - sprite.y).nor();
+            float denom = lineVec.x * fromSprite.y - lineVec.y * fromSprite.x;
+            float t = ((sprite.y - leftPoint.y) * fromSprite.x - (sprite.x - leftPoint.x) * fromSprite.y) / denom;
+
+            Vector2 intersectPoint = leftPoint.cpy().add(lineVec.cpy().scl(t));
+            float visualDistance = intersectPoint.sub(camX, camY).dot(forward) * 100.0f;//rescaling distance from our "near" plane scaling
+            if(visualDistance <= 0.0f) {
+                sprite.isVis = false;
+                continue;
+            }
+
             sprite.dst = Vector2.dst(sprite.x, sprite.y, camX, camY);
-            sprite.visHeight = sprite.height / sprite.dst;
-            sprite.visWidth = sprite.width / sprite.dst;
-
-            Vector2 toSprite = new Vector2(sprite.x - camX, sprite.y - camY);//.nor();
-            Vector2 relCam = new Vector2(cameraDir.x * toSprite.x + cameraDir.y * toSprite.y, cameraDir.x * toSprite.y - cameraDir.y * toSprite.x);
-
-            sprite.scrX = (relCam.y / relCam.x) / fovR;
-
+            sprite.visHeight = sprite.height / visualDistance;
+            sprite.visWidth = sprite.width / visualDistance;
             
-            sprite.scrY = 0.0f;//-1.0f / sprite.dst;
+            sprite.scrX = aspect * 2.0f * (t + 0.5f);
+            sprite.scrY = -1.0f / visualDistance;
 
             float left = sprite.scrX - sprite.visWidth / 2.0f;
             float right = sprite.scrX + sprite.visWidth / 2.0f;
@@ -412,6 +432,7 @@ public class Renderer {
                 float raysPerU = (deltaU / (float)(rightRayIndex - leftRayIndex));
                 float raysPerWidth = (sprite.visWidth / (float)(rightRayIndex - leftRayIndex));
 
+                //check our rays from the left
                 int stopIndexLeft = leftRayIndex;
                 for (int i = leftRayIndex; i <= rightRayIndex; i++) {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
@@ -421,12 +442,12 @@ public class Renderer {
                         break;
                     }
                 }
-
+                //and from right
                 int stopIndexRight = rightRayIndex;
                 for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
                     float sdst = sprite.dst;
-                    if(i == stopIndexLeft) { sprite.isVis = false; }
+                    if(i == stopIndexLeft) { sprite.isVis = false; }//ray stopped at left stop so object is completely behind wall
                     if(idst > sdst) {
                         stopIndexRight = i;
                         break;
