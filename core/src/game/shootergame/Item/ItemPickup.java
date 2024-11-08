@@ -25,6 +25,8 @@ public class ItemPickup {
 
     float x, y;
 
+    Sprite2_5D sprite;
+
     public ItemPickup(float x, float y, RangedWeapon weapon) {
         payload = Payload.RANGED_WEAPON;
         this.weapon = weapon;
@@ -67,7 +69,8 @@ public class ItemPickup {
             default:
                 return;
         }
-        Renderer.inst().addSprite(new Sprite2_5D(reg, x, y, 0.3f, 0.3f));
+        sprite = new Sprite2_5D(reg, x, y, 0.3f, 0.3f);
+        Renderer.inst().addSprite(sprite);
     }
 
     private void createCollider() {
@@ -77,6 +80,7 @@ public class ItemPickup {
                     World.showPickupPrompt(this);
                     if (payload == Payload.POWERUP && powerup.isActive()) {
                         if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+                            Renderer.inst().removeSprite(sprite);
                             World.getPlayer().addPowerup(powerup);
                             isActive = false;
                         }
