@@ -433,7 +433,7 @@ public class Renderer {
             sprite.visWidth = sprite.width / visualDistance;
             
             sprite.scrX = aspect * 2.0f * (t + 0.5f);
-            sprite.scrY = -1.0f / visualDistance;
+            sprite.scrY = sprite.z / visualDistance;
 
             float left = sprite.scrX - sprite.visWidth / 2.0f;
             float right = sprite.scrX + sprite.visWidth / 2.0f;
