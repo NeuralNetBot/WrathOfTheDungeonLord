@@ -73,7 +73,21 @@ public class Renderer {
     boolean debugRayDraw = false;
     ShapeRenderer sr = new ShapeRenderer();
 
-    public Renderer(int screnX, ArrayList<Wall> walls) {
+    static Renderer instance;
+    public static Renderer createInstance(int screenX, ArrayList<Wall> walls) {
+        if(instance == null) {
+            instance = new Renderer(screenX, walls);
+        } else {
+            System.err.println("Renderer already has running instance!");
+        }
+        return instance;
+    }
+
+    public static Renderer inst() {
+        return instance;
+    }
+
+    private Renderer(int screnX, ArrayList<Wall> walls) {
         this.walls = walls;
         TextureParameter param = new TextureParameter();
         param.minFilter = TextureFilter.Linear;
