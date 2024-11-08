@@ -19,7 +19,6 @@ import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -111,9 +110,6 @@ public class Renderer {
         door.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
         resize(screnX, 0);
-
-        sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0, 0, 2.0f, 0.5f));
-        //sprites2_5d.add(new Sprite2_5D(new TextureRegion(tex, 1024, 1024), 0.5f, 0.5f, 1.0f, 1.0f));
 
         //splitting the mesh into left and right halfs for more scene data
         meshLeft = new Mesh(true, 4, 6,
