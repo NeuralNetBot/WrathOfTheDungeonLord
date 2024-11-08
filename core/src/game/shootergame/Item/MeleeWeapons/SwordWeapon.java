@@ -1,14 +1,10 @@
 package game.shootergame.Item.MeleeWeapons;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-import com.badlogic.gdx.math.Vector2;
-import game.shootergame.Item.ItemPickup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.ShooterGame;
 import game.shootergame.Item.MeleeWeapon;
