@@ -173,10 +173,7 @@ public class World {
         items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
         items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
         items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
-<<<<<<< HEAD
 
         enemies.add(new Goblin(0.0f, 0.0f));
-=======
->>>>>>> powerups now rendering their pickup sprites
     }
 }
