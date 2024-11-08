@@ -467,6 +467,9 @@ public class Renderer {
 
         for (Sprite2_5D sprite : sprites2_5d) {
             if(sprite.isVis) {
+                float idst = 1.0f / sprite.dst;
+                float dstColor = idst;
+                ShooterGame.getInstance().coreBatch.setColor(dstColor, dstColor, dstColor, 1.0f);
                 ShooterGame.getInstance().coreBatch.draw(sprite.textureCalc, sprite.scrX - (sprite.visWidth / 2.0f), sprite.scrY - (sprite.visHeight / 2.0f), sprite.visWidth, sprite.visHeight);
             }
         }
