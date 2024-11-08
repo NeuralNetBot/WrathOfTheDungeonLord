@@ -396,7 +396,7 @@ public class Renderer {
     public void processSpriteDraws() {
 
         float yawR = (float)Math.toRadians(yaw);
-        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR)).scl(0.01f);//scaling so our "near" plane is closer
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR)).cpy().scl(0.01f);//scaling so our "near" plane is closer
         Vector2 rightV = new Vector2(forward.y, -forward.x);
         float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
 
@@ -404,11 +404,13 @@ public class Renderer {
             forward.x + -1.0f * rightV.x * halfWidth,
             forward.y + -1.0f * rightV.y * halfWidth
         );
+        leftPoint.add(camX, camY);
 
         Vector2 rightPoint = new Vector2(
             forward.x + 1.0f * rightV.x * halfWidth,
             forward.y + 1.0f * rightV.y * halfWidth
         );
+        rightPoint.add(camX, camY);
 
         Vector2 lineVec = rightPoint.cpy().sub(leftPoint);
 
@@ -418,9 +420,9 @@ public class Renderer {
             Vector2 fromSprite = new Vector2(camX - sprite.x, camY - sprite.y).nor();
             float denom = lineVec.x * fromSprite.y - lineVec.y * fromSprite.x;
             float t = ((sprite.y - leftPoint.y) * fromSprite.x - (sprite.x - leftPoint.x) * fromSprite.y) / denom;
+            Vector2 intersectPoint = leftPoint.cpy().lerp(rightPoint, t);
+            float visualDistance = -intersectPoint.sub(sprite.x, sprite.y).dot(forward) * 100.0f;//rescale distance from our near "plane" scaling
 
-            Vector2 intersectPoint = leftPoint.cpy().add(lineVec.cpy().scl(t));
-            float visualDistance = intersectPoint.sub(camX, camY).dot(forward) * 100.0f;//rescaling distance from our "near" plane scaling
             if(visualDistance <= 0.0f) {
                 sprite.isVis = false;
                 continue;
