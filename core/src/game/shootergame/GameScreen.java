@@ -22,7 +22,7 @@ public class GameScreen extends ScreenAdapter {
         World.createInstance();
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
-        renderer = new Renderer(Gdx.graphics.getWidth(), World.getWalls());
+        renderer = Renderer.createInstance(Gdx.graphics.getWidth(), World.getWalls());
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
