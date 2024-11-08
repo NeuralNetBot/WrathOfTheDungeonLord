@@ -163,9 +163,9 @@ public class World {
 
         player = new Player(new SwordWeapon());
 
-        items.add(new ItemPickup(5.0f, 0.0f, (new DamagePowerup())));
-        items.add(new ItemPickup(-5.0f, 0.0f, (new HealthPowerup())));
+        items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
+        items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
         items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
-        items.add(new ItemPickup(10.0f, 0.0f, (new AttackSpeedPowerup())));
+        items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
     }
 }

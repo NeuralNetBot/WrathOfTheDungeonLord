@@ -2,8 +2,12 @@ package game.shootergame.Item;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 import game.shootergame.World;
 import game.shootergame.Physics.Collider;
+import game.shootergame.Renderer.Renderer;
+import game.shootergame.Renderer.Sprite2_5D;
 
 public class ItemPickup {
     public enum Payload {
@@ -26,6 +30,7 @@ public class ItemPickup {
         this.weapon = weapon;
         powerup = null;
         this.x = x; this.y = y;
+        createPickupSprite();
         createCollider();
         isActive = true;
     }
@@ -35,6 +40,7 @@ public class ItemPickup {
         weapon = null;
         this.powerup = powerup;
         this.x = x; this.y = y;
+        createPickupSprite();
         createCollider();
         this.name = powerup.getName();
         isActive = true;
@@ -45,7 +51,23 @@ public class ItemPickup {
         weapon = null;
         powerup = null;
         this.x = x; this.y = y;
+        createPickupSprite();
         createCollider();
+    }
+
+    private void createPickupSprite() {
+        TextureRegion reg;
+        switch (payload) {
+            case RANGED_WEAPON:
+                return;//TODO:
+                //break;
+            case POWERUP:
+                reg = powerup.getItemTexture();
+                break;
+            default:
+                return;
+        }
+        Renderer.inst().addSprite(new Sprite2_5D(reg, x, y, 0.3f, 0.3f));
     }
 
     private void createCollider() {

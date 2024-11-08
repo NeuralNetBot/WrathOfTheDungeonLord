@@ -74,9 +74,9 @@ public class Renderer {
     ShapeRenderer sr = new ShapeRenderer();
 
     static Renderer instance;
-    public static Renderer createInstance(int screenX, ArrayList<Wall> walls) {
+    public static Renderer createInstance(int screenX) {
         if(instance == null) {
-            instance = new Renderer(screenX, walls);
+            instance = new Renderer(screenX);
         } else {
             System.err.println("Renderer already has running instance!");
         }
@@ -87,8 +87,12 @@ public class Renderer {
         return instance;
     }
 
-    private Renderer(int screnX, ArrayList<Wall> walls) {
+    public void setWalls(ArrayList<Wall> walls) {
         this.walls = walls;
+    }
+
+    private Renderer(int screnX) {
+        this.walls = new ArrayList<>();
         TextureParameter param = new TextureParameter();
         param.minFilter = TextureFilter.Linear;
         param.magFilter = TextureFilter.Linear;

@@ -1,14 +1,25 @@
 package game.shootergame.Item.Powerups;
 
 import game.shootergame.Item.Powerup;
+
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 import game.shootergame.Player;
+import game.shootergame.ShooterGame;
 
 public class HealthPowerup implements Powerup {
 
     boolean isActive;
+    Texture tex;
+    TextureRegion reg;
 
     public HealthPowerup() {
         isActive = true;
+        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.finishLoading();
+        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
+        reg = new TextureRegion(tex, 0, 256, 256, 256);
     }
 
     @Override
@@ -41,4 +52,10 @@ public class HealthPowerup implements Powerup {
     public String getName() {
         return "Health Pack";
     }
+
+    @Override
+    public TextureRegion getItemTexture() {
+        return reg;
+    }
+
 }
