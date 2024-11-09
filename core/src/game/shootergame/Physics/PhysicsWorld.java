@@ -1,6 +1,7 @@
 package game.shootergame.Physics;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import com.badlogic.gdx.math.Vector2;
 
@@ -8,7 +9,7 @@ import game.shootergame.Wall;
 
 public class PhysicsWorld {
 
-    ArrayList<Collider> colliders = new ArrayList<>();
+    LinkedList<Collider> colliders = new LinkedList<>();
     ArrayList<Wall> walls;
 
     public PhysicsWorld(ArrayList<Wall> walls) {
@@ -17,6 +18,10 @@ public class PhysicsWorld {
 
     public void addCollider(Collider collider) {
         colliders.add(collider);
+    }
+
+    public void removeCollider(Collider collider) {
+        colliders.remove(collider);
     }
 
     boolean isOverlap(Collider a, Collider b) {
