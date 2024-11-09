@@ -40,7 +40,7 @@ public class Goblin implements Enemy{
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(reg, x, y, 0.0f, 0.3f, 2.0f);
+        sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
         Renderer.inst().addSprite(sprite);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -49,6 +49,7 @@ public class Goblin implements Enemy{
             }
             if(damage != 0.0f) {
                 health -= damage;
+                System.out.println(health);
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
@@ -61,12 +62,18 @@ public class Goblin implements Enemy{
 
         if(currentTargetCollider != null) {
             //TODO: make this use path finding instead of "dumb" moves
-            Vector2 move = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y).nor();
-            move.scl(delta * moveSpeed);
-            dx = move.x;
-            dy = move.y;
-            collider.dx = dx;
-            collider.dy = dy;
+            Vector2 move = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y);
+            if(move.len() > 1.0f) {
+                move.nor();
+                move.scl(delta * moveSpeed);
+                dx = move.x;
+                dy = move.y;
+                collider.dx = dx;
+                collider.dy = dy;
+            } else {
+                collider.dx = 0.0f;
+                collider.dy = 0.0f;
+            }
         } else {
             collider.dx = 0.0f;
             collider.dy = 0.0f;
