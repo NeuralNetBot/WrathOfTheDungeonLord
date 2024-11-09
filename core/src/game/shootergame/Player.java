@@ -3,6 +3,9 @@ package game.shootergame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.Powerup;
@@ -18,6 +21,8 @@ public class Player {
 
     int selectedWeapon = 1;//1 melee, 2 ranged if equiped
 
+    final float maxHealth = 100.0f;
+    final float maxStamina = 100.0f;
     float health;
     float stamina;
     
@@ -43,16 +48,23 @@ public class Player {
 
     LinkedList<Powerup> activePowerups;
 
+    Sprite barSprite;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
 
-        health = 50.0f;
-        stamina = 100.0f;
+        health = maxHealth;
+        stamina = maxStamina;
 
         damageMultiplier = 1.0f;
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
+
+        ShooterGame.getInstance().am.load("bar.png", Texture.class);
+        ShooterGame.getInstance().am.finishLoading();
+        barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
+        barSprite.setOrigin(0, 0);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
@@ -167,6 +179,7 @@ public class Player {
                 iterator.remove();
             }
         }
+        health -= delta * 10.0f;
     }
 
     void render() {
@@ -181,6 +194,28 @@ public class Player {
         default:
             break;
         }
+
+        Color healthColor = new Color().fromHsv((health / maxHealth) * 120.0f, 1.0f, 1.0f);
+        healthColor.a = 1.0f;
+        float aspect = (float)Gdx.graphics.getWidth() / (float)Gdx.graphics.getHeight();
+
+        barSprite.setPosition(-aspect + 0.1f, 0.9f);
+
+        barSprite.setSize(1.0f, 0.03f);
+        barSprite.setColor(Color.BLACK);
+        barSprite.draw(ShooterGame.getInstance().coreBatch);
+        barSprite.setSize(health / maxHealth, 0.03f);
+        barSprite.setColor(healthColor);
+        barSprite.draw(ShooterGame.getInstance().coreBatch);
+
+        barSprite.setPosition(-aspect + 0.1f, 0.8f);
+
+        barSprite.setSize(1.0f, 0.03f);
+        barSprite.setColor(Color.BLACK);
+        barSprite.draw(ShooterGame.getInstance().coreBatch);
+        barSprite.setSize(stamina / maxStamina, 0.03f);
+        barSprite.setColor(Color.GOLDENROD);
+        barSprite.draw(ShooterGame.getInstance().coreBatch);
     }
 
     void applyDamage(float damage) {
