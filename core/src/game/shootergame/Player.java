@@ -24,6 +24,7 @@ public class Player {
     final float maxHealth = 100.0f;
     final float maxStamina = 100.0f;
     float health;
+    final float staminaRegenPerSecond = 20.0f;
     float stamina;
     
     public float damageMultiplier;
@@ -41,6 +42,10 @@ public class Player {
     final float moveSpeed = 4.0f;
 
     boolean isDodging;
+    final float maxDodgeTime = 0.3f;
+    final float dodgeSpeedMultiplier = 3.0f;
+    final float dodgeStaminaCost = 20.0f;
+    float dodgeTime;
 
     int lastMouse = 0;
 
@@ -128,6 +133,16 @@ public class Player {
                 break;
             }
         }
+
+        if(Gdx.input.isKeyJustPressed(Keys.SPACE)) {
+            if(!isDodging && (moveDirX != 0.0f || moveDirY != 0.0f)) {
+                if(stamina >= dodgeStaminaCost) {
+                    isDodging = true;
+                    dodgeTime = 0.0f;
+                    stamina -= dodgeStaminaCost;
+                }
+            }
+        }
     }
 
     public float x() { return x; }
@@ -135,8 +150,17 @@ public class Player {
     public float rotation() { return rotation; }
 
     void update(float delta) {
-        rotation += Gdx.input.getDeltaX() * 0.1f;
+        if(isDodging) {
+            dodgeTime += delta;
+            if(dodgeTime >= maxDodgeTime) {
+                isDodging = false;
+            }
+        }
+        
+        stamina += delta * staminaRegenPerSecond;
+        if(stamina > maxStamina) stamina = maxStamina;
 
+        rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
         x += dx;
@@ -144,7 +168,7 @@ public class Player {
         collider.x = x;
         collider.y = y;
 
-        float speed = moveSpeed * delta;
+        float speed = moveSpeed * delta * (isDodging ? dodgeSpeedMultiplier : 1.0f);
 
         dx = speed * (moveDirX * (float)Math.cos(rotationR) - moveDirY * (float)Math.sin(rotationR));
         dy = speed * (moveDirX * (float)Math.sin(rotationR) + moveDirY * (float)Math.cos(rotationR));
@@ -179,7 +203,6 @@ public class Player {
                 iterator.remove();
             }
         }
-        health -= delta * 10.0f;
     }
 
     void render() {
