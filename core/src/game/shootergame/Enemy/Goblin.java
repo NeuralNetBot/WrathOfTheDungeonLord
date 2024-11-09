@@ -67,6 +67,9 @@ public class Goblin implements Enemy{
             dy = move.y;
             collider.dx = dx;
             collider.dy = dy;
+        } else {
+            collider.dx = 0.0f;
+            collider.dy = 0.0f;
         }
 
         collider.x = x;
