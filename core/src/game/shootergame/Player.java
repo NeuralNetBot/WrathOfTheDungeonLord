@@ -168,7 +168,11 @@ public class Player {
         collider.x = x;
         collider.y = y;
 
-        float speed = moveSpeed * delta * (isDodging ? dodgeSpeedMultiplier : 1.0f);
+        float finalDodgeSpeed = 1.0f;
+        if(isDodging) {
+            finalDodgeSpeed = 1.0f + 2.0f * (float)Math.sin((dodgeTime / maxDodgeTime) * Math.PI);
+        }
+        float speed = moveSpeed * delta * finalDodgeSpeed;
 
         dx = speed * (moveDirX * (float)Math.cos(rotationR) - moveDirY * (float)Math.sin(rotationR));
         dy = speed * (moveDirX * (float)Math.sin(rotationR) + moveDirY * (float)Math.cos(rotationR));
