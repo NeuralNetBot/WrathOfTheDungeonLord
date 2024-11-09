@@ -1,7 +1,10 @@
 package game.shootergame.Enemy;
 
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
+import game.shootergame.ShooterGame;
 import game.shootergame.World;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Renderer.Renderer;
@@ -19,12 +22,25 @@ public class Goblin implements Enemy{
 
     final float moveSpeed = 1.0f;
 
+    Texture tex;
+    TextureRegion reg;
+
     public Goblin(float x, float y) {
+
+        ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
+        ShooterGame.getInstance().am.finishLoading();
+        tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
+        reg = new TextureRegion(tex, 0, 0, 1024, 1024);
+
+
         health = 100.0f;
+
+        //TODO: make dyanmically choose this target
+        currentTargetCollider = World.getPlayerCollider();
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(null, x, y, 0.0f, 0.3f, 2.0f);
+        sprite = new Sprite2_5D(reg, x, y, 0.0f, 0.3f, 2.0f);
         Renderer.inst().addSprite(sprite);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -40,7 +56,6 @@ public class Goblin implements Enemy{
 
     @Override
     public void update(float delta) {
-
         x += dx;
         y += dy;
 
@@ -50,6 +65,8 @@ public class Goblin implements Enemy{
             move.scl(delta * moveSpeed);
             dx = move.x;
             dy = move.y;
+            collider.dx = dx;
+            collider.dy = dy;
         }
 
         collider.x = x;

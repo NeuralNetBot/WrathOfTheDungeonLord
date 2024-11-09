@@ -7,6 +7,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
+import game.shootergame.Enemy.Enemy;
+import game.shootergame.Enemy.Goblin;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
@@ -29,6 +31,8 @@ public class World {
     ArrayList<Wall> walls;
 
     LinkedList<ItemPickup> items;
+
+    LinkedList<Enemy> enemies;
 
     public static void createInstance() {
         instance = new World();
@@ -56,6 +60,10 @@ public class World {
         instance.walls.get(15).yOffset = (float)Math.sin(instance.wx) + 1.0f;
 
         instance.walls.get(15).height = 1.0f - instance.walls.get(15).yOffset / 2.0f;
+
+        for (Enemy enemy : instance.enemies) {
+            enemy.update(delta);
+        }
     }
 
     public static void render() {
@@ -90,6 +98,7 @@ public class World {
     private World() {
         walls = new ArrayList<>();
         items = new LinkedList<>();
+        enemies = new LinkedList<>();
     }
 
     private void init() {
@@ -167,5 +176,7 @@ public class World {
         items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
         items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
         items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
+
+        enemies.add(new Goblin(0.0f, 0.0f));
     }
 }

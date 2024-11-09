@@ -122,7 +122,7 @@ public class PhysicsWorld {
                 }
             }
         }
-
+        
         for (Collider collider : colliders) {
             if(collider.isStatic) { continue; }
             Vector2[] normals = new Vector2[3];//3 collisions should handle every case for our needs
@@ -152,7 +152,6 @@ public class PhysicsWorld {
                 float d = new Vector2(collider.dx, collider.dy).dot(effectiveSlide);
 
                 Vector2 slide = effectiveSlide.scl(d);
-                
                 collider.Callback(null, slide.x, slide.y, 0.0f);
             } else {
                 collider.Callback(null, collider.dx, collider.dy, 0.0f);
