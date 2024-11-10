@@ -24,7 +24,7 @@ public class Player {
     final float maxHealth = 100.0f;
     final float maxStamina = 100.0f;
     float health;
-    final float staminaRegenPerSecond = 20.0f;
+    final float staminaRegenPerSecond = 45.0f;
     float stamina;
     
     public float damageMultiplier;
@@ -45,7 +45,10 @@ public class Player {
     final float maxDodgeTime = 0.3f;
     final float dodgeSpeedMultiplier = 3.0f;
     final float dodgeStaminaCost = 20.0f;
+    final float dodgeStaminaRegenDelay = 0.35f;
+    boolean isDelaying;
     float dodgeTime;
+    float staminaRegenDelay;
 
     int lastMouse = 0;
 
@@ -140,6 +143,7 @@ public class Player {
                     isDodging = true;
                     dodgeTime = 0.0f;
                     stamina -= dodgeStaminaCost;
+                    isDelaying = false;
                 }
             }
         }
@@ -156,11 +160,21 @@ public class Player {
             dodgeTime += delta;
             if(dodgeTime >= maxDodgeTime) {
                 isDodging = false;
+                isDelaying = true;
+                staminaRegenDelay = 0.0f;
             }
         }
-        
-        stamina += delta * staminaRegenPerSecond;
-        if(stamina > maxStamina) stamina = maxStamina;
+        if(isDelaying) {
+            staminaRegenDelay += delta;
+            if(staminaRegenDelay > dodgeStaminaRegenDelay) {
+                isDelaying = false;
+            }
+        } else {
+            if(!isDodging) {
+                stamina += delta * staminaRegenPerSecond;
+                if(stamina > maxStamina) stamina = maxStamina;
+            }
+        }
 
         float rotationR = (float)Math.toRadians(rotation);
 
