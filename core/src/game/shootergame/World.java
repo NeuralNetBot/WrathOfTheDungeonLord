@@ -133,6 +133,9 @@ public class World {
                 }
 
             }
+            System.out.println("Map: '" + mapName + "' loaded");
+            System.out.println((walls.size() - doors.size()) + " walls");
+            System.out.println(doors.size() + " doors");
         } catch (IOException e) {
             e.printStackTrace();
         }
