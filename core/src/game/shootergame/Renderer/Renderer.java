@@ -321,6 +321,11 @@ public class Renderer {
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
 
+   }
+
+    public void renderMinimap() {
+        float yawR = (float)Math.toRadians(yaw);
+
         sr.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         float scale = 50.0f;
         float wx = 15.0f / scale;

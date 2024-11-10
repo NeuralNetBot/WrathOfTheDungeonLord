@@ -93,6 +93,8 @@ public class GameScreen extends ScreenAdapter {
 
         World.render();
 
+        renderer.renderMinimap();
+
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
 
         World.renderHud();
