@@ -119,9 +119,9 @@ public class World {
                     if(parts.length != 8) {
                         System.err.println("ERROR malformed map wall read");
                     }
-                    float ax = Float.parseFloat(parts[1]);
+                    float ax = -Float.parseFloat(parts[1]);
                     float ay = Float.parseFloat(parts[2]);
-                    float bx = Float.parseFloat(parts[3]);
+                    float bx = -Float.parseFloat(parts[3]);
                     float by = Float.parseFloat(parts[4]);
                     float height = Float.parseFloat(parts[5]);
                     float textureID = Float.parseFloat(parts[6]);
