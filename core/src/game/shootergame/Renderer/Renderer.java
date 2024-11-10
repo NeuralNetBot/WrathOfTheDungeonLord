@@ -358,28 +358,57 @@ public class Renderer {
                 sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
             }
         }
-
+        //Cohen-Sutherland box fitting algorithm
+        //https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
         for (Wall wall : walls) {
             if(wall.transparentDoor) {
                 sr.setColor(Color.RED);
             } else {
                 sr.setColor(Color.WHITE);
             }
+
             float ax = (-wall.a.x - -camX) / scale;
             float ay = (wall.a.y - camY) / scale;
             float bx = (-wall.b.x - -camX) / scale;
             float by = (wall.b.y - camY) / scale;
-            if(Math.abs(ax) > wx && Math.abs(bx) > wx)
-                continue;
-            if(Math.abs(ay) > wy && Math.abs(by) > wy)
-                continue;
-                
-            ax = Math.min(Math.max(ax, -wx), wx);
-            ay = Math.min(Math.max(ay, -wy), wy);
-            bx = Math.min(Math.max(bx, -wx), wx);
-            by = Math.min(Math.max(by, -wy), wy);
-
-            sr.line(ax + offsetX, ay + offsetY, bx + offsetX, by + offsetY);
+            int codea = findPointRegion(ax, ay, -wx, -wy, wx, wy);
+            int codeb = findPointRegion(bx, by, -wx, -wy, wx, wy);
+            while(true) {
+                if(codea == 0 && codeb == 0) {
+                    sr.line(ax + offsetX, ay + offsetY, bx + offsetX, by + offsetY);
+                    break;
+                } else if((codea & codeb) != 0) {
+                    break;
+                } else {
+                    int codeOut;
+                    if(codea != 0) {
+                        codeOut = codea;
+                    } else {
+                        codeOut = codeb;
+                    }
+                    float x = 0, y = 0;
+                    if((codeOut & RegionCode.TOP.bits) > 1) {
+                        x = ax + (bx - ax) * (wy - ay) / (by - ay);
+                        y = wy;
+                    } else if((codeOut & RegionCode.BOTTOM.bits) > 1) {  
+                        x = ax + (bx - ax) * (-wy - ay) / (by - ay);
+                        y = -wy;
+                    } else if((codeOut & RegionCode.RIGHT.bits) > 1) {
+                        y = ay + (by - ay) * (wx - ax) / (bx - ax);
+                        x = wx;
+                    } else if((codeOut & RegionCode.LEFT.bits) > 1) {
+                        y = ay + (by - ay) * (-wx - ax) / (bx - ax);
+                        x = -wx;
+                    }
+                    if(codeOut == codea) {
+                        ax = x; ay = y;
+                        codea = findPointRegion(ax, ay, -wx, -wy, wx, wy);
+                    } else {
+                        bx = x; by = y;
+                        codeb = findPointRegion(bx, by, -wx, -wy, wx, wy);
+                    }
+                }
+            }
         }
         sr.setColor(Color.GRAY);
         sr.line(-wx + offsetX, -wy + offsetY, -wx + offsetX, wy + offsetY);
@@ -391,6 +420,27 @@ public class Renderer {
         sr.line(offsetX, offsetY, offsetX + -(float)Math.cos(yawR) / 25, offsetY + (float)Math.sin(yawR) / 25);
 
         sr.end();
+    }
+
+    private enum RegionCode {
+        TOP(1 << 0),
+        BOTTOM(1 << 1),
+        LEFT(1 << 2),
+        RIGHT(1 << 3);
+
+        public final int bits;
+
+        RegionCode(int id) {
+            this.bits = 1 << id;
+        }
+    }
+    private int findPointRegion(float x, float y, float xmin, float ymin, float xmax, float ymax) {
+        int code = 0;
+        if(y > ymax) code |= RegionCode.TOP.bits;
+        if(y < ymin) code |= RegionCode.BOTTOM.bits;
+        if(x > xmax) code |= RegionCode.RIGHT.bits;
+        if(x < xmin) code |= RegionCode.LEFT.bits;
+        return code;
     }
 
     public void processSpriteDraws() {
@@ -516,6 +566,7 @@ public class Renderer {
 
         if(wallShader != null) {
             wallShader.dispose();
+            floorShader.dispose();
         }
 
         String vertexShader = 
