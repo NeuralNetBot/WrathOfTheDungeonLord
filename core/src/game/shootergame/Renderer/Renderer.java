@@ -550,7 +550,7 @@ public class Renderer {
                 //check our rays from the left
                 int stopIndexLeft = leftRayIndex;
                 for (int i = leftRayIndex; i <= rightRayIndex; i++) {
-                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
                     float sdst = sprite.dst;
                     if(idst > sdst) {
                         stopIndexLeft = i;
@@ -560,7 +560,7 @@ public class Renderer {
                 //and from right
                 int stopIndexRight = rightRayIndex;
                 for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
-                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
                     float sdst = sprite.dst;
                     if(i == stopIndexLeft) { sprite.isVis = false; }//ray stopped at left stop so object is completely behind wall
                     if(idst > sdst) {
