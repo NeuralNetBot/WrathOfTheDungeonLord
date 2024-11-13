@@ -67,6 +67,7 @@ public class Renderer {
 
 
     ArrayList<Wall> walls;
+    ArrayList<Torch> torches;
     ArrayList<ArrayList<Torch>> torchMap;
     
     LinkedList<Sprite2_5D> sprites2_5d = new LinkedList<>();
@@ -600,6 +601,7 @@ public class Renderer {
     }
 
     public void buildLightmap(ArrayList<Torch> torches) {
+        this.torches = torches;
         System.out.printf("Building lightmap. Walls: %d Torches: %d\n", walls.size(), torches.size());
         long start = System.nanoTime();
 
@@ -622,7 +624,6 @@ public class Renderer {
 
                 //if our torch is within range to cast light on the wall, then add it to the map
                 if(dst <= torches.get(j).radius) {
-                    System.err.println(dst);
                     if(torchMap.get(i) == null) {
                         torchMap.set(i, new ArrayList<>());
                     }
@@ -639,6 +640,30 @@ public class Renderer {
         long end = System.nanoTime();
         float durationInMs = (end - start) / 1000000.0f;
         System.out.printf("Lightmap built: %fms\n", durationInMs);
+    }
+
+    private void buildLightFrustums() {
+        float yawR = (float)Math.toRadians(yaw);
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+        Vector2 rightV = new Vector2(forward.y, -forward.x);
+        float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
+
+        Vector2 leftPoint = new Vector2(
+            forward.x + -1.0f * rightV.x * halfWidth,
+            forward.y + -1.0f * rightV.y * halfWidth
+        );
+        leftPoint.add(camX, camY);
+
+        Vector2 rightPoint = new Vector2(
+            forward.x + 1.0f * rightV.x * halfWidth,
+            forward.y + 1.0f * rightV.y * halfWidth
+        );
+        rightPoint.add(camX, camY);
+
+
+        for (Torch torch : torches) {
+            
+        }
     }
 
     public void resize(int x, int y) {
