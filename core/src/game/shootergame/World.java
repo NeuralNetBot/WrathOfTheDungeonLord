@@ -20,6 +20,7 @@ import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
+import game.shootergame.Renderer.Torch;
 
 public class World {
 
@@ -32,6 +33,7 @@ public class World {
     ItemPickup itemPrompt;
 
     ArrayList<Wall> walls;
+    ArrayList<Torch> torches;
     ArrayList<Integer> doors;
 
     LinkedList<ItemPickup> items;
@@ -92,6 +94,10 @@ public class World {
         return instance.walls;
     }
 
+    public static ArrayList<Torch> getTorches() {
+        return instance.torches;
+    }
+
     public static Player getPlayer() {
         return instance.player;
     }
@@ -102,6 +108,7 @@ public class World {
 
     private World() {
         walls = new ArrayList<>();
+        torches = new ArrayList<>();
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
@@ -130,6 +137,11 @@ public class World {
                     if(isDoor) {
                         doors.add(walls.size() - 1);
                     }
+                } else if(type.equals("torch")) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    float radius = Float.parseFloat(parts[3]);
+                    torches.add(new Torch(x, y, radius));
                 }
 
             }
