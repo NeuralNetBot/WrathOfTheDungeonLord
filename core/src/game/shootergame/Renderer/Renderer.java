@@ -67,7 +67,7 @@ public class Renderer {
 
 
     ArrayList<Wall> walls;
-
+    ArrayList<ArrayList<Torch>> torchMap;
     
     LinkedList<Sprite2_5D> sprites2_5d = new LinkedList<>();
 
@@ -184,12 +184,15 @@ public class Renderer {
 
         float minDistance = Float.MAX_VALUE;
         Wall hitWall = null;
+        int hitWallIdx = 0;
         float dU = 0.0f;
 
         float minDistanceDoor = Float.MAX_VALUE;
         Wall hitWallDoor = null;
+        int hitWallDoorIdx = 0;
         float dUDoor = 0.0f;
 
+        int i = 0;
         for (Wall wall : walls) {
             Vector2 segDir = new Vector2(wall.a).sub(wall.b);
             Vector2 segToRay = new Vector2(wall.b).sub(rayOrigin);
@@ -202,23 +205,26 @@ public class Renderer {
                 if(wall.transparentDoor) {
                     if(dst < minDistanceDoor) {
                         hitWallDoor = wall;
+                        hitWallDoorIdx = i;
                         minDistanceDoor = dst;
                         dUDoor = u;
                     }
                 } else {
                     if(dst < minDistance) {
                         hitWall = wall;
+                        hitWallIdx = i;
                         minDistance = dst;
                         dU = u;
                     }  
                 }
             }
+            i++;
         }
 
         if(hitWallDoor != null && minDistanceDoor < minDistance) {
             float yOffset = hitWallDoor.yOffset;
             Vector2 hitPos = hitWallDoor.b.cpy().lerp(hitWallDoor.a, dUDoor);
-            float dst = hitPos.sub(rayOrigin).dot(forward);
+            float dst = hitPos.cpy().sub(rayOrigin).dot(forward);
             float idst = 1.0f / dst;
             float wallTop = (hitWallDoor.height * 2.0f + yOffset - 1.0f) * idst;
             float wallBottom = (yOffset - 1.0f) * idst;
@@ -228,8 +234,27 @@ public class Renderer {
             rayDoorData[index * 4 + 2] = wallTop;
             rayDoorData[index * 4 + 3] = wallBottom;
     
-            rayDoorTex[index * 2] = hitWallDoor.textureID;
-            rayDoorTex[index * 2 + 1] = idst;
+            rayDoorTex[index * 4] = hitWallDoor.textureID;
+            rayDoorTex[index * 4 + 1] = idst;
+
+            //calculate light info
+            ArrayList<Torch> wallTorches = torchMap.get(hitWallDoorIdx);           
+            float closestZ = 100.0f;
+            float closestDst = Float.MAX_VALUE;
+            float torchRadius = 0.0f;
+            if(wallTorches != null) {
+                for (Torch torch : wallTorches) {
+                    float torchDst = hitPos.dst(torch.x, torch.y);
+                    
+                    if(torchDst < closestDst) {
+                        closestDst = torchDst;
+                        closestZ = torch.z;
+                        torchRadius = torch.radius;
+                    }
+                }
+            }
+            rayDoorTex[index * 4 + 2] = closestZ;
+            rayDoorTex[index * 4 + 3] = closestDst * closestDst / (torchRadius * torchRadius);
         } else {
             rayDoorData[index * 4 + 2] = 0;
             rayDoorData[index * 4 + 3] = 0;
@@ -239,7 +264,7 @@ public class Renderer {
         if(hitWall != null) {
             float yOffset = hitWall.yOffset;
             Vector2 hitPos = hitWall.b.cpy().lerp(hitWall.a, dU);
-            float dst = hitPos.sub(rayOrigin).dot(forward);
+            float dst = hitPos.cpy().sub(rayOrigin).dot(forward);
             float idst = 1.0f / dst;
             float wallTop = (hitWall.height * 2.0f + yOffset - 1.0f) * idst;
             float wallBottom = (yOffset - 1.0f) * idst;
@@ -249,8 +274,27 @@ public class Renderer {
             rayData[index * 4 + 2] = wallTop;
             rayData[index * 4 + 3] = wallBottom;
     
-            rayWallTex[index * 2] = hitWall.textureID;
-            rayWallTex[index * 2 + 1] = idst;
+            rayWallTex[index * 4] = hitWall.textureID;
+            rayWallTex[index * 4 + 1] = idst;
+
+            //calculate light info
+            ArrayList<Torch> wallTorches = torchMap.get(hitWallIdx);           
+            float closestZ = 100.0f;
+            float closestDst = Float.MAX_VALUE;
+            float torchRadius = 0.0f;
+            if(wallTorches != null) {
+                for (Torch torch : wallTorches) {
+                    float torchDst = hitPos.dst(torch.x, torch.y);
+                    
+                    if(torchDst < closestDst) {
+                        closestDst = torchDst;
+                        closestZ = torch.z;
+                        torchRadius = torch.radius;
+                    }
+                }
+            }
+            rayWallTex[index * 4 + 2] = closestZ;
+            rayWallTex[index * 4 + 3] = closestDst * closestDst / (torchRadius * torchRadius);
         } else {
             rayData[index * 4 + 2] = 0;
             rayData[index * 4 + 3] = 0;
@@ -306,17 +350,17 @@ public class Renderer {
 
         //render the screen one half at a time so we can have more uniform slots
         wallShader.setUniform4fv("rayData", rayData, 0, rayData.length / 2);
-        wallShader.setUniform2fv("rayTex", rayWallTex, 0, rayWallTex.length / 2);
+        wallShader.setUniform4fv("rayTex", rayWallTex, 0, rayWallTex.length / 2);
         meshLeft.render(wallShader, GL20.GL_TRIANGLES);
         wallShader.setUniform4fv("rayData", rayData, rayData.length / 2, rayData.length / 2);
-        wallShader.setUniform2fv("rayTex", rayWallTex, rayWallTex.length / 2, rayWallTex.length / 2);
+        wallShader.setUniform4fv("rayTex", rayWallTex, rayWallTex.length / 2, rayWallTex.length / 2);
         meshRight.render(wallShader, GL20.GL_TRIANGLES);
 
         wallShader.setUniform4fv("rayData", rayDoorData, 0, rayDoorData.length / 2);
-        wallShader.setUniform2fv("rayTex", rayDoorTex, 0, rayDoorTex.length / 2);
+        wallShader.setUniform4fv("rayTex", rayDoorTex, 0, rayDoorTex.length / 2);
         meshLeft.render(wallShader, GL20.GL_TRIANGLES);
         wallShader.setUniform4fv("rayData", rayDoorData, rayDoorData.length / 2, rayDoorData.length / 2);
-        wallShader.setUniform2fv("rayTex", rayDoorTex, rayDoorTex.length / 2, rayDoorTex.length / 2);
+        wallShader.setUniform4fv("rayTex", rayDoorTex, rayDoorTex.length / 2, rayDoorTex.length / 2);
         meshRight.render(wallShader, GL20.GL_TRIANGLES);
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
@@ -539,8 +583,8 @@ public class Renderer {
 
         for (Sprite2_5D sprite : sprites2_5d) {
             if(sprite.isVis) {
-                float idst = 1.0f / sprite.dst;
-                float dstColor = idst;
+                //float idst = 1.0f / sprite.dst;
+                float dstColor = 1.0f;//idst;
                 ShooterGame.getInstance().coreBatch.setColor(dstColor, dstColor, dstColor, 1.0f);
                 ShooterGame.getInstance().coreBatch.draw(sprite.textureCalc, sprite.scrX - (sprite.visWidth / 2.0f), sprite.scrY - (sprite.visHeight / 2.0f), sprite.visWidth, sprite.visHeight);
             }
@@ -555,6 +599,48 @@ public class Renderer {
         sprites2_5d.remove(sprite);
     }
 
+    public void buildLightmap(ArrayList<Torch> torches) {
+        System.out.printf("Building lightmap. Walls: %d Torches: %d\n", walls.size(), torches.size());
+        long start = System.nanoTime();
+
+        torchMap = new ArrayList<>(Collections.nCopies(walls.size(), null));
+
+        for (int i = 0; i < walls.size(); i++) {
+            Wall wall = walls.get(i);
+            for (int j = 0; j < torches.size(); j++) {
+                Vector2 P = new Vector2(torches.get(j).x, torches.get(j).y);
+                //find distance from the torch to the point
+                Vector2 AP = P.cpy().sub(wall.a);
+                Vector2 AB = wall.b.cpy().sub(wall.a);
+                float len2 = AB.len2();
+                float t = AP.dot(AB) / len2;
+                if(t < 0) t = 0;
+                else if (t > 1) t = 1;
+
+                Vector2 closest = wall.a.cpy().add(AB.cpy().scl(t));
+                float dst = P.dst(closest);
+
+                //if our torch is within range to cast light on the wall, then add it to the map
+                if(dst <= torches.get(j).radius) {
+                    System.err.println(dst);
+                    if(torchMap.get(i) == null) {
+                        torchMap.set(i, new ArrayList<>());
+                    }
+                    torchMap.get(i).add(torches.get(j));
+                }
+            }
+        }
+
+        Torch.loadTexture();
+        for (Torch torch : torches) {
+            sprites2_5d.add(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.0f, 0.8f, 0.4f));
+        }
+
+        long end = System.nanoTime();
+        float durationInMs = (end - start) / 1000000.0f;
+        System.out.printf("Lightmap built: %fms\n", durationInMs);
+    }
+
     public void resize(int x, int y) {
         aspect = (float)x / (float)y;
         screenX = x;
@@ -566,8 +652,8 @@ public class Renderer {
 
         rayData = new float[screenX * 4];
         rayDoorData = new float[screenX * 4];
-        rayWallTex = new float[screenX * 2];
-        rayDoorTex = new float[screenX * 2];
+        rayWallTex = new float[screenX * 4];
+        rayDoorTex = new float[screenX * 4];
         rayFloorData = new float[screenX * 4];
 
         if(wallShader != null) {
@@ -590,7 +676,7 @@ public class Renderer {
             + "#endif\n"
             + "varying vec2 v_texCoords;\n"
             + "uniform vec4 rayData[" + numRayData + "];\n"
-            + "uniform vec2 rayTex[" + numRayData + "];\n"
+            + "uniform vec4 rayTex[" + numRayData + "];\n"
             + "uniform float numRays;\n"
             + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w tanhalffov
             + "uniform sampler2D texture0;\n"
@@ -599,6 +685,7 @@ public class Renderer {
             + "{\n"
             + "  int index = int(v_texCoords.x * numRays);\n"
             + "  vec4 dat = rayData[index];\n"
+            + "  vec4 rayTexDat = rayTex[index];\n"
             + "  float wallTop = dat.z;\n"
             + "  float wallBottom = dat.w;\n"
             + "  float current = v_texCoords.y - 0.5;"
@@ -606,12 +693,13 @@ public class Renderer {
             + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
             + "  vec2 texCoords = vec2(cameraInfo.z * dat.y, texY);\n"
             + "  vec4 texColor;\n"
-            + "  float texID = rayTex[index].x;\n"
+            + "  float texID = rayTexDat.x;\n"
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
-            + "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
+            //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
+            + "  float lightInfluence = length(vec2(rayTexDat.w, texY - 0.5f));"
             + "  if(isWall && texColor.a > 0.01) {\n"
-            + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), dst * dst), 1.0);\n"
+            + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
             + "}\n";
 
