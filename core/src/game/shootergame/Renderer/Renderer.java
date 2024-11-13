@@ -539,7 +539,7 @@ public class Renderer {
             float right = sprite.scrX + sprite.visWidth / 2.0f;
 
             sprite.isVis = !(Math.abs(left) > aspect && Math.abs(right) > aspect);
-            
+            /*
             if(sprite.isVis) {
                 int leftRayIndex = (int)((left + aspect) / (aspect * 2) * (screenX - 1));
                 int rightRayIndex = (int)((right + aspect) / (aspect * 2) * (screenX - 1));
@@ -577,7 +577,7 @@ public class Renderer {
                 right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
                 sprite.scrX = (left + right) / 2.0f;
                 sprite.visWidth = (right - left);
-            }
+            }*/
         }
         Collections.sort(sprites2_5d, Comparator.comparingDouble(Sprite2_5D::getDst).reversed());
 
@@ -697,7 +697,7 @@ public class Renderer {
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
-            + "  float lightInfluence = length(vec2(rayTexDat.w, texY - 0.5f));"
+            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5f)), 0.95);"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
