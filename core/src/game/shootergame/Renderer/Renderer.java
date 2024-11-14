@@ -32,6 +32,7 @@ public class Renderer {
     ShaderProgram floorShader;
     Mesh meshLeft;
     Mesh meshRight;
+    Mesh meshFull;
 
     int screenX;
 
@@ -39,8 +40,6 @@ public class Renderer {
     float[] rayDoorData;
     float[] rayWallTex;
     float[] rayDoorTex;
-
-    float[] rayFloorData;
 
     
     float camX = 0.0f;
@@ -135,6 +134,19 @@ public class Renderer {
            1, -1, 1, 0
         });
         meshRight.setIndices(new short[] {
+           0, 1, 2, 1, 0, 3
+        });
+
+        meshFull = new Mesh(true, 4, 6,
+        new VertexAttribute(Usage.Position, 2, ShaderProgram.POSITION_ATTRIBUTE),
+        new VertexAttribute(Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE));
+        meshFull.setVertices(new float[] {
+           -1, -1, 1, -1,
+           1, 1, -1, 1,
+           -1, 1, 1, 1,
+           1, -1, -1, -1
+        });
+        meshFull.setIndices(new short[] {
            0, 1, 2, 1, 0, 3
         });
 
@@ -299,11 +311,6 @@ public class Renderer {
             rayData[index * 4 + 2] = 0;
             rayData[index * 4 + 3] = 0;
         }
-        
-        rayFloorData[index * 4] = dX; //specifically using the non normalized rays for distance stretching
-        rayFloorData[index * 4 + 1] = dY;
-        rayFloorData[index * 4 + 2] = 0;
-        rayFloorData[index * 4 + 3] = 0;
     }
 
     public void setDebugRayDraw(boolean debugRayDraw) {
@@ -332,13 +339,11 @@ public class Renderer {
 
         floorShader.setUniformi("texture", 1);
 
-        floorShader.setUniformf("numRays", rayData.length / 4 / 2);
-        floorShader.setUniformf("cameraInfo", camX, camY, yawR, 0.0f);
+        floorShader.setUniformf("cameraInfo", camX, camY, yawR, (float)Math.tan(Math.toRadians(fov * 0.5f)));
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+        floorShader.setUniformf("cameraInfo2", forward.x, forward.y);
         
-        floorShader.setUniform4fv("rayData", rayFloorData, 0, rayData.length / 2);
-        meshLeft.render(floorShader, GL20.GL_TRIANGLES);
-        floorShader.setUniform4fv("rayData", rayFloorData, rayData.length / 2, rayData.length / 2);
-        meshRight.render(floorShader, GL20.GL_TRIANGLES);
+        meshFull.render(floorShader, GL20.GL_TRIANGLES);
 
         wallShader.bind();
 
@@ -387,6 +392,7 @@ public class Renderer {
         sr.begin(ShapeType.Line);
 
         if(debugRayDraw) {
+            /*
             for (int i = 0; i < screenX; i++) {
                 Color c = new Color(0xffa500ff);
                 sr.setColor(c.lerp(Color.CYAN, (float)i / (float)screenX));
@@ -406,7 +412,7 @@ public class Renderer {
                 float y = (dy * idst / scale);
 
                 sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
-            }
+            }*/
         }
         //Cohen-Sutherland box fitting algorithm
         //https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
@@ -678,7 +684,6 @@ public class Renderer {
         rayDoorData = new float[screenX * 4];
         rayWallTex = new float[screenX * 4];
         rayDoorTex = new float[screenX * 4];
-        rayFloorData = new float[screenX * 4];
 
         if(wallShader != null) {
             wallShader.dispose();
@@ -732,17 +737,15 @@ public class Renderer {
           + "precision mediump float;\n"
           + "#endif\n"
           + "varying vec2 v_texCoords;\n"
-          + "uniform vec4 rayData[" + numRayData + "];\n"
-          + "uniform float numRays;\n"
           + "uniform vec4 cameraInfo;\n"
+          + "uniform vec2 cameraInfo2;\n"
           + "uniform sampler2D texture;\n"
           + "void main()\n"
           + "{\n"
-          + "  vec2 screenPos = v_texCoords * 2.0 - 1.0;"
-          + "  vec4 dat = rayData[int(v_texCoords.x * numRays)];\n"
-          + "  vec2 worldDir = vec2(dat.x, dat.y) * abs(1.0 / screenPos.y);\n"
+          + "  vec2 dxdy = vec2(cameraInfo2.x + (v_texCoords.x * cameraInfo2.y * cameraInfo.w), cameraInfo2.y + (v_texCoords.x * -cameraInfo2.x * cameraInfo.w));"
+          + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(1.0 / v_texCoords.y);\n"
           + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
-          + "  float dst = 1.0 - abs(screenPos.y);\n"
+          + "  float dst = 1.0 - abs(v_texCoords.y);\n"
           + "  vec3 fColor = mix(texture2D(texture, worldPos).rgb, vec3(0.0, 0.0, 0.0), dst * dst);\n"
           + "  gl_FragColor = vec4(fColor, 1.0);\n"
           + "}\n";
