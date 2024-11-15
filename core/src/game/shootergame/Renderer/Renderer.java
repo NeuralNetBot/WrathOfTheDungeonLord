@@ -1,12 +1,16 @@
 package game.shootergame.Renderer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Texture;
@@ -15,6 +19,8 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
@@ -61,11 +67,35 @@ public class Renderer {
 
     ArrayList<Wall> walls;
 
-    public Renderer(int screnX, ArrayList<Wall> walls) {
+    
+    LinkedList<Sprite2_5D> sprites2_5d = new LinkedList<>();
+
+    boolean debugRayDraw = false;
+    ShapeRenderer sr = new ShapeRenderer();
+
+    static Renderer instance;
+    public static Renderer createInstance(int screenX) {
+        if(instance == null) {
+            instance = new Renderer(screenX);
+        } else {
+            System.err.println("Renderer already has running instance!");
+        }
+        return instance;
+    }
+
+    public static Renderer inst() {
+        return instance;
+    }
+
+    public void setWalls(ArrayList<Wall> walls) {
         this.walls = walls;
+    }
+
+    private Renderer(int screnX) {
+        this.walls = new ArrayList<>();
         TextureParameter param = new TextureParameter();
-        param.minFilter = TextureFilter.Nearest;
-        param.magFilter = TextureFilter.Nearest;
+        param.minFilter = TextureFilter.Linear;
+        param.magFilter = TextureFilter.Linear;
 
         ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
         ShooterGame.getInstance().am.load("brick.png", Texture.class, param);
@@ -230,19 +260,16 @@ public class Renderer {
         rayFloorData[index * 4 + 2] = 0;
         rayFloorData[index * 4 + 3] = 0;
     }
-    float wx = 0.0f;
+
+    public void setDebugRayDraw(boolean debugRayDraw) {
+        this.debugRayDraw = debugRayDraw;
+    }
     
     public void update(float x, float y, float rotation) {
         camX = x; camY = y; yaw = rotation;
     }
 
     public void render() {
-        wx += 1.0f / 144.0f;
-
-        walls.get(0).yOffset = (float)Math.sin(wx) + 1.0f;
-
-        walls.get(0).height = 1.0f - walls.get(0).yOffset / 2.0f;
-
         float yawR = (float)Math.toRadians(yaw);
 
         try {
@@ -293,6 +320,183 @@ public class Renderer {
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
+
+        sr.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
+        float scale = 50.0f;
+        float wx = 15.0f / scale;
+        float wy = 15.0f / scale;
+        float offsetX = ((float)Gdx.graphics.getWidth() / (float)Gdx.graphics.getHeight()) - 0.33f, offsetY = 0.67f;
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        sr.begin(ShapeType.Filled);
+        sr.setColor(0.0f, 0.0f, 0.0f, 0.3f);
+        sr.rect(-wx + offsetX, -wy + offsetY, wx * 2, wy * 2);
+        sr.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        sr.begin(ShapeType.Line);
+
+        if(debugRayDraw) {
+            for (int i = 0; i < screenX; i++) {
+                Color c = new Color(0xffa500ff);
+                sr.setColor(c.lerp(Color.CYAN, (float)i / (float)screenX));
+                float idst = 1.0f / rayWallTex[i*2+1];
+                float dx = rayFloorData[i*4];
+                float dy = rayFloorData[i*4+1];
+
+
+                float tx = wx / Math.abs(dx);
+                float ty = wy / Math.abs(dy);
+                float t = Math.min(tx, ty) * scale;
+                if(t < idst) {
+                    idst = t;
+                }
+
+                float x = (-dx * idst / scale);
+                float y = (dy * idst / scale);
+
+                sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
+            }
+        }
+
+        for (Wall wall : walls) {
+            if(wall.transparentDoor) {
+                sr.setColor(Color.RED);
+            } else {
+                sr.setColor(Color.WHITE);
+            }
+            float ax = (-wall.a.x - -camX) / scale;
+            float ay = (wall.a.y - camY) / scale;
+            float bx = (-wall.b.x - -camX) / scale;
+            float by = (wall.b.y - camY) / scale;
+            if(Math.abs(ax) > wx && Math.abs(bx) > wx)
+                continue;
+            if(Math.abs(ay) > wy && Math.abs(by) > wy)
+                continue;
+                
+            ax = Math.min(Math.max(ax, -wx), wx);
+            ay = Math.min(Math.max(ay, -wy), wy);
+            bx = Math.min(Math.max(bx, -wx), wx);
+            by = Math.min(Math.max(by, -wy), wy);
+
+            sr.line(ax + offsetX, ay + offsetY, bx + offsetX, by + offsetY);
+        }
+        sr.setColor(Color.GRAY);
+        sr.line(-wx + offsetX, -wy + offsetY, -wx + offsetX, wy + offsetY);
+        sr.line(-wx + offsetX, wy + offsetY, wx + offsetX, wy + offsetY);
+        sr.line(wx + offsetX, wy + offsetY, wx + offsetX, -wy + offsetY);
+        sr.line(-wx + offsetX, -wy + offsetY, wx + offsetX, -wy + offsetY);
+        sr.setColor(Color.GREEN);
+        sr.circle(offsetX, offsetY, 0.01f, 8);
+        sr.line(offsetX, offsetY, offsetX + -(float)Math.cos(yawR) / 25, offsetY + (float)Math.sin(yawR) / 25);
+
+        sr.end();
+    }
+
+    public void processSpriteDraws() {
+
+        float yawR = (float)Math.toRadians(yaw);
+        Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR)).cpy().scl(0.01f);//scaling so our "near" plane is closer
+        Vector2 rightV = new Vector2(forward.y, -forward.x);
+        float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
+
+        Vector2 leftPoint = new Vector2(
+            forward.x + -1.0f * rightV.x * halfWidth,
+            forward.y + -1.0f * rightV.y * halfWidth
+        );
+        leftPoint.add(camX, camY);
+
+        Vector2 rightPoint = new Vector2(
+            forward.x + 1.0f * rightV.x * halfWidth,
+            forward.y + 1.0f * rightV.y * halfWidth
+        );
+        rightPoint.add(camX, camY);
+
+        Vector2 lineVec = rightPoint.cpy().sub(leftPoint);
+
+        for (Sprite2_5D sprite : sprites2_5d) {
+
+            //ray intersect sprite back to cameras projected "plane", i.e. the same plane we used to cast the rays for the walls
+            Vector2 fromSprite = new Vector2(camX - sprite.x, camY - sprite.y).nor();
+            float denom = lineVec.x * fromSprite.y - lineVec.y * fromSprite.x;
+            float t = ((sprite.y - leftPoint.y) * fromSprite.x - (sprite.x - leftPoint.x) * fromSprite.y) / denom;
+            Vector2 intersectPoint = leftPoint.cpy().lerp(rightPoint, t);
+            float visualDistance = -intersectPoint.sub(sprite.x, sprite.y).dot(forward) * 100.0f;//rescale distance from our near "plane" scaling
+
+            if(visualDistance <= 0.0f) {
+                sprite.isVis = false;
+                continue;
+            }
+
+            sprite.dst = Vector2.dst(sprite.x, sprite.y, camX, camY);
+            sprite.visHeight = sprite.height / visualDistance;
+            sprite.visWidth = sprite.width / visualDistance;
+            
+            sprite.scrX = aspect * 2.0f * (t + 0.5f);
+            sprite.scrY = sprite.z / visualDistance;
+
+            float left = sprite.scrX - sprite.visWidth / 2.0f;
+            float right = sprite.scrX + sprite.visWidth / 2.0f;
+
+            sprite.isVis = !(Math.abs(left) > aspect && Math.abs(right) > aspect);
+            
+            if(sprite.isVis) {
+                int leftRayIndex = (int)((left + aspect) / (aspect * 2) * (screenX - 1));
+                int rightRayIndex = (int)((right + aspect) / (aspect * 2) * (screenX - 1));
+                
+                float deltaU = sprite.texture.getU2() - sprite.texture.getU();
+                float raysPerU = (deltaU / (float)(rightRayIndex - leftRayIndex));
+                float raysPerWidth = (sprite.visWidth / (float)(rightRayIndex - leftRayIndex));
+
+                //check our rays from the left
+                int stopIndexLeft = leftRayIndex;
+                for (int i = leftRayIndex; i <= rightRayIndex; i++) {
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float sdst = sprite.dst;
+                    if(idst > sdst) {
+                        stopIndexLeft = i;
+                        break;
+                    }
+                }
+                //and from right
+                int stopIndexRight = rightRayIndex;
+                for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
+                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 2 + 1];
+                    float sdst = sprite.dst;
+                    if(i == stopIndexLeft) { sprite.isVis = false; }//ray stopped at left stop so object is completely behind wall
+                    if(idst > sdst) {
+                        stopIndexRight = i;
+                        break;
+                    }
+                }
+
+                sprite.textureCalc.setU(sprite.texture.getU() + (stopIndexLeft - leftRayIndex) * raysPerU);
+                sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);
+                
+                left = ((float)(stopIndexLeft - (screenX / 2))) * raysPerWidth;
+                right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
+                sprite.scrX = (left + right) / 2.0f;
+                sprite.visWidth = (right - left);
+            }
+        }
+        Collections.sort(sprites2_5d, Comparator.comparingDouble(Sprite2_5D::getDst).reversed());
+
+        for (Sprite2_5D sprite : sprites2_5d) {
+            if(sprite.isVis) {
+                float idst = 1.0f / sprite.dst;
+                float dstColor = idst;
+                ShooterGame.getInstance().coreBatch.setColor(dstColor, dstColor, dstColor, 1.0f);
+                ShooterGame.getInstance().coreBatch.draw(sprite.textureCalc, sprite.scrX - (sprite.visWidth / 2.0f), sprite.scrY - (sprite.visHeight / 2.0f), sprite.visWidth, sprite.visHeight);
+            }
+        }
+    }
+
+    public void addSprite(Sprite2_5D sprite) {
+        sprites2_5d.add(sprite);
+    }
+
+    public void removeSprite(Sprite2_5D sprite) {
+        sprites2_5d.remove(sprite);
     }
 
     public void resize(int x, int y) {
@@ -345,10 +549,9 @@ public class Renderer {
             + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
             + "  vec2 texCoords = vec2(cameraInfo.z * dat.y, texY);\n"
             + "  vec4 texColor;\n"
-            + "  switch(rayTex[index].x) {\n"
-            + "  case 0.0: texColor = texture2D(texture0, texCoords); break;\n"
-            + "  case 1.0: texColor = texture2D(texture1, texCoords); break;\n"
-            + "  }\n"
+            + "  float texID = rayTex[index].x;\n"
+            + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
+            + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             + "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), dst * dst), 1.0);\n"

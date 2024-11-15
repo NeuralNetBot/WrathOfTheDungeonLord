@@ -19,22 +19,25 @@ public class GameScreen extends ScreenAdapter {
 
     public GameScreen() {
 
+        renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
+        renderer.setWalls(World.getWalls());
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
-        renderer = new Renderer(Gdx.graphics.getWidth(), World.getWalls());
 
         // the HUD will show FPS always, by default.  Here's how
         // to use the HUD interface to silence it (and other HUD Data)
         hud.setDataVisibility(HUDViewCommand.Visibility.WHEN_OPEN);
 
         hud.registerAction("debug", new HUDActionCommand() {
-            static final String help = "Usage: debug";
+            static final String help = "Usage: debug [true|false]";
 
             @Override
             public String execute(String[] cmd) {
                 try {
-                    return "";
+                    boolean b = Boolean.parseBoolean(cmd[1]);
+                    renderer.setDebugRayDraw(b);
+                    return "debug: " + b;
                 } catch (Exception e) {
                     return help;
                 }
@@ -85,6 +88,8 @@ public class GameScreen extends ScreenAdapter {
         ShooterGame.getInstance().coreCamera.update();
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
+
+        renderer.processSpriteDraws();
 
         World.render();
 

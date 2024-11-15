@@ -1,5 +1,7 @@
 package game.shootergame.Item;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 import game.shootergame.Player;
 
 public interface Powerup {
@@ -8,4 +10,6 @@ public interface Powerup {
     void onTimeout(Player player);
     float getRemainingTime();
     boolean isActive();
+    String getName();
+    TextureRegion getItemTexture();
 }

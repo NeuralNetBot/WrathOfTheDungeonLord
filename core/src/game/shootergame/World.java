@@ -1,5 +1,8 @@
 package game.shootergame;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -7,8 +10,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
+import game.shootergame.Enemy.Enemy;
+import game.shootergame.Enemy.Goblin;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
+import game.shootergame.Item.Powerups.AttackSpeedPowerup;
+import game.shootergame.Item.Powerups.DamagePowerup;
+import game.shootergame.Item.Powerups.DamageResistPowerup;
+import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
 
@@ -23,8 +32,11 @@ public class World {
     ItemPickup itemPrompt;
 
     ArrayList<Wall> walls;
+    ArrayList<Integer> doors;
 
     LinkedList<ItemPickup> items;
+
+    LinkedList<Enemy> enemies;
 
     public static void createInstance() {
         instance = new World();
@@ -39,11 +51,24 @@ public class World {
         instance.player.processInput();
     }
 
+    float wx = 0.0f;
     public static void update(float delta) {
         instance.itemPrompt = null;
+        
         instance.physicsWorld.update();
 
         instance.player.update(delta);
+
+        instance.wx += 1.0f / 144.0f;
+
+        for (Integer door : instance.doors) {
+            instance.walls.get(door).yOffset = (float)Math.sin(instance.wx) + 1.0f;
+            instance.walls.get(door).height = 1.0f - instance.walls.get(door).yOffset / 2.0f;
+        }
+
+        for (Enemy enemy : instance.enemies) {
+            enemy.update(delta);
+        }
     }
 
     public static void render() {
@@ -77,37 +102,55 @@ public class World {
 
     private World() {
         walls = new ArrayList<>();
+        doors = new ArrayList<>();
         items = new LinkedList<>();
+        enemies = new LinkedList<>();
+    }
+
+    private void loadFromFile(String mapName) {
+        try (BufferedReader br = new BufferedReader(new FileReader(mapName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(" ");
+
+                String type = parts[0];
+
+                if(type.equals("wall")) {
+                    if(parts.length != 8) {
+                        System.err.println("ERROR malformed map wall read");
+                    }
+                    float ax = -Float.parseFloat(parts[1]);
+                    float ay = Float.parseFloat(parts[2]);
+                    float bx = -Float.parseFloat(parts[3]);
+                    float by = Float.parseFloat(parts[4]);
+                    float height = Float.parseFloat(parts[5]);
+                    float textureID = Float.parseFloat(parts[6]);
+                    boolean isDoor = Boolean.parseBoolean(parts[7]);
+                    walls.add(new Wall(ax, ay, bx, by, height, textureID, isDoor));
+                    if(isDoor) {
+                        doors.add(walls.size() - 1);
+                    }
+                }
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void init() {
-        walls.add(new Wall(1.5177f, 3.4569f, 3.9219f, 3.5477f));
-        walls.add(new Wall(3.9219f, 3.5477f, 3.8766f, 0.9279f));
-        walls.add(new Wall(3.8766f, 0.9279f, 4.0353f, -1.5330f));
-        walls.add(new Wall(1.3929f, 1.0187f, 1.5177f, 3.4569f));
-        walls.add(new Wall(-1.0000f, 1.0527f, 1.3929f, 1.0187f));
-        walls.add(new Wall(-1.0227f, -1.0113f, -1.0000f, 1.0527f));
-        walls.add(new Wall(4.0353f, -1.5330f, 1.2908f, -1.2608f));
-        walls.add(new Wall(1.2908f, -1.2608f, 1.3702f, -4.4703f));
-        walls.add(new Wall(1.3702f, -4.4703f, -5.9900f, -3.8465f));
-        walls.add(new Wall(-5.9900f, -3.8465f, -5.8539f, -1.3175f));
-        walls.add(new Wall(-5.8539f, -1.3175f, -3.1434f, 2.2662f));
-        walls.add(new Wall(-3.1434f, 2.2662f, -3.4836f, -1.7712f));
-        walls.add(new Wall(-3.4836f, -1.7712f, -2.4630f, -1.8959f));
-        walls.add(new Wall(-2.4630f, -1.8959f, -2.4403f, 3.4683f));
-        walls.add(new Wall(-2.4403f, 3.4683f, 0.3949f, 3.5023f));
-        walls.add(new Wall(0.3949f, 3.5023f, 0.2475f, 2.2095f));
-        walls.add(new Wall(0.2475f, 2.2095f, -1.6805f, 2.2321f));
-        walls.add(new Wall(-1.6805f, 2.2321f, -1.0227f, -1.0113f));
-        walls.get(0).height = 2.0f;
-        walls.get(0).textureID = 1.0f;
-        walls.get(0).transparentDoor = true;
+        loadFromFile("assets/map0.data");
 
         physicsWorld = new PhysicsWorld(walls);
         itemPrompt = null;
 
         player = new Player(new SwordWeapon());
 
-        items.add(new ItemPickup(5.0f, 0.0f));
+        items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
+        items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
+        items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
+        items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
+
+        enemies.add(new Goblin(0.0f, 0.0f));
     }
 }
