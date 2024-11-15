@@ -1,0 +1,27 @@
+------server sends to clients------
+-player positions update
+type amnt id         x          y          dx         dy         rotation
+0x00 0x10 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+bytes: 2 + n*24
+
+-new player
+type add? id
+0x01 0x01 0x00000001
+     0x01 add
+     0x00 remove
+bytes: 6
+
+-enemies update
+-new enemy
+-new item drop
+-recieve damage(sent to specific client)
+
+------client sends to server------
+-player positions send
+type x          y          dx         dy         rotation
+0x00 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+bytes: 21
+
+-attacked
+-item interact
+
