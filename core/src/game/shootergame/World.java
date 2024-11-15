@@ -5,8 +5,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
@@ -18,6 +20,9 @@ import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Network.Client;
+import game.shootergame.Network.RemotePlayer;
+import game.shootergame.Network.Server;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
 
@@ -38,6 +43,8 @@ public class World {
 
     LinkedList<Enemy> enemies;
 
+    CopyOnWriteArrayList<RemotePlayer> remotePlayers;
+
     public static void createInstance() {
         instance = new World();
         instance.init();
@@ -48,6 +55,13 @@ public class World {
     }
 
     public static void processInput() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            new Thread(new Server(instance.remotePlayers)).start();
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+            new Thread(new Client()).start();
+        }
         instance.player.processInput();
     }
 
@@ -64,6 +78,10 @@ public class World {
         for (Integer door : instance.doors) {
             instance.walls.get(door).yOffset = (float)Math.sin(instance.wx) + 1.0f;
             instance.walls.get(door).height = 1.0f - instance.walls.get(door).yOffset / 2.0f;
+        }
+
+        for (RemotePlayer remotePlayer : instance.remotePlayers) {
+            remotePlayer.update(delta);
         }
 
         for (Enemy enemy : instance.enemies) {
@@ -105,6 +123,7 @@ public class World {
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
+        remotePlayers = new CopyOnWriteArrayList<>();
     }
 
     private void loadFromFile(String mapName) {

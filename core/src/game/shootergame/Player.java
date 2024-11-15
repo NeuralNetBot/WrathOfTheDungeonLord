@@ -147,6 +147,8 @@ public class Player {
 
     public float x() { return x; }
     public float y() { return y; }
+    public float dx() { return dx; }
+    public float dy() { return dy; }
     public float rotation() { return rotation; }
 
     void update(float delta) {
