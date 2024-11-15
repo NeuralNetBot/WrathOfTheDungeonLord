@@ -675,6 +675,12 @@ public class Renderer {
         int torchCounter = 0;
 
         for (int i = 0; i < torches.size(); i++) {
+
+            //max torches achieved per view
+            if(torchCounter >= MAX_SHADER_TORCHES) {
+                break;
+            }
+
             Torch torch = torches.get(i);
             Vector2 torchVec = new Vector2(torch.x - camX, torch.y - camY);
             float crsL = torchVec.crs(leftPoint);
