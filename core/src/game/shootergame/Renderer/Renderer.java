@@ -41,6 +41,9 @@ public class Renderer {
     float[] rayWallTex;
     float[] rayDoorTex;
 
+    final int MAX_SHADER_TORCHES = 512;
+    float[] torchData;
+
     
     float camX = 0.0f;
     float camY = 0.0f;
@@ -331,11 +334,16 @@ public class Renderer {
             e.printStackTrace();
         }
 
+        int torchCount = buildLightFrustums();
+
         tex.bind(0);
         floor.bind(1);
         door.bind(2);
 
         floorShader.bind();
+
+        floorShader.setUniform4fv("torchData", torchData, 0, torchData.length / 4);
+        floorShader.setUniformi("torchCount", torchCount);
 
         floorShader.setUniformi("texture", 1);
 
@@ -370,7 +378,6 @@ public class Renderer {
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
-
    }
 
     public void renderMinimap() {
@@ -647,7 +654,8 @@ public class Renderer {
         System.out.printf("Lightmap built: %fms\n", durationInMs);
     }
 
-    private void buildLightFrustums() {
+    //returns torch count filled
+    private int buildLightFrustums() {
         float yawR = (float)Math.toRadians(yaw);
         Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
         Vector2 rightV = new Vector2(forward.y, -forward.x);
@@ -656,19 +664,53 @@ public class Renderer {
         Vector2 leftPoint = new Vector2(
             forward.x + -1.0f * rightV.x * halfWidth,
             forward.y + -1.0f * rightV.y * halfWidth
-        );
-        leftPoint.add(camX, camY);
+        ).nor();
 
         Vector2 rightPoint = new Vector2(
             forward.x + 1.0f * rightV.x * halfWidth,
             forward.y + 1.0f * rightV.y * halfWidth
-        );
-        rightPoint.add(camX, camY);
+        ).nor();
 
+        int torchCounter = 0;
 
-        for (Torch torch : torches) {
-            
+        for (int i = 0; i < torches.size(); i++) {
+            Torch torch = torches.get(i);
+            Vector2 torchVec = new Vector2(torch.x - camX, torch.y - camY);
+            float crsL = torchVec.crs(leftPoint);
+            float crsR = torchVec.crs(rightPoint);
+            //quick check to see if center is in view or if light radius is within camera pos
+            if((crsL > 0 && crsR < 0) || torchVec.len() < torch.radius) {
+                torchData[torchCounter * 4] = torch.x;
+                torchData[torchCounter * 4 + 1] = torch.y;
+                torchData[torchCounter * 4 + 2] = torch.radius;
+                torchCounter++;
+                continue;
+            }
+
+            //check edges by circle line intersection
+            float tL = torchVec.dot(leftPoint);
+            float tR = torchVec.dot(rightPoint);
+
+            //both miss
+            if(tL < 0 && tR < 0) {
+                continue;
+            }
+
+            float L2 = torchVec.len2();
+            float dL = L2 - (tL * tL);
+            float dR = L2 - (tR * tR);
+            if(dL > torch.radius * torch.radius && dR > torch.radius * torch.radius) {
+                continue; //ray miss, skipping torch
+            }
+
+            torchData[torchCounter * 4] = torch.x;
+            torchData[torchCounter * 4 + 1] = torch.y;
+            torchData[torchCounter * 4 + 2] = torch.radius;
+
+            torchCounter++;
         }
+        
+        return torchCounter;
     }
 
     public void resize(int x, int y) {
@@ -684,6 +726,8 @@ public class Renderer {
         rayDoorData = new float[screenX * 4];
         rayWallTex = new float[screenX * 4];
         rayDoorTex = new float[screenX * 4];
+
+        torchData = new float[MAX_SHADER_TORCHES * 4];
 
         if(wallShader != null) {
             wallShader.dispose();
@@ -726,7 +770,7 @@ public class Renderer {
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
-            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5f)), 0.95);"
+            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5f)), 0.85);"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
@@ -737,6 +781,8 @@ public class Renderer {
           + "precision mediump float;\n"
           + "#endif\n"
           + "varying vec2 v_texCoords;\n"
+          + "uniform vec4 torchData[" + MAX_SHADER_TORCHES + "];\n"
+          + "uniform int torchCount;\n"
           + "uniform vec4 cameraInfo;\n"
           + "uniform vec2 cameraInfo2;\n"
           + "uniform sampler2D texture;\n"
@@ -746,7 +792,14 @@ public class Renderer {
           + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(1.0 / v_texCoords.y);\n"
           + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
           + "  float dst = 1.0 - abs(v_texCoords.y);\n"
-          + "  vec3 fColor = mix(texture2D(texture, worldPos).rgb, vec3(0.0, 0.0, 0.0), dst * dst);\n"
+          + "  float lightValue = 0.0;\n"
+          + "  for(int i = 0; i < torchCount; i++) {\n"
+          + "      vec3 torch = torchData[i];\n"
+          + "      float distToLight2 = dot(worldPos * 2.0f - torch.xy, worldPos * 2.0f - torch.xy);\n"
+          + "      if(distToLight2 > torch.z * torch.z) continue;\n"
+          + "      lightValue += 1.0 - distToLight2 / (torch.z * torch.z);\n"
+          + "  }\n"
+          + "  vec3 fColor = texture2D(texture, worldPos).rgb * lightValue;\n"
           + "  gl_FragColor = vec4(fColor, 1.0);\n"
           + "}\n";
 
