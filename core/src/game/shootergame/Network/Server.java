@@ -14,51 +14,79 @@ public class Server implements Runnable{
     private List<ClientHandler> clients = new CopyOnWriteArrayList<>();
     private CopyOnWriteArrayList<RemotePlayer> remotePlayers;
 
-    private class ClientHandler implements Runnable {
+    private class ClientHandler {
 
         private Socket socket;
-        private DataInputStream in;
-        private DataOutputStream out;
         private RemotePlayer remotePlayer;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
             try {
-                this.in = new DataInputStream(socket.getInputStream());
-                this.out = new DataOutputStream(socket.getOutputStream());
+                DataInputStream in = new DataInputStream(socket.getInputStream());
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+                Thread inputThread = new Thread(new InputHandler(in, this));
+                Thread outputThread = new Thread(new OutputHandler(out));
+                inputThread.start();
+                outputThread.start();
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        @Override
-        public void run() {
-            try {
-                remotePlayer = new RemotePlayer();
-                remotePlayers.add(remotePlayer);
-                while (true) {
-                    float x = in.readFloat();
-                    float y = in.readFloat();
-                    float dx = in.readFloat();
-                    float dy = in.readFloat();
-                    remotePlayer.updateNetwork(x, y, dx, dy);
-                }
+        private class InputHandler implements Runnable {
+            private final DataInputStream in;
+            private final ClientHandler client;
+            public InputHandler(DataInputStream in, ClientHandler client) {
+                this.in = in;
+                this.client = client;
             }
-            catch (IOException e) {
-                System.out.println("Client Disconnected" + e.getMessage());
-            }
-            finally {
+
+            @Override
+            public void run() {
                 try {
-                    socket.close();
+                    remotePlayer = new RemotePlayer();
+                    remotePlayers.add(remotePlayer);
+                    while (true) {
+                        float x = in.readFloat();
+                        float y = in.readFloat();
+                        float dx = in.readFloat();
+                        float dy = in.readFloat();
+    
+                        remotePlayer.updateNetwork(x, y, dx, dy);
+                    }
                 }
                 catch (IOException e) {
-                    System.out.println("Cannot Close Socket" + e.getMessage());
+                    System.out.println("Client Disconnected" + e.getMessage());
                 }
-                clients.remove(this);
-                remotePlayers.remove(remotePlayer);
+                finally {
+                    try {
+                        socket.close();
+                    }
+                    catch (IOException e) {
+                        System.out.println("Cannot Close Socket" + e.getMessage());
+                    }
+                    clients.remove(client);
+                    remotePlayers.remove(remotePlayer);
+                }
             }
+
         }
+
+        private class OutputHandler implements Runnable {
+            private final DataOutputStream out;
+            public OutputHandler(DataOutputStream out) {
+                this.out = out;
+            }
+
+            @Override
+            public void run() {
+
+            }
+            
+        }
+
     }
 
     public Server (CopyOnWriteArrayList<RemotePlayer> remotePlayers) {
@@ -74,7 +102,6 @@ public class Server implements Runnable{
                 System.out.println("Client connected");
                 ClientHandler clientHandler = new ClientHandler(socket);
                 clients.add(clientHandler);
-                new Thread(clientHandler).start();
             }
         }
 

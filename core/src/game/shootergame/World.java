@@ -45,6 +45,9 @@ public class World {
 
     CopyOnWriteArrayList<RemotePlayer> remotePlayers;
 
+    Server server;
+    Client client;
+
     public static void createInstance() {
         instance = new World();
         instance.init();
@@ -60,7 +63,7 @@ public class World {
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-            new Thread(new Client()).start();
+            instance.client = new Client();
         }
         instance.player.processInput();
     }

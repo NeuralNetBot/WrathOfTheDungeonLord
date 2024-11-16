@@ -12,9 +12,20 @@ type add? id
 bytes: 6
 
 -enemies update
+type
+0x02
+
 -new enemy
+type
+0x03
+
 -new item drop
--recieve damage(sent to specific client)
+type
+0x04
+
+-player update(sent to specific client)
+type
+0x05
 
 ------client sends to server------
 -player positions send
@@ -23,5 +34,11 @@ type x          y          dx         dy         rotation
 bytes: 21
 
 -attacked
+type
+0x06
+
 -item interact
+type
+0x07
+
 
