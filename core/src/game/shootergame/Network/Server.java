@@ -5,14 +5,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Server implements Runnable{
 
     private final int port = 42069;
     private List<ClientHandler> clients = new CopyOnWriteArrayList<>();
-    private CopyOnWriteArrayList<RemotePlayer> remotePlayers;
+    private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
 
     private class ClientHandler {
 
@@ -47,14 +51,29 @@ public class Server implements Runnable{
             public void run() {
                 try {
                     remotePlayer = new RemotePlayer();
-                    remotePlayers.add(remotePlayer);
+                    remotePlayers.put(ThreadLocalRandom.current().nextInt(), remotePlayer);
                     while (true) {
-                        float x = in.readFloat();
-                        float y = in.readFloat();
-                        float dx = in.readFloat();
-                        float dy = in.readFloat();
-    
-                        remotePlayer.updateNetwork(x, y, dx, dy);
+                        ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
+                        while(buffer.hasRemaining()) {
+                            switch (PacketInfo.getType(buffer.get())) {
+                            case PLAYER_POSITION:
+                                float x = buffer.getFloat();
+                                float y = buffer.getFloat();
+                                float dx = buffer.getFloat();
+                                float dy = buffer.getFloat();
+                                float rotation = buffer.getFloat();
+                                remotePlayer.updateNetwork(x, y, dx, dy, rotation);
+                            case NEW_PLAYER:      break;
+                            case ENEMY_UPDATE:    break;
+                            case NEW_ENEMY:       break;
+                            case NEW_ITEM:        break;
+                            case PLAYER_UPDATE:   break;
+                            case PLAYER_ATTACK:   break;
+                            case ITEM_INTERACT:   break;
+                            default: break;
+                            }
+                        }
+                        
                     }
                 }
                 catch (IOException e) {
@@ -82,21 +101,36 @@ public class Server implements Runnable{
 
             @Override
             public void run() {
-
+                ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
+                buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
+                buffer.put((byte)remotePlayers.size());
+                for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
+                    buffer.putInt(entry.getKey());
+                    buffer.putFloat(entry.getValue().x);
+                    buffer.putFloat(entry.getValue().y);
+                    buffer.putFloat(entry.getValue().dx);
+                    buffer.putFloat(entry.getValue().dy);
+                    buffer.putFloat(entry.getValue().rotation);
+                }
+                try {
+                    out.write(buffer.array());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             
         }
 
     }
 
-    public Server (CopyOnWriteArrayList<RemotePlayer> remotePlayers) {
+    public Server (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers) {
         this.remotePlayers = remotePlayers;
     }
 
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server is listening on port " + port);
+            System.out.println("Server is listening on port: " + port + " IP: " + serverSocket.getInetAddress().getHostAddress());
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Client connected");

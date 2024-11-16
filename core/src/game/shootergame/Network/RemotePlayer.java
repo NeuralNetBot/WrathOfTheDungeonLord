@@ -10,6 +10,7 @@ import game.shootergame.Renderer.Sprite2_5D;
 public class RemotePlayer {
     float x, y;
     float dx, dy;
+    float rotation;
     Sprite2_5D sprite;
 
     RemotePlayer() {
@@ -25,16 +26,17 @@ public class RemotePlayer {
     public void update(float delta) {
         x = x + dx * delta;
         y = y + dy * delta;
-        
+
         sprite.x = x;
         sprite.y = y;
     }
 
-    public void updateNetwork(float x, float y, float dx, float dy) {
+    public void updateNetwork(float x, float y, float dx, float dy, float rotation) {
         this.x = x;
         this.y = y;
         this.dx = dx;
         this.dy = dy;
+        this.rotation = rotation;
     }
 
     public void kill() {

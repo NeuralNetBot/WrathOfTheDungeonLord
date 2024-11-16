@@ -5,7 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -43,7 +44,7 @@ public class World {
 
     LinkedList<Enemy> enemies;
 
-    CopyOnWriteArrayList<RemotePlayer> remotePlayers;
+    ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
 
     Server server;
     Client client;
@@ -63,7 +64,7 @@ public class World {
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-            instance.client = new Client();
+            instance.client = new Client(instance.remotePlayers);
         }
         instance.player.processInput();
     }
@@ -83,8 +84,8 @@ public class World {
             instance.walls.get(door).height = 1.0f - instance.walls.get(door).yOffset / 2.0f;
         }
 
-        for (RemotePlayer remotePlayer : instance.remotePlayers) {
-            remotePlayer.update(delta);
+        for (Entry<Integer, RemotePlayer> entry : instance.remotePlayers.entrySet()) {
+            entry.getValue().update(delta);
         }
 
         for (Enemy enemy : instance.enemies) {
@@ -126,7 +127,7 @@ public class World {
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
-        remotePlayers = new CopyOnWriteArrayList<>();
+        remotePlayers = new ConcurrentHashMap<>();
     }
 
     private void loadFromFile(String mapName) {

@@ -11,7 +11,7 @@ public enum PacketInfo {
     PLAYER_ATTACK,
     ITEM_INTERACT;
 
-    static PacketInfo getType(byte type) {
+    public static PacketInfo getType(byte type) {
         switch (type) {
         case 0x00: return PLAYER_POSITION;
         case 0x01: return NEW_PLAYER;
@@ -22,6 +22,20 @@ public enum PacketInfo {
         case 0x06: return PLAYER_ATTACK;
         case 0x07: return ITEM_INTERACT;
         default:   return UNKNOWN;
+        }
+    }
+
+    public static byte getByte(PacketInfo type) {
+        switch (type) {
+        case PLAYER_POSITION: return 0x00;
+        case NEW_PLAYER:      return 0x01;
+        case ENEMY_UPDATE:    return 0x02;
+        case NEW_ENEMY:       return 0x03;
+        case NEW_ITEM:        return 0x04;
+        case PLAYER_UPDATE:   return 0x05;
+        case PLAYER_ATTACK:   return 0x06;
+        case ITEM_INTERACT:   return 0x07;
+        default:              return (byte)0xFF;
         }
     }
 }
