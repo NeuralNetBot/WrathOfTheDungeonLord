@@ -552,7 +552,7 @@ public class Renderer {
             float right = sprite.scrX + sprite.visWidth / 2.0f;
 
             sprite.isVis = !(Math.abs(left) > aspect && Math.abs(right) > aspect);
-            /*
+            
             if(sprite.isVis) {
                 int leftRayIndex = (int)((left + aspect) / (aspect * 2) * (screenX - 1));
                 int rightRayIndex = (int)((right + aspect) / (aspect * 2) * (screenX - 1));
@@ -565,7 +565,7 @@ public class Renderer {
                 int stopIndexLeft = leftRayIndex;
                 for (int i = leftRayIndex; i <= rightRayIndex; i++) {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
-                    float sdst = sprite.dst;
+                    float sdst = visualDistance;
                     if(idst > sdst) {
                         stopIndexLeft = i;
                         break;
@@ -575,22 +575,26 @@ public class Renderer {
                 int stopIndexRight = rightRayIndex;
                 for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
-                    float sdst = sprite.dst;
-                    if(i == stopIndexLeft) { sprite.isVis = false; }//ray stopped at left stop so object is completely behind wall
+                    float sdst = visualDistance;
+                    if(i == stopIndexLeft) { sprite.isVis = false; break; }//ray stopped at left stop so object is completely behind wall
                     if(idst > sdst) {
                         stopIndexRight = i;
                         break;
                     }
                 }
-
-                sprite.textureCalc.setU(sprite.texture.getU() + (stopIndexLeft - leftRayIndex) * raysPerU);
-                sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);
                 
-                left = ((float)(stopIndexLeft - (screenX / 2))) * raysPerWidth;
-                right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
+                if(leftRayIndex != stopIndexLeft) {
+                    sprite.textureCalc.setU(sprite.texture.getU() + (stopIndexLeft - leftRayIndex) * raysPerU);
+                    left = ((float)(stopIndexLeft - (screenX / 2))) * raysPerWidth;
+                }
+                if(rightRayIndex != stopIndexRight) {
+                    sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);   
+                    right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
+                }
+                
                 sprite.scrX = (left + right) / 2.0f;
                 sprite.visWidth = (right - left);
-            }*/
+            }
         }
         Collections.sort(sprites2_5d, Comparator.comparingDouble(Sprite2_5D::getDst).reversed());
 
@@ -607,7 +611,7 @@ public class Renderer {
     public void addSprite(Sprite2_5D sprite) {
         sprites2_5d.add(sprite);
     }
-
+    
     public void removeSprite(Sprite2_5D sprite) {
         sprites2_5d.remove(sprite);
     }
@@ -646,7 +650,7 @@ public class Renderer {
 
         Torch.loadTexture();
         for (Torch torch : torches) {
-            sprites2_5d.add(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.0f, 0.8f, 0.4f));
+            addSprite(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.0f, 0.8f, 0.4f));
         }
 
         long end = System.nanoTime();
