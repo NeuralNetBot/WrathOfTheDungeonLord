@@ -37,29 +37,6 @@ public class Client {
         private final DataInputStream in;
         public InputHandler(DataInputStream in) {
             this.in = in;
-            try {
-                while(true) {
-                    ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
-                    while(buffer.hasRemaining()) {
-                        switch (PacketInfo.getType(buffer.get())) {
-                        case PLAYER_POSITION:
-                            processPlayerPosition(buffer); break;
-                        case NEW_PLAYER:      
-                            processNewPlayer(buffer); break;
-                        case ENEMY_UPDATE:    break;
-                        case NEW_ENEMY:       break;
-                        case NEW_ITEM:        break;
-                        case PLAYER_UPDATE:   break;
-                        case PLAYER_ATTACK:   break;
-                        case ITEM_INTERACT:   break;
-                        default: break;
-                        }
-                    }
-
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         void processPlayerPosition(ByteBuffer buffer) {
@@ -86,6 +63,31 @@ public class Client {
 
         @Override
         public void run() {
+            try {
+                while(true) {
+                    System.out.println("waiting for bytes");
+                    ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
+                    System.out.println("bytes received");
+                    while(buffer.hasRemaining()) {
+                        switch (PacketInfo.getType(buffer.get())) {
+                        case PLAYER_POSITION:
+                            processPlayerPosition(buffer); break;
+                        case NEW_PLAYER:      
+                            processNewPlayer(buffer); break;
+                        case ENEMY_UPDATE:    break;
+                        case NEW_ENEMY:       break;
+                        case NEW_ITEM:        break;
+                        case PLAYER_UPDATE:   break;
+                        case PLAYER_ATTACK:   break;
+                        case ITEM_INTERACT:   break;
+                        default: break;
+                        }
+                    }
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
