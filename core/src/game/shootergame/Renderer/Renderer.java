@@ -858,7 +858,7 @@ public class Renderer {
           + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(1.0 / v_texCoords.y);\n"
           + "  vec2 worldPos = worldDir * 2.0 + (cameraInfo.xy);\n"
           + "  float dst = 1.0 - abs(v_texCoords.y);\n"
-          + "  float lightValue = 0.0;\n"
+          + "  float lightValue = 0.15;\n"
           + "  for(int i = 0; i < torchCount; i++) {\n"
           + "      vec3 torch = torchData[i];\n"
           + "      bool intersects = false;\n"
@@ -875,7 +875,7 @@ public class Renderer {
           + "      if(distToLight2 > torch.z * torch.z) continue;\n"
           + "      lightValue += 1.0 - distToLight2 / (torch.z * torch.z);\n"
           + "  }\n"
-          + "  vec3 fColor = texture2D(texture, worldPos * 0.5f).rgb * lightValue;\n"
+          + "  vec3 fColor = texture2D(texture, worldPos * 0.5f).rgb * min(lightValue, 1.0);\n"
           + "  gl_FragColor = vec4(fColor, 1.0);\n"
           + "}\n";
 
