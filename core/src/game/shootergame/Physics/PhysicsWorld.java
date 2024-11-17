@@ -177,4 +177,9 @@ public class PhysicsWorld {
             }
         }
     }
+
+    //TODO: impliment
+    public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
+        return null;
+    }
 }
