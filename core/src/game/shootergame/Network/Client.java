@@ -58,16 +58,21 @@ public class Client {
         }
 
         void processNewPlayer(ByteBuffer buffer) {
-
+            byte add = buffer.get();
+            int ID = buffer.getInt();
+            System.out.println("recieved new player " + ID);
+            if(add == 0x01) {
+                remotePlayers.put(ID, new RemotePlayer());
+            } else if(add == 0x00) {
+                remotePlayers.remove(ID);
+            }
         }
 
         @Override
         public void run() {
             try {
                 while(true) {
-                    System.out.println("waiting for bytes");
                     ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
-                    System.out.println("bytes received");
                     while(buffer.hasRemaining()) {
                         switch (PacketInfo.getType(buffer.get())) {
                         case PLAYER_POSITION:

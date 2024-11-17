@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import game.shootergame.World;
+
 public class Server implements Runnable{
 
     private final int port = 42069;
@@ -22,6 +24,7 @@ public class Server implements Runnable{
 
         private Socket socket;
         private RemotePlayer remotePlayer;
+        private int remotePlayerID;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
@@ -29,12 +32,47 @@ public class Server implements Runnable{
                 DataInputStream in = new DataInputStream(socket.getInputStream());
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
+                onConnect(in, out);
+
                 Thread inputThread = new Thread(new InputHandler(in, this));
                 Thread outputThread = new Thread(new OutputHandler(out));
                 inputThread.start();
                 outputThread.start();
             }
             catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void onConnect(DataInputStream in, DataOutputStream out) {
+
+            handleNewPlayer(0, true, out);//server player id
+            for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
+                handleNewPlayer(entry.getKey(), true, out);
+            }
+
+            remotePlayer = new RemotePlayer();
+            remotePlayerID = ThreadLocalRandom.current().nextInt();
+            remotePlayers.put(remotePlayerID, remotePlayer);
+            System.out.println("Added player ID: " + remotePlayerID);
+
+            for (ClientHandler clientHandler : clients) {
+                if(clientHandler == this) continue;
+                clientHandler.handleNewPlayer(remotePlayerID, true, out);
+            }
+
+        }
+
+        public void handleNewPlayer(int id, boolean add, DataOutputStream out) {
+            System.out.println("writing " + id + " to new client");
+            ByteBuffer buffer = ByteBuffer.allocate(6);
+            buffer.put(PacketInfo.getByte(PacketInfo.NEW_PLAYER));
+            buffer.put(add ? (byte)0x01 : (byte)0x00);
+            buffer.putInt(id);
+            try {
+                out.write(buffer.array());
+                out.flush();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -50,8 +88,6 @@ public class Server implements Runnable{
             @Override
             public void run() {
                 try {
-                    remotePlayer = new RemotePlayer();
-                    remotePlayers.put(ThreadLocalRandom.current().nextInt(), remotePlayer);
                     while (true) {
                         ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
                         while(buffer.hasRemaining()) {
@@ -87,7 +123,8 @@ public class Server implements Runnable{
                         System.out.println("Cannot Close Socket" + e.getMessage());
                     }
                     clients.remove(client);
-                    remotePlayers.remove(remotePlayer);
+                    remotePlayers.remove(remotePlayerID);
+                    System.out.println("Removed player ID: " + remotePlayerID);
                 }
             }
 
@@ -101,21 +138,32 @@ public class Server implements Runnable{
 
             @Override
             public void run() {
-                ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
-                buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
-                buffer.put((byte)remotePlayers.size());
-                for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
-                    buffer.putInt(entry.getKey());
-                    buffer.putFloat(entry.getValue().x);
-                    buffer.putFloat(entry.getValue().y);
-                    buffer.putFloat(entry.getValue().dx);
-                    buffer.putFloat(entry.getValue().dy);
-                    buffer.putFloat(entry.getValue().rotation);
-                }
-                try {
-                    out.write(buffer.array());
-                } catch (IOException e) {
-                    e.printStackTrace();
+                while(true) {
+                    ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
+                    buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
+                    buffer.put((byte)(remotePlayers.size() + 1));
+
+                    buffer.putInt(0);//server is always player ID 0
+                    buffer.putFloat(World.getPlayer().x());
+                    buffer.putFloat(World.getPlayer().y());
+                    buffer.putFloat(World.getPlayer().dx());
+                    buffer.putFloat(World.getPlayer().dy());
+                    buffer.putFloat(World.getPlayer().rotation());
+
+                    for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
+                        buffer.putInt(entry.getKey());
+                        buffer.putFloat(entry.getValue().x);
+                        buffer.putFloat(entry.getValue().y);
+                        buffer.putFloat(entry.getValue().dx);
+                        buffer.putFloat(entry.getValue().dy);
+                        buffer.putFloat(entry.getValue().rotation);
+                    }
+                    try {
+                        out.write(buffer.array());
+                        out.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             
