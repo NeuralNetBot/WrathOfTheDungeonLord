@@ -89,7 +89,11 @@ public class Server implements Runnable{
             public void run() {
                 try {
                     while (true) {
-                        ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
+                        byte[] buf = new byte[1024];
+                        int amount = in.read(buf);
+                        if(amount <= 0) continue;
+
+                        ByteBuffer buffer = ByteBuffer.wrap(buf, 0, amount);
                         while(buffer.hasRemaining()) {
                             switch (PacketInfo.getType(buffer.get())) {
                             case PLAYER_POSITION:
@@ -139,6 +143,13 @@ public class Server implements Runnable{
             @Override
             public void run() {
                 while(true) {
+
+                    try {
+                        Thread.sleep(16);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
                     ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
                     buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
                     buffer.put((byte)(remotePlayers.size() + 1));
@@ -162,6 +173,13 @@ public class Server implements Runnable{
                         out.write(buffer.array());
                         out.flush();
                     } catch (IOException e) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        System.out.println(e.getMessage());
                         e.printStackTrace();
                     }
                 }

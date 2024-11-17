@@ -49,6 +49,7 @@ public class Client {
                 float dy = buffer.getFloat();
                 float rotation = buffer.getFloat();
                 RemotePlayer thePlayer = remotePlayers.get(id);
+                if(thePlayer == null) continue;
                 thePlayer.x = x;
                 thePlayer.y = y;
                 thePlayer.dx = dx;
@@ -72,7 +73,12 @@ public class Client {
         public void run() {
             try {
                 while(true) {
-                    ByteBuffer buffer = ByteBuffer.wrap(in.readAllBytes());
+
+                    byte[] buf = new byte[1024];
+                    int amount = in.read(buf);
+                    if(amount <= 0) continue;
+
+                    ByteBuffer buffer = ByteBuffer.wrap(buf, 0, amount);
                     while(buffer.hasRemaining()) {
                         switch (PacketInfo.getType(buffer.get())) {
                         case PLAYER_POSITION:
@@ -91,6 +97,7 @@ public class Client {
 
                 }
             } catch (IOException e) {
+                System.out.println(e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -107,6 +114,12 @@ public class Client {
         public void run() {
             try {
                 while (true) {
+                    try {
+                        Thread.sleep(16);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
                     ByteBuffer buffer = ByteBuffer.allocate(21);
                     buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
                     buffer.putFloat(World.getPlayer().x());
