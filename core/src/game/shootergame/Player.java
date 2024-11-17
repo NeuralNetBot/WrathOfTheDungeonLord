@@ -87,7 +87,7 @@ public class Player {
 
     void processInput() {
 
-        rotation += Gdx.input.getDeltaX() * 0.1f;
+        rotation += Gdx.input.getDeltaX() * 0.2f;
 
         moveDirX = 0.0f;
         moveDirY = 0.0f;
@@ -162,7 +162,6 @@ public class Player {
         stamina += delta * staminaRegenPerSecond;
         if(stamina > maxStamina) stamina = maxStamina;
 
-        rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
         x += dx;

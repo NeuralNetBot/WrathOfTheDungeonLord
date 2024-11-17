@@ -72,7 +72,7 @@ public class GameScreen extends ScreenAdapter {
             Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
         }
 
-        if (!hud.isOpen()) {
+        if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
             World.processInput();
         }
 
