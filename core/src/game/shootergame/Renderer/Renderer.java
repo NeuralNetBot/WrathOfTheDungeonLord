@@ -1,6 +1,7 @@
 package game.shootergame.Renderer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -42,8 +43,9 @@ public class Renderer {
     float[] rayWallTex;
     float[] rayDoorTex;
 
-    final int MAX_SHADER_TORCHES = 512;
+    final int MAX_SHADER_TORCHES = 64;
     float[] torchData;
+    float[] torchWallData;
 
     
     float camX = 0.0f;
@@ -70,7 +72,16 @@ public class Renderer {
 
     ArrayList<Wall> walls;
     ArrayList<Torch> torches;
-    ArrayList<ArrayList<Torch>> torchMap;
+    ArrayList<ArrayList<Torch>> wallToTorchMap;
+
+    private class OcclusionWall {
+        public float ax, ay, bx, by;
+        public float dst;
+        public float getDst() { return dst; }
+        public OcclusionWall(float dst) { this.dst = dst; }
+    }
+    final int MAX_OCCLUSION_WALS = 6;
+    ArrayList<OcclusionWall[]> torchToWallMap;
     
     LinkedList<Sprite2_5D> sprites2_5d = new LinkedList<>();
 
@@ -254,7 +265,7 @@ public class Renderer {
             rayDoorTex[index * 4 + 1] = idst;
 
             //calculate light info
-            ArrayList<Torch> wallTorches = torchMap.get(hitWallDoorIdx);           
+            ArrayList<Torch> wallTorches = wallToTorchMap.get(hitWallDoorIdx);           
             float closestZ = 100.0f;
             float closestDst = Float.MAX_VALUE;
             float torchRadius = 0.0f;
@@ -294,7 +305,7 @@ public class Renderer {
             rayWallTex[index * 4 + 1] = idst;
 
             //calculate light info
-            ArrayList<Torch> wallTorches = torchMap.get(hitWallIdx);           
+            ArrayList<Torch> wallTorches = wallToTorchMap.get(hitWallIdx);           
             float closestZ = 100.0f;
             float closestDst = Float.MAX_VALUE;
             float torchRadius = 0.0f;
@@ -343,7 +354,8 @@ public class Renderer {
 
         floorShader.bind();
 
-        floorShader.setUniform4fv("torchData", torchData, 0, torchData.length / 4);
+        floorShader.setUniform4fv("torchData", torchData, 0, torchData.length);
+        floorShader.setUniform4fv("torchWallData", torchWallData, 0, torchWallData.length);
         floorShader.setUniformi("torchCount", torchCount);
 
         floorShader.setUniformi("texture", 1);
@@ -622,8 +634,10 @@ public class Renderer {
         System.out.printf("Building lightmap. Walls: %d Torches: %d\n", walls.size(), torches.size());
         long start = System.nanoTime();
 
-        torchMap = new ArrayList<>(Collections.nCopies(walls.size(), null));
+        wallToTorchMap = new ArrayList<>(Collections.nCopies(walls.size(), null));
+        torchToWallMap = new ArrayList<>(Collections.nCopies(torches.size(), null));
 
+        //find which torches "belong" to which walls, and also which walls to torch for floor occlusion
         for (int i = 0; i < walls.size(); i++) {
             Wall wall = walls.get(i);
             for (int j = 0; j < torches.size(); j++) {
@@ -641,11 +655,35 @@ public class Renderer {
 
                 //if our torch is within range to cast light on the wall, then add it to the map
                 if(dst <= torches.get(j).radius) {
-                    if(torchMap.get(i) == null) {
-                        torchMap.set(i, new ArrayList<>());
+                    if(wallToTorchMap.get(i) == null) {
+                        wallToTorchMap.set(i, new ArrayList<>());
                     }
-                    torchMap.get(i).add(torches.get(j));
+                    wallToTorchMap.get(i).add(torches.get(j));
                 }
+
+                OcclusionWall[] closestWallsToLight = torchToWallMap.get(j);
+                if(closestWallsToLight == null) {
+                    closestWallsToLight = new OcclusionWall[MAX_OCCLUSION_WALS];
+                    for (int k = 0; k < closestWallsToLight.length; k++) {
+                        closestWallsToLight[k] = new OcclusionWall(Float.MAX_VALUE);
+                    }
+                    torchToWallMap.set(j, closestWallsToLight);
+                }
+
+                //find the closest 4 walls to the light
+                for (int k = 0; k < closestWallsToLight.length; k++) {
+                    OcclusionWall oWall = closestWallsToLight[k];
+                    if(dst < oWall.dst) {
+                        oWall.dst = dst;
+                        oWall.ax = wall.a.x;
+                        oWall.ay = wall.a.y;
+                        oWall.bx = wall.b.x;
+                        oWall.by = wall.b.y;
+                        Arrays.sort(closestWallsToLight, (o1, o2) -> Float.compare(o1.getDst(), o2.getDst()));
+                        break;
+                    }
+                }
+                
             }
         }
 
@@ -694,6 +732,13 @@ public class Renderer {
                 torchData[torchCounter * 4] = torch.x;
                 torchData[torchCounter * 4 + 1] = torch.y;
                 torchData[torchCounter * 4 + 2] = torch.radius;
+                OcclusionWall[] oWalls = torchToWallMap.get(i);
+                for (int index = 0; index < MAX_OCCLUSION_WALS; index++) {
+                    torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4] = oWalls[index].ax;
+                    torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 1] = oWalls[index].ay;
+                    torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 2] = oWalls[index].bx;
+                    torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 3] = oWalls[index].by;
+                }
                 torchCounter++;
                 continue;
             }
@@ -717,6 +762,13 @@ public class Renderer {
             torchData[torchCounter * 4] = torch.x;
             torchData[torchCounter * 4 + 1] = torch.y;
             torchData[torchCounter * 4 + 2] = torch.radius;
+            OcclusionWall[] oWalls = torchToWallMap.get(i);
+            for (int index = 0; index < MAX_OCCLUSION_WALS; index++) {
+                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4] = oWalls[index].ax;
+                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 1] = oWalls[index].ay;
+                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 2] = oWalls[index].bx;
+                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 3] = oWalls[index].by;
+            }
 
             torchCounter++;
         }
@@ -739,6 +791,7 @@ public class Renderer {
         rayDoorTex = new float[screenX * 4];
 
         torchData = new float[MAX_SHADER_TORCHES * 4];
+        torchWallData = new float[MAX_SHADER_TORCHES * MAX_OCCLUSION_WALS * 4];
 
         if(wallShader != null) {
             wallShader.dispose();
@@ -793,24 +846,37 @@ public class Renderer {
           + "#endif\n"
           + "varying vec2 v_texCoords;\n"
           + "uniform vec4 torchData[" + MAX_SHADER_TORCHES + "];\n"
+          + "uniform vec4 torchWallData[" + MAX_SHADER_TORCHES * MAX_OCCLUSION_WALS + "];\n" //4 walls per torch to occlude light
           + "uniform int torchCount;\n"
           + "uniform vec4 cameraInfo;\n"
           + "uniform vec2 cameraInfo2;\n"
           + "uniform sampler2D texture;\n"
+          + "int orientation(vec2 a, vec2 b, vec2 c) { float d = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y); if(d == 0.0) return 0; return d > 0.0 ? 1 : 2; }\n"
+          + "bool onSegment(vec2 a, vec2 b, vec2 c) { return c.x >= min(a.x, b.x) && c.x <= max(a.x, b.x) && c.y >= min(a.y, b.y) && c.y <= max(a.y, b.y); }\n"
           + "void main()\n"
           + "{\n"
           + "  vec2 dxdy = vec2(cameraInfo2.x + (v_texCoords.x * cameraInfo2.y * cameraInfo.w), cameraInfo2.y + (v_texCoords.x * -cameraInfo2.x * cameraInfo.w));"
           + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(1.0 / v_texCoords.y);\n"
-          + "  vec2 worldPos = worldDir + (cameraInfo.xy * 0.5);\n"
+          + "  vec2 worldPos = worldDir * 2.0 + (cameraInfo.xy);\n"
           + "  float dst = 1.0 - abs(v_texCoords.y);\n"
           + "  float lightValue = 0.0;\n"
           + "  for(int i = 0; i < torchCount; i++) {\n"
           + "      vec3 torch = torchData[i];\n"
-          + "      float distToLight2 = dot(worldPos * 2.0f - torch.xy, worldPos * 2.0f - torch.xy);\n"
+          + "      bool intersects = false;\n"
+          + "      for(int j = 0; j < " + MAX_OCCLUSION_WALS + "; j++) {\n"
+          + "          vec4 wall = torchWallData[i + (j * " + MAX_SHADER_TORCHES + ")];\n"
+          + "          int o1 = orientation(wall.xy, wall.zw, worldPos);\n"
+          + "          int o2 = orientation(wall.xy, wall.zw, torch.xy);\n"
+          + "          int o3 = orientation(worldPos, torch.xy, wall.xy);\n"
+          + "          int o4 = orientation(worldPos, torch.xy, wall.zw);\n"
+          + "          if(o1 != o2 && o3 != o4) { intersects = true; break; }\n"
+          + "      }\n"
+          + "      if(intersects) continue;\n"
+          + "      float distToLight2 = dot(worldPos - torch.xy, worldPos - torch.xy);\n"
           + "      if(distToLight2 > torch.z * torch.z) continue;\n"
           + "      lightValue += 1.0 - distToLight2 / (torch.z * torch.z);\n"
           + "  }\n"
-          + "  vec3 fColor = texture2D(texture, worldPos).rgb * lightValue;\n"
+          + "  vec3 fColor = texture2D(texture, worldPos * 0.5f).rgb * lightValue;\n"
           + "  gl_FragColor = vec4(fColor, 1.0);\n"
           + "}\n";
 
