@@ -3,6 +3,7 @@ package game.shootergame.Network;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -196,7 +197,8 @@ public class Server implements Runnable{
     @Override
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server is listening on port: " + port + " IP: " + serverSocket.getInetAddress().getHostAddress());
+            serverSocket.getInetAddress();
+            System.out.println("Server is listening on port: " + port + " IP: " + InetAddress.getLocalHost().getHostAddress());
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Client connected");
