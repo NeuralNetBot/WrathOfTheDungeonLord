@@ -17,7 +17,11 @@ public class GameScreen extends ScreenAdapter {
 
     private Renderer renderer;
 
+    private MainMenu menu;
+
     public GameScreen() {
+
+        menu = new MainMenu();
 
         renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
@@ -65,37 +69,54 @@ public class GameScreen extends ScreenAdapter {
         
     }
 
+    boolean doOnce = true;
+
     @Override
     public void render(float delta) {
-
-        if(Gdx.input.isKeyJustPressed(Keys.T)) {
-            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+        if(menu.isDone() && doOnce) {
+            if(menu.getSelectedMode()) {
+                World.startAsServer();
+            } else {
+                World.startAsClient();
+            }
+            doOnce = false;
         }
-
-        if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
-            World.processInput();
-        }
-
-        World.update(delta);
-        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation());
+        
 
         ScreenUtils.clear(0, 0, 0, 1);
 
+        if(menu.shouldLaunchGame()) {
+            if(Gdx.input.isKeyJustPressed(Keys.T)) {
+                Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+            }
 
-        renderer.render();
+            if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
+                World.processInput();
+            }
+
+            World.update(delta);
+            renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation());
+
+            renderer.render();
+        }
 
         SpriteBatch coreBatch = ShooterGame.getInstance().coreBatch;
         ShooterGame.getInstance().coreCamera.update();
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
-        renderer.processSpriteDraws();
-
-        World.render();
+        if(menu.shouldLaunchGame()) {
+            renderer.processSpriteDraws();
+            World.render();
+        } else {
+            menu.update();
+        }
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
-
-        World.renderHud();
+        
+        if(menu.shouldLaunchGame()) {
+            World.renderHud();
+        }
 
         //we always want the hud to be visible
         hud.draw(coreBatch);

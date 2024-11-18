@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
@@ -59,14 +58,15 @@ public class World {
     }
 
     public static void processInput() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
-            new Thread(new Server(instance.remotePlayers)).start();
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-            instance.client = new Client(instance.remotePlayers);
-        }
         instance.player.processInput();
+    }
+
+    public static void startAsServer() {
+        new Thread(new Server(instance.remotePlayers)).start();
+    }
+
+    public static void startAsClient() {
+        instance.client = new Client(instance.remotePlayers);
     }
 
     float wx = 0.0f;
