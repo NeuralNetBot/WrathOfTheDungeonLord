@@ -770,6 +770,9 @@ public class Renderer {
 
             Torch torch = torches.get(i);
             Vector2 torchVec = new Vector2(torch.x - camX, torch.y - camY);
+            if(torchVec.len() > 55) { //magic light culling distance
+                continue;
+            }
             float crsL = torchVec.crs(leftPoint);
             float crsR = torchVec.crs(rightPoint);
             //quick check to see if center is in view or if light radius is within camera pos
