@@ -833,7 +833,7 @@ public class Renderer {
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
-            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5f)), 0.85);"
+            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5)), 0.85);"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
@@ -875,7 +875,7 @@ public class Renderer {
           + "      if(distToLight2 > torch.z * torch.z) continue;\n"
           + "      lightValue += 1.0 - distToLight2 / (torch.z * torch.z);\n"
           + "  }\n"
-          + "  vec3 fColor = texture2D(texture, worldPos * 0.5f).rgb * min(lightValue, 1.0);\n"
+          + "  vec3 fColor = texture2D(texture, worldPos * 0.5).rgb * min(lightValue, 1.0);\n"
           + "  gl_FragColor = vec4(fColor, 1.0);\n"
           + "}\n";
 
