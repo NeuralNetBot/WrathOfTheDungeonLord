@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import game.shootergame.Item.ItemPickup;
+import game.shootergame.Player;
 import game.shootergame.World;
 
 public class Server implements Runnable{
@@ -19,6 +21,7 @@ public class Server implements Runnable{
     private final int port = 42069;
     private List<ClientHandler> clients = new CopyOnWriteArrayList<>();
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
+    private ConcurrentHashMap<Integer, ItemPickup> items;
 
     private class ClientHandler {
 
@@ -69,6 +72,22 @@ public class Server implements Runnable{
             buffer.put(PacketInfo.getByte(PacketInfo.NEW_PLAYER));
             buffer.put(add ? (byte)0x01 : (byte)0x00);
             buffer.putInt(id);
+            try {
+                out.write(buffer.array());
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void handlewNewItem(int id, boolean add, int payload, int subtype, DataOutputStream out) {
+            System.out.println("writing " + id + " to new item");
+            ByteBuffer buffer = ByteBuffer.allocate(21);
+            buffer.put(PacketInfo.getByte(PacketInfo.NEW_ITEM));
+            buffer.put(add ? (byte)0x01 : (byte)0x00);
+            buffer.putInt(id);
+            buffer.putInt(payload);
+            buffer.putInt(subtype);
             try {
                 out.write(buffer.array());
                 out.flush();

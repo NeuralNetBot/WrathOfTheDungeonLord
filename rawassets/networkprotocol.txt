@@ -20,8 +20,20 @@ type
 0x03
 
 -new item drop
-type
-0x04
+type add? id         x          y           payload    subtype
+0x04 0x01 0x00000001 0x00000000 0x00000000  0x00000000 0x00000000
+     0x01 add
+     0x00 remove                            0x00000003 Powerup
+                                            0x00000002 Ranged Weapon
+                                            0x00000001 None
+
+                                                       0x00000004 Health
+                                                       0x00000003 DamageResist
+                                                       0x00000002 Damage
+                                                       0x00000001 AttackSpeed
+
+                                                       0x00000002 Musket
+                                                       0x00000001 Crossbow
 
 -player update(sent to specific client)
 type
@@ -38,7 +50,8 @@ type
 0x06
 
 -item interact
-type
-0x07
+type id
+0x07 0x00000001
+
 
 

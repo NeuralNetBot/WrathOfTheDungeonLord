@@ -1,6 +1,13 @@
 package game.shootergame.Network;
 
+import game.shootergame.Item.ItemPickup;
+import game.shootergame.Item.Powerups.AttackSpeedPowerup;
+import game.shootergame.Item.Powerups.DamagePowerup;
+import game.shootergame.Item.Powerups.DamageResistPowerup;
+import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Item.RangedWeapon;
 import game.shootergame.World;
+import org.w3c.dom.ranges.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -15,9 +22,11 @@ public class Client {
     private final int portNumber = 42069;
     private Socket socket;
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
+    private ConcurrentHashMap<Integer, ItemPickup> items;
 
-    public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers) {
+    public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
         this.remotePlayers = remotePlayers;
+        this.items = items;
         try {
             socket = new Socket(hostName, portNumber);
             DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -69,6 +78,54 @@ public class Client {
             }
         }
 
+        void processNewItem(ByteBuffer buffer) {
+            byte add = buffer.get();
+            int ID = buffer.getInt();
+            float x = buffer.getFloat();
+            float y = buffer.getFloat();
+            int payload = buffer.getInt();
+            int subtype = buffer.getInt();
+            if (add == 0x01) {
+                switch (payload) {
+                    case 0x01:
+                        //ItemPickup.Payload.NONE;
+                        break;
+                    case 0x02:
+                        switch (subtype) {
+                            case 0x00000001:
+                                //CrossbowWeapon crossbow = new CrossbowWeapon();
+                                //items.put(ID, new ItemPickup(x, y crossbow));
+                                //break;
+                            case 0x00000002:
+                                //MusketWeapon musket = new MusketWeapon();
+                                //items.put(ID, new ItemPickup(x, y, musket));
+                                //break;
+                        }
+                        break;
+                    case 0x03:
+                        switch (subtype) {
+                            case 0x00000001:
+                                items.put(ID, new ItemPickup(x, y, (new AttackSpeedPowerup())));
+                                break;
+                            case 0x00000002:
+                                items.put(ID, new ItemPickup(x, y, (new DamagePowerup())));
+                                break;
+                            case 0x00000003:
+                                items.put(ID, new ItemPickup(x, y, (new DamageResistPowerup())));
+                                break;
+                            case 0x00000004:
+                                items.put(ID, new ItemPickup(x, y, (new HealthPowerup())));
+                                break;
+                        }
+                        break;
+                }
+            }
+
+            else {
+                items.remove(ID);
+            }
+        }
+
         @Override
         public void run() {
             try {
@@ -87,7 +144,8 @@ public class Client {
                             processNewPlayer(buffer); break;
                         case ENEMY_UPDATE:    break;
                         case NEW_ENEMY:       break;
-                        case NEW_ITEM:        break;
+                        case NEW_ITEM:
+                            processNewItem(buffer); break;
                         case PLAYER_UPDATE:   break;
                         case PLAYER_ATTACK:   break;
                         case ITEM_INTERACT:   break;
@@ -134,6 +192,18 @@ public class Client {
                 System.out.println("Client Disconnecting: " + e.getMessage());
             }
         }
-        
+
+        public void handleItemInteract(int id, DataOutputStream out) {
+            System.out.println("writing " + id + " item interact");
+            ByteBuffer buffer = ByteBuffer.allocate(4);
+            buffer.put(PacketInfo.getByte(PacketInfo.ITEM_INTERACT));
+            buffer.putInt(id);
+            try {
+                out.write(buffer.array());
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

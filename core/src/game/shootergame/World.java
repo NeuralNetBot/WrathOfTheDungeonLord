@@ -40,7 +40,7 @@ public class World {
     ArrayList<Wall> walls;
     ArrayList<Integer> doors;
 
-    LinkedList<ItemPickup> items;
+    ConcurrentHashMap<Integer, ItemPickup> items;
 
     LinkedList<Enemy> enemies;
 
@@ -64,7 +64,7 @@ public class World {
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-            instance.client = new Client(instance.remotePlayers);
+            instance.client = new Client(instance.remotePlayers, instance.items);
         }
         instance.player.processInput();
     }
@@ -125,7 +125,7 @@ public class World {
     private World() {
         walls = new ArrayList<>();
         doors = new ArrayList<>();
-        items = new LinkedList<>();
+        items = new ConcurrentHashMap<>();
         enemies = new LinkedList<>();
         remotePlayers = new ConcurrentHashMap<>();
     }
@@ -169,10 +169,10 @@ public class World {
 
         player = new Player(new SwordWeapon());
 
-        items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
-        items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
-        items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
-        items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
+        items.put(1, new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
+        items.put(2, new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
+        items.put(3, new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
+        items.put(4, new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
 
         enemies.add(new Goblin(0.0f, 0.0f));
     }
