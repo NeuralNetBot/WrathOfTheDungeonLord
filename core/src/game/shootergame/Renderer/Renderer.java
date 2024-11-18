@@ -608,7 +608,7 @@ public class Renderer {
                 for (int i = leftRayIndex; i <= rightRayIndex; i++) {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
                     float sdst = visualDistance;
-                    if(idst > sdst - sprite.visWidth) {
+                    if(idst > sdst) {
                         stopIndexLeft = i;
                         break;
                     }
@@ -619,21 +619,21 @@ public class Renderer {
                     float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
                     float sdst = visualDistance;
                     if(i == stopIndexLeft) { sprite.isVis = false; break; }//ray stopped at left stop so object is completely behind wall
-                    if(idst > sdst - sprite.visWidth) {
+                    if(idst > sdst) {
                         stopIndexRight = i;
                         break;
                     }
                 }
+                if(!sprite.isVis) {
+                    continue;
+                }
                 
                 sprite.textureCalc.setU(sprite.texture.getU() + (stopIndexLeft - leftRayIndex) * raysPerU);
-                if(leftRayIndex != stopIndexLeft) {
-                    left = ((float)(stopIndexLeft - (screenX / 2))) * raysPerWidth;
-                }
+                left = left + (stopIndexLeft - leftRayIndex) * raysPerWidth;
                 sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);   
-                if(rightRayIndex != stopIndexRight) {
-                    right = ((float)(stopIndexRight - (screenX / 2))) * raysPerWidth;
-                }
-                
+                right = right - (rightRayIndex - stopIndexRight) * raysPerWidth;
+
+
                 sprite.scrX = (left + right) / 2.0f;
                 sprite.visWidth = (right - left);
             }
