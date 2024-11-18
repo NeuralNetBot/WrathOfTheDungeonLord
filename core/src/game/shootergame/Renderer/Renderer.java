@@ -71,7 +71,14 @@ public class Renderer {
 
     ArrayList<Wall> walls;
     ArrayList<Torch> torches;
-    ArrayList<ArrayList<Torch>> wallToTorchMap;
+
+    private class TorchAndIndex {
+        public Torch torch;
+        public int index;
+        public TorchAndIndex(Torch torch, int index) { this.torch = torch; this.index = index; }
+    }
+
+    ArrayList<ArrayList<TorchAndIndex>> wallToTorchMap;
 
     private class OcclusionWall {
         public float ax, ay, bx, by;
@@ -264,23 +271,21 @@ public class Renderer {
             rayDoorTex[index * 4 + 1] = idst;
 
             //calculate light info
-            ArrayList<Torch> wallTorches = wallToTorchMap.get(hitWallDoorIdx);           
-            float closestZ = 100.0f;
+            ArrayList<TorchAndIndex> wallTorches = wallToTorchMap.get(hitWallDoorIdx);
             float closestDst = Float.MAX_VALUE;
-            float torchRadius = 0.0f;
+            TorchAndIndex closestTorch = new TorchAndIndex(new Torch(0, 0, 0), 0);
             if(wallTorches != null) {
-                for (Torch torch : wallTorches) {
-                    float torchDst = hitPos.dst(torch.x, torch.y);
+                for (TorchAndIndex torch : wallTorches) {
+                    float torchDst = hitPos.dst(torch.torch.x, torch.torch.y);
                     
                     if(torchDst < closestDst) {
                         closestDst = torchDst;
-                        closestZ = torch.z;
-                        torchRadius = torch.radius;
+                        closestTorch = torch;
                     }
                 }
             }
-            rayDoorTex[index * 4 + 2] = closestZ;
-            rayDoorTex[index * 4 + 3] = closestDst * closestDst / (torchRadius * torchRadius);
+            rayDoorTex[index * 4 + 2] = closestTorch.torch.z;
+            rayDoorTex[index * 4 + 3] = closestDst * closestDst / (closestTorch.torch.radius * closestTorch.torch.radius);
         } else {
             rayDoorData[index * 4 + 2] = 0;
             rayDoorData[index * 4 + 3] = 0;
@@ -304,27 +309,51 @@ public class Renderer {
             rayWallTex[index * 4 + 1] = idst;
 
             //calculate light info
-            ArrayList<Torch> wallTorches = wallToTorchMap.get(hitWallIdx);           
-            float closestZ = 100.0f;
+            ArrayList<TorchAndIndex> wallTorches = wallToTorchMap.get(hitWallIdx);   
             float closestDst = Float.MAX_VALUE;
-            float torchRadius = 0.0f;
+            TorchAndIndex closestTorch = new TorchAndIndex(new Torch(0, 0, 0), 0);
             if(wallTorches != null) {
-                for (Torch torch : wallTorches) {
-                    float torchDst = hitPos.dst(torch.x, torch.y);
+                for (TorchAndIndex torch : wallTorches) {
+                    float torchDst = hitPos.dst(torch.torch.x, torch.torch.y);
                     
                     if(torchDst < closestDst) {
+
+                        OcclusionWall[] oWalls = torchToWallMap.get(torch.index);
+                        boolean intersects = false;    
+                        for (OcclusionWall occlusionWall : oWalls) {
+                            if(occlusionWall.ax == hitWall.a.x && occlusionWall.ay == hitWall.a.y && occlusionWall.bx == hitWall.b.x && occlusionWall.by == hitWall.b.y)
+                                continue;
+                            Vector2 wa = new Vector2(occlusionWall.ax, occlusionWall.ay);
+                            Vector2 wb = new Vector2(occlusionWall.bx, occlusionWall.by);
+                            Vector2 torchPos = new Vector2(torch.torch.x, torch.torch.y);
+                            int o1 = orientation(wa, wb, hitPos);
+                            int o2 = orientation(wa, wb, torchPos);
+                            int o3 = orientation(hitPos, torchPos, wa);
+                            int o4 = orientation(hitPos, torchPos, wb);
+                            if(o1 != o2 && o3 != o4) { intersects = true; break; }   
+                        }
+                        if(intersects)
+                            continue;
+
                         closestDst = torchDst;
-                        closestZ = torch.z;
-                        torchRadius = torch.radius;
+                        closestTorch = torch;
                     }
                 }
             }
-            rayWallTex[index * 4 + 2] = closestZ;
-            rayWallTex[index * 4 + 3] = closestDst * closestDst / (torchRadius * torchRadius);
+
+            rayWallTex[index * 4 + 2] = closestTorch.torch.z;
+            
+            rayWallTex[index * 4 + 3] = closestDst * closestDst / (closestTorch.torch.radius * closestTorch.torch.radius);
         } else {
             rayData[index * 4 + 2] = 0;
             rayData[index * 4 + 3] = 0;
         }
+    }
+
+    private int orientation(Vector2 a, Vector2 b, Vector2 c) {
+        float d = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+        if(d == 0.0) return 0;
+        return d > 0.0 ? 1 : 2;
     }
 
     public void setDebugRayDraw(boolean debugRayDraw) {
@@ -657,7 +686,7 @@ public class Renderer {
                     if(wallToTorchMap.get(i) == null) {
                         wallToTorchMap.set(i, new ArrayList<>());
                     }
-                    wallToTorchMap.get(i).add(torches.get(j));
+                    wallToTorchMap.get(i).add(new TorchAndIndex(torches.get(j), j));
                 }
 
                 OcclusionWall[] closestWallsToLight = torchToWallMap.get(j);
