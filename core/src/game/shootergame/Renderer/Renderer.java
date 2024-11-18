@@ -279,6 +279,23 @@ public class Renderer {
                 for (TorchAndIndex torch : wallTorches) {
                     float torchDst = hitPos.dst(torch.torch.x, torch.torch.y);
                     
+                    OcclusionWall[] oWalls = torchToWallMap.get(torch.index);
+                    boolean intersects = false;    
+                    for (OcclusionWall occlusionWall : oWalls) {
+                        if(occlusionWall.ax == hitWallDoor.a.x && occlusionWall.ay == hitWallDoor.a.y && occlusionWall.bx == hitWallDoor.b.x && occlusionWall.by == hitWallDoor.b.y)
+                            continue;
+                        Vector2 wa = new Vector2(occlusionWall.ax, occlusionWall.ay);
+                        Vector2 wb = new Vector2(occlusionWall.bx, occlusionWall.by);
+                        Vector2 torchPos = new Vector2(torch.torch.x, torch.torch.y);
+                        int o1 = orientation(wa, wb, hitPos);
+                        int o2 = orientation(wa, wb, torchPos);
+                        int o3 = orientation(hitPos, torchPos, wa);
+                        int o4 = orientation(hitPos, torchPos, wb);
+                        if(o1 != o2 && o3 != o4) { intersects = true; break; }   
+                    }
+                    if(intersects)
+                        continue;
+
                     if(torchDst < closestDst) {
                         closestDst = torchDst;
                         closestTorch = torch;
