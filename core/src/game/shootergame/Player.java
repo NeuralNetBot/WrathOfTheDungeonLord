@@ -15,6 +15,7 @@ import game.shootergame.Physics.Collider;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class Player {
     MeleeWeapon melee;
@@ -263,15 +264,25 @@ public class Player {
         barSprite.setColor(Color.GOLDENROD);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
 
+        int visibleIndex = 0;
 
         for (int i = 0; i < activePowerups.size(); i++) {
             Powerup powerup = activePowerups.get(i);
 
-            barSprite.setPosition(-aspect + 0.1f, 0.7f - (0.1f * i));
+            if (powerup.getName().equals("Health Pack")) {
+                reg = new TextureRegion(tex, 0, 256, 256, 256);
+                powerupSprite = new Sprite (reg);
+                powerupSprite.setPosition(-aspect + 1.11f, 0.88f);
+                powerupSprite.setSize(0.07f, 0.07f);
+                powerupSprite.draw(ShooterGame.getInstance().coreBatch);
+                continue;
+            }
+
+            barSprite.setPosition(-aspect + 0.1f, 0.7f - (0.1f * visibleIndex));
             barSprite.setSize(0.5f, 0.03f);
             barSprite.setColor(Color.BLACK);
             barSprite.draw(ShooterGame.getInstance().coreBatch);
-            barSprite.setSize((powerup.getRemainingTime() / 10.0f) * 0.5f, 0.03f);
+            barSprite.setSize((powerup.getRemainingTime() / powerup.getMaxTime()) * 0.5f, 0.03f);
 
             tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
 
@@ -292,10 +303,11 @@ public class Player {
 
             barSprite.draw(ShooterGame.getInstance().coreBatch);
 
-            powerupSprite = new Sprite (reg);
-            powerupSprite.setPosition(-aspect + 0.015f, 0.68f - (0.1f * i));
+            powerupSprite = new Sprite(reg);
+            powerupSprite.setPosition(-aspect + 0.015f, 0.68f - (0.1f * visibleIndex));
             powerupSprite.setSize(0.07f, 0.07f);
             powerupSprite.draw(ShooterGame.getInstance().coreBatch);
+            visibleIndex++;
         }
     }
 
