@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.Powerup;
 import game.shootergame.Item.RangedWeapon;
@@ -57,6 +58,9 @@ public class Player {
     LinkedList<Powerup> activePowerups;
 
     Sprite barSprite;
+    Sprite powerupSprite;
+    Texture tex;
+    TextureRegion reg;
 
     public Player(MeleeWeapon melee) {
         this.melee = melee;
@@ -258,6 +262,41 @@ public class Player {
         barSprite.setSize(stamina / maxStamina, 0.03f);
         barSprite.setColor(Color.GOLDENROD);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
+
+
+        for (int i = 0; i < activePowerups.size(); i++) {
+            Powerup powerup = activePowerups.get(i);
+
+            barSprite.setPosition(-aspect + 0.1f, 0.7f - (0.1f * i));
+            barSprite.setSize(0.5f, 0.03f);
+            barSprite.setColor(Color.BLACK);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+            barSprite.setSize((powerup.getRemainingTime() / 10.0f) * 0.5f, 0.03f);
+
+            tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
+
+            switch (powerup.getName()) {
+                case "Attack Speed":
+                    reg = new TextureRegion(tex, 0, 0, 256, 256);
+                    barSprite.setColor(Color.FIREBRICK);
+                    break;
+                case "Damage Boost":
+                    reg = new TextureRegion(tex, 256, 256, 256, 256);
+                    barSprite.setColor(Color.MAGENTA);
+                    break;
+                case "Damage Resist":
+                    reg = new TextureRegion(tex, 256, 0, 256, 256);
+                    barSprite.setColor(Color.BLUE);
+                    break;
+            }
+
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+
+            powerupSprite = new Sprite (reg);
+            powerupSprite.setPosition(-aspect + 0.015f, 0.68f - (0.1f * i));
+            powerupSprite.setSize(0.07f, 0.07f);
+            powerupSprite.draw(ShooterGame.getInstance().coreBatch);
+        }
     }
 
     void applyDamage(float damage) {
