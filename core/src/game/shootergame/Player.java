@@ -15,7 +15,6 @@ import game.shootergame.Physics.Collider;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Objects;
 
 public class Player {
     MeleeWeapon melee;
@@ -363,7 +362,7 @@ public class Player {
     public float getHealth() { return health; }
 
     public void addHealth(float health) {
-        this.health = Math.min(this.health + health, 100.0f);
+        this.health = Math.min(this.health + health, maxHealth);
     }
 
     public LinkedList<Powerup> getActivePowerups() { return activePowerups; }
