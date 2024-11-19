@@ -101,6 +101,7 @@ public class GameScreen extends ScreenAdapter {
         hud.draw(coreBatch);
         coreBatch.end();
 
+        renderer.renderMinimap();
     }
 
 	@Override

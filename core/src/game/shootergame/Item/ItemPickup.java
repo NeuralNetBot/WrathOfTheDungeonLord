@@ -69,7 +69,7 @@ public class ItemPickup {
             default:
                 return;
         }
-        sprite = new Sprite2_5D(reg, x, y, 0.3f, 0.3f);
+        sprite = new Sprite2_5D(reg, x, y, -0.7f, 0.3f, 0.3f);
         Renderer.inst().addSprite(sprite);
     }
 
