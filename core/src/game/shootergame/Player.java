@@ -51,6 +51,11 @@ public class Player {
     float dodgeTime;
     float staminaRegenDelay;
 
+    final float regenCheckpointPercentage = 25.0f;
+    final float damageRegenDelayTime = 5.0f;
+    float regenDelayTimer = 0.0f;
+    final float regenRate = 10.0f;
+
     int lastMouse = 0;
 
     Collider collider;
@@ -83,13 +88,18 @@ public class Player {
                 dx = newDX; dy = newDY;
             }
             if(damage != 0.0f) {
-                float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
-                health -= damageDone;
+                doDamage(damage);
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
 
         activePowerups = new LinkedList<>();
+    }
+
+    void doDamage(float damage) {
+        float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
+        health -= damageDone;
+        regenDelayTimer = 0.0f;//reset the timer when taken damage
     }
 
     void processInput() {
@@ -178,6 +188,16 @@ public class Player {
             }
         }
 
+        if(regenDelayTimer >= damageRegenDelayTime) {
+            float stepSize = (maxHealth * regenCheckpointPercentage) / 100.0f;
+            float checkPointIDX = (float)Math.ceil(health / stepSize);
+            float checkPointValue = checkPointIDX * stepSize;
+            health += regenRate * delta;
+            health = Math.min(checkPointValue, health);
+        } else {
+            regenDelayTimer += delta;
+        }
+
         rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
@@ -249,9 +269,25 @@ public class Player {
         barSprite.setSize(1.0f, 0.03f);
         barSprite.setColor(Color.BLACK);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
-        barSprite.setSize(health / maxHealth, 0.03f);
         barSprite.setColor(healthColor);
-        barSprite.draw(ShooterGame.getInstance().coreBatch);
+        int maxI = (int)(100.0f/ regenCheckpointPercentage);
+        for (int i = 0; i < maxI; i++) {
+            barSprite.setPosition(-aspect + 0.1f + (regenCheckpointPercentage / 100.0f * i), 0.9f);
+
+            float healthPerMaker = maxHealth * (regenCheckpointPercentage / 100.0f);
+            float healthMarkerMax = healthPerMaker * (i + 1);
+            float healthMarkerMin = healthPerMaker * (i);
+            if(health >= healthMarkerMin) {
+                float l = 0.0f;
+                if(health >= healthMarkerMax)
+                    l = (regenCheckpointPercentage / 100.0f);
+                else
+                    l = ((health - healthMarkerMin) / healthPerMaker) * (regenCheckpointPercentage / 100.0f);
+                
+                barSprite.setSize(l * (i == maxI-1 ? 1.0f : 0.95f), 0.03f);
+                barSprite.draw(ShooterGame.getInstance().coreBatch);
+            }
+        }
 
         barSprite.setPosition(-aspect + 0.1f, 0.8f);
 
