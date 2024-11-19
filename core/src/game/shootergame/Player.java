@@ -85,7 +85,7 @@ public class Player {
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
-                dx = newDX; dy = newDY;
+                //dx = newDX; dy = newDY;
             }
             if(damage != 0.0f) {
                 doDamage(damage);

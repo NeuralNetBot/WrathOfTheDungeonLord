@@ -123,7 +123,7 @@ public class World {
                 String type = parts[0];
 
                 if(type.equals("wall")) {
-                    if(parts.length != 8) {
+                    if(parts.length < 8) {
                         System.err.println("ERROR malformed map wall read");
                     }
                     float ax = -Float.parseFloat(parts[1]);
@@ -133,8 +133,10 @@ public class World {
                     float height = Float.parseFloat(parts[5]);
                     float textureID = Float.parseFloat(parts[6]);
                     boolean isDoor = Boolean.parseBoolean(parts[7]);
-                    walls.add(new Wall(ax, ay, bx, by, height, textureID, isDoor));
-                    if(isDoor) {
+                    Wall wall = new Wall(ax, ay, bx, by, height, textureID, isDoor);
+                    walls.add(wall);
+                    if(parts.length == 9) { wall.yOffset = Float.parseFloat(parts[8]); }
+                    else if(isDoor) {
                         doors.add(walls.size() - 1);
                     }
                 } else if(type.equals("torch")) {
