@@ -253,7 +253,7 @@ public class Renderer {
             }
             i++;
         }
-
+        float doorBottom = Float.MAX_VALUE;
         if(hitWallDoor != null && minDistanceDoor < minDistance) {
             float yOffset = hitWallDoor.yOffset;
             Vector2 hitPos = hitWallDoor.b.cpy().lerp(hitWallDoor.a, dUDoor);
@@ -266,6 +266,9 @@ public class Renderer {
             rayDoorData[index * 4 + 1] = dUDoor * hitWallDoor.widthScaler / 4.0f;
             rayDoorData[index * 4 + 2] = wallTop;
             rayDoorData[index * 4 + 3] = wallBottom;
+            if(hitWallDoor.yOffset >= 2.0f) {
+                doorBottom = wallBottom;
+            }
     
             rayDoorTex[index * 4] = hitWallDoor.textureID;
             rayDoorTex[index * 4 + 1] = idst;
@@ -301,7 +304,7 @@ public class Renderer {
                     }
                 }
             }
-            rayDoorTex[index * 4 + 2] = closestTorch.torch.z;
+            rayDoorTex[index * 4 + 2] = wallTop;//unmodified wall top for lighting calc
             rayDoorTex[index * 4 + 3] = closestDst * closestDst / (closestTorch.torch.radius * closestTorch.torch.radius);
         } else {
             rayDoorData[index * 4 + 2] = 0;
@@ -319,7 +322,8 @@ public class Renderer {
     
             rayData[index * 4] = hitWall.height;
             rayData[index * 4 + 1] = dU * hitWall.widthScaler / 4.0f;
-            rayData[index * 4 + 2] = wallTop;
+            float wallTopWithDoor = Math.min(wallTop, doorBottom);
+            rayData[index * 4 + 2] = wallTopWithDoor;
             rayData[index * 4 + 3] = wallBottom;
     
             rayWallTex[index * 4] = hitWall.textureID;
@@ -358,8 +362,7 @@ public class Renderer {
                 }
             }
 
-            rayWallTex[index * 4 + 2] = closestTorch.torch.z;
-            
+            rayWallTex[index * 4 + 2] = wallTop;//unmodified wall top for lighting calc
             rayWallTex[index * 4 + 3] = closestDst * closestDst / (closestTorch.torch.radius * closestTorch.torch.radius);
         } else {
             rayData[index * 4 + 2] = 0;
@@ -875,7 +878,7 @@ public class Renderer {
             + "  float wallBottom = dat.w;\n"
             + "  float current = v_texCoords.y - 0.5;\n"
             + "  bool isWall = current > wallBottom && current < wallTop;\n"
-            + "  float texY = dat.x * (current - wallBottom) / (wallTop - wallBottom);\n"
+            + "  float texY = dat.x * (current - wallBottom) / (rayTexDat.z - wallBottom);\n"
             + "  vec2 texCoords = vec2(cameraInfo.z * dat.y, texY);\n"
             + "  vec4 texColor;\n"
             + "  float texID = rayTexDat.x;\n"
