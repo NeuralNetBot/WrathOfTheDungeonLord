@@ -23,6 +23,7 @@ public class GameScreen extends ScreenAdapter {
         World.createInstance();
         renderer.setWalls(World.getWalls());
         renderer.buildLightmap(World.getTorches());
+        renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 

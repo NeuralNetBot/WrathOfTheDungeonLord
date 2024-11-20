@@ -20,6 +20,7 @@ import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
+import game.shootergame.Renderer.RegionIndexCuller;
 import game.shootergame.Renderer.Torch;
 
 public class World {
@@ -34,6 +35,7 @@ public class World {
 
     ArrayList<Wall> walls;
     ArrayList<Torch> torches;
+    RegionIndexCuller torchRegionIndexCuller;
     ArrayList<Integer> doors;
 
     LinkedList<ItemPickup> items;
@@ -98,6 +100,10 @@ public class World {
         return instance.torches;
     }
 
+    public static RegionIndexCuller getTorchRegionIndexCuller() {
+        return instance.torchRegionIndexCuller;
+    }
+
     public static Player getPlayer() {
         return instance.player;
     }
@@ -109,6 +115,7 @@ public class World {
     private World() {
         walls = new ArrayList<>();
         torches = new ArrayList<>();
+        torchRegionIndexCuller = new RegionIndexCuller();
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
@@ -144,6 +151,16 @@ public class World {
                     float y = Float.parseFloat(parts[2]);
                     float radius = Float.parseFloat(parts[3]);
                     torches.add(new Torch(x, y, radius));
+                } else if(type.equals("region")) {
+                    float minX = -Float.parseFloat(parts[1]);
+                    float minY = Float.parseFloat(parts[2]);
+                    float maxX = -Float.parseFloat(parts[3]);
+                    float maxY = Float.parseFloat(parts[4]);
+                    RegionIndexCuller.Region region = new RegionIndexCuller.Region(minX, minY, maxX, maxY);
+                    for (int i = 5; i < parts.length; i++) {
+                        region.indices.add(Integer.parseInt(parts[i]));
+                    }
+                    torchRegionIndexCuller.regions.add(region);
                 }
 
             }
