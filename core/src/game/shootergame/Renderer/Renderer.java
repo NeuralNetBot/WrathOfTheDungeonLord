@@ -112,7 +112,24 @@ public class Renderer {
         return instance;
     }
 
+    public class RenderStatistics {
+        public int walls;
+        public int torches;
+        public int visibleTorches;
+        public int sprites;
+        public int visibleSprites;
+        @Override
+        public String toString() {
+            return "Walls: " + walls + " Torches: " + visibleTorches + "/" + torches + " Sprites: " + visibleSprites + "/" + sprites;
+        }
+    }
+    RenderStatistics stats = new RenderStatistics();
+    public RenderStatistics getRenderStatistics() {
+        return stats;
+    }
+
     public void setWalls(ArrayList<Wall> walls) {
+        stats.walls = walls.size();
         this.walls = walls;
     }
 
@@ -664,9 +681,10 @@ public class Renderer {
             }
         }
         Collections.sort(sprites2_5d, Comparator.comparingDouble(Sprite2_5D::getDst).reversed());
-
+        stats.visibleSprites = 0;
         for (Sprite2_5D sprite : sprites2_5d) {
             if(sprite.isVis) {
+                stats.visibleSprites++;
                 //float idst = 1.0f / sprite.dst;
                 float dstColor = 1.0f;//idst;
                 ShooterGame.getInstance().coreBatch.setColor(dstColor, dstColor, dstColor, 1.0f);
@@ -676,14 +694,17 @@ public class Renderer {
     }
 
     public void addSprite(Sprite2_5D sprite) {
+        stats.sprites++;
         sprites2_5d.add(sprite);
     }
     
     public void removeSprite(Sprite2_5D sprite) {
+        stats.sprites--;
         sprites2_5d.remove(sprite);
     }
 
     public void buildLightmap(ArrayList<Torch> torches) {
+        stats.torches = torches.size();
         this.torches = torches;
         System.out.printf("Building lightmap. Walls: %d Torches: %d\n", walls.size(), torches.size());
         long start = System.nanoTime();
@@ -838,6 +859,8 @@ public class Renderer {
                 torchCounter++;
                 }
         }
+
+        stats.visibleTorches = torchCounter;
         
         return torchCounter;
     }
