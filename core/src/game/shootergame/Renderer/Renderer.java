@@ -384,8 +384,9 @@ public class Renderer {
         this.debugRayDraw = debugRayDraw;
     }
     
-    public void update(float x, float y, float rotation) {
+    public void update(float x, float y, float rotation, float delta) {
         camX = x; camY = y; yaw = rotation;
+        Torch.updateRegion(delta);
     }
 
     public void render() {
@@ -741,7 +742,7 @@ public class Renderer {
 
         Torch.loadTexture();
         for (Torch torch : torches) {
-            addSprite(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.0f, 0.8f, 0.4f));
+            addSprite(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.4f, 1.5f, 0.75f));
         }
 
         long end = System.nanoTime();
