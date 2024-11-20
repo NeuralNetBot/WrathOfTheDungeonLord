@@ -46,6 +46,8 @@ public class Renderer {
     float[] torchData;
     float[] torchWallData;
 
+    float[] rayDepth;
+
     
     float camX = 0.0f;
     float camY = 0.0f;
@@ -271,7 +273,7 @@ public class Renderer {
             }
     
             rayDoorTex[index * 4] = hitWallDoor.textureID;
-            rayDoorTex[index * 4 + 1] = idst;
+            rayDoorTex[index * 4 + 1] = yOffset;
 
             //calculate light info
             ArrayList<TorchAndIndex> wallTorches = wallToTorchMap.get(hitWallDoorIdx);
@@ -327,7 +329,8 @@ public class Renderer {
             rayData[index * 4 + 3] = wallBottom;
     
             rayWallTex[index * 4] = hitWall.textureID;
-            rayWallTex[index * 4 + 1] = idst;
+            rayWallTex[index * 4 + 1] = yOffset;
+            rayDepth[index] = idst;
 
             //calculate light info
             ArrayList<TorchAndIndex> wallTorches = wallToTorchMap.get(hitWallIdx);   
@@ -625,7 +628,7 @@ public class Renderer {
                 //check our rays from the left
                 int stopIndexLeft = leftRayIndex;
                 for (int i = leftRayIndex; i <= rightRayIndex; i++) {
-                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
+                    float idst = 1.0f / rayDepth[Math.max(Math.min(i, (screenX - 1)), 0)];
                     float sdst = visualDistance;
                     if(idst > sdst) {
                         stopIndexLeft = i;
@@ -635,7 +638,7 @@ public class Renderer {
                 //and from right
                 int stopIndexRight = rightRayIndex;
                 for (int i = rightRayIndex; i >= stopIndexLeft; i--) {
-                    float idst = 1.0f / rayWallTex[Math.max(Math.min(i, (screenX - 1)), 0) * 4 + 1];
+                    float idst = 1.0f / rayDepth[Math.max(Math.min(i, (screenX - 1)), 0)];
                     float sdst = visualDistance;
                     if(i == stopIndexLeft) { sprite.isVis = false; break; }//ray stopped at left stop so object is completely behind wall
                     if(idst > sdst) {
@@ -841,6 +844,8 @@ public class Renderer {
         rayWallTex = new float[screenX * 4];
         rayDoorTex = new float[screenX * 4];
 
+        rayDepth = new float[screenX];
+
         torchData = new float[MAX_SHADER_TORCHES * 4];
         torchWallData = new float[MAX_SHADER_TORCHES * MAX_OCCLUSION_WALS * 4];
 
@@ -885,7 +890,7 @@ public class Renderer {
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
-            + "  float lightInfluence = min(length(vec2(rayTexDat.w, texY - 0.5)), 0.8);\n"
+            + "  float lightInfluence = min(length(vec2(rayTexDat.w, 0.5 * (texY - 0.5 + (rayTexDat.y * 0.5)))), 0.8);\n"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
