@@ -713,7 +713,7 @@ public class Renderer {
                     }
                     wallToTorchMap.get(i).add(new TorchAndIndex(torches.get(j), j));
                 }
-
+                if(wall.transparentDoor) continue;//dont want doors blocking lights
                 OcclusionWall[] closestWallsToLight = torchToWallMap.get(j);
                 if(closestWallsToLight == null) {
                     closestWallsToLight = new OcclusionWall[MAX_OCCLUSION_WALS];
