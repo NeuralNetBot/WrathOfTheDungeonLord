@@ -78,7 +78,7 @@ public class GameScreen extends ScreenAdapter {
         }
 
         World.update(delta);
-        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation());
+        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation(), delta);
 
         ScreenUtils.clear(0, 0, 0, 1);
 
