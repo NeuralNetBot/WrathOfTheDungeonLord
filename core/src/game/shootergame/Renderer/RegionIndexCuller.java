@@ -6,7 +6,15 @@ public class RegionIndexCuller {
     static public class Region {
         public float minX, minY, maxX, maxY;
         public ArrayList<Integer> indices;
-        public Region(float minX, float minY, float maxX, float maxY) { this.minX = minX; this.minY = minY; this.maxX = maxX; this.maxY = maxY; indices = new ArrayList<>(); }
+        public Region(float minX, float minY, float maxX, float maxY) {
+            if(minX > maxX) { float t = minX; minX = maxX; maxX = t; }
+            if(minY > maxY) { float t = minY; minY = maxY; maxY = t; }
+            this.minX = minX;
+            this.minY = minY;
+            this.maxX = maxX;
+            this.maxY = maxY;
+            indices = new ArrayList<>();
+        }
     };
 
     public ArrayList<Region> regions;

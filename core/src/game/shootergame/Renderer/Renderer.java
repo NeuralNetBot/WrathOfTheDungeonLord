@@ -27,6 +27,7 @@ import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.Wall;
+import game.shootergame.Renderer.RegionIndexCuller.Region;
 
 public class Renderer {
 
@@ -74,6 +75,7 @@ public class Renderer {
 
     ArrayList<Wall> walls;
     ArrayList<Torch> torches;
+    RegionIndexCuller torchRegionIndexCuller;
 
     private class TorchAndIndex {
         public Torch torch;
@@ -751,6 +753,10 @@ public class Renderer {
         System.out.printf("Lightmap built: %fms\n", durationInMs);
     }
 
+    public void setTorchRegionIndexCuller(RegionIndexCuller culler) {
+        torchRegionIndexCuller = culler;
+    }
+
     //returns torch count filled
     private int buildLightFrustums() {
         float yawR = (float)Math.toRadians(yaw);
@@ -770,64 +776,68 @@ public class Renderer {
 
         int torchCounter = 0;
 
-        for (int i = 0; i < torches.size(); i++) {
+        ArrayList<Region> visibleRegions = torchRegionIndexCuller.getContainedRegions(camX, camY);
+        System.out.println(visibleRegions.size());
+        for (Region region : visibleRegions) {
+            for (int torchIndex : region.indices) {
+                Torch torch = torches.get(torchIndex);
 
-            //max torches achieved per view
-            if(torchCounter >= MAX_SHADER_TORCHES) {
-                break;
-            }
+                //max torches achieved per view
+                if(torchCounter >= MAX_SHADER_TORCHES) {
+                    break;
+                }
 
-            Torch torch = torches.get(i);
-            Vector2 torchVec = new Vector2(torch.x - camX, torch.y - camY);
-            if(torchVec.len() > 55) { //magic light culling distance
-                continue;
-            }
-            float crsL = torchVec.crs(leftPoint);
-            float crsR = torchVec.crs(rightPoint);
-            //quick check to see if center is in view or if light radius is within camera pos
-            if((crsL > 0 && crsR < 0) || torchVec.len() < torch.radius) {
+                Vector2 torchVec = new Vector2(torch.x - camX, torch.y - camY);
+                if(torchVec.len() > 55) { //magic light culling distance
+                    continue;
+                }
+                float crsL = torchVec.crs(leftPoint);
+                float crsR = torchVec.crs(rightPoint);
+                //quick check to see if center is in view or if light radius is within camera pos
+                if((crsL > 0 && crsR < 0) || torchVec.len() < torch.radius) {
+                    torchData[torchCounter * 4] = torch.x;
+                    torchData[torchCounter * 4 + 1] = torch.y;
+                    torchData[torchCounter * 4 + 2] = torch.radius;
+                    OcclusionWall[] oWalls = torchToWallMap.get(torchIndex);
+                    for (int index = 0; index < MAX_OCCLUSION_WALS; index++) {
+                        torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4] = oWalls[index].ax;
+                        torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 1] = oWalls[index].ay;
+                        torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 2] = oWalls[index].bx;
+                        torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 3] = oWalls[index].by;
+                    }
+                    torchCounter++;
+                    continue;
+                }
+
+                //check edges by circle line intersection
+                float tL = torchVec.dot(leftPoint);
+                float tR = torchVec.dot(rightPoint);
+
+                //both miss
+                if(tL < 0 && tR < 0) {
+                    continue;
+                }
+
+                float L2 = torchVec.len2();
+                float dL = L2 - (tL * tL);
+                float dR = L2 - (tR * tR);
+                if(dL > torch.radius * torch.radius && dR > torch.radius * torch.radius) {
+                    continue; //ray miss, skipping torch
+                }
+
                 torchData[torchCounter * 4] = torch.x;
                 torchData[torchCounter * 4 + 1] = torch.y;
                 torchData[torchCounter * 4 + 2] = torch.radius;
-                OcclusionWall[] oWalls = torchToWallMap.get(i);
+                OcclusionWall[] oWalls = torchToWallMap.get(torchIndex);
                 for (int index = 0; index < MAX_OCCLUSION_WALS; index++) {
                     torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4] = oWalls[index].ax;
                     torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 1] = oWalls[index].ay;
                     torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 2] = oWalls[index].bx;
                     torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 3] = oWalls[index].by;
                 }
+
                 torchCounter++;
-                continue;
-            }
-
-            //check edges by circle line intersection
-            float tL = torchVec.dot(leftPoint);
-            float tR = torchVec.dot(rightPoint);
-
-            //both miss
-            if(tL < 0 && tR < 0) {
-                continue;
-            }
-
-            float L2 = torchVec.len2();
-            float dL = L2 - (tL * tL);
-            float dR = L2 - (tR * tR);
-            if(dL > torch.radius * torch.radius && dR > torch.radius * torch.radius) {
-                continue; //ray miss, skipping torch
-            }
-
-            torchData[torchCounter * 4] = torch.x;
-            torchData[torchCounter * 4 + 1] = torch.y;
-            torchData[torchCounter * 4 + 2] = torch.radius;
-            OcclusionWall[] oWalls = torchToWallMap.get(i);
-            for (int index = 0; index < MAX_OCCLUSION_WALS; index++) {
-                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4] = oWalls[index].ax;
-                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 1] = oWalls[index].ay;
-                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 2] = oWalls[index].bx;
-                torchWallData[((index * MAX_SHADER_TORCHES) + torchCounter) * 4 + 3] = oWalls[index].by;
-            }
-
-            torchCounter++;
+                }
         }
         
         return torchCounter;
