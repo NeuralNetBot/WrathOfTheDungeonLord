@@ -35,7 +35,6 @@ public class Torch {
                     animFrames[index++] = tempFrames[i][j];
             }
         }
-        System.out.println(index);
         animation = new Animation<TextureRegion>(0.04167f, animFrames);
         animation.setPlayMode(PlayMode.LOOP);
     }

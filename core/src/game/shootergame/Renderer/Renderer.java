@@ -741,6 +741,7 @@ public class Renderer {
 
         Torch.loadTexture();
         for (Torch torch : torches) {
+            //width 0.75f, torch 46px wide on image and image 128 wide, torch apparent width 0.26953125
             addSprite(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.4f, 1.5f, 0.75f));
         }
 
