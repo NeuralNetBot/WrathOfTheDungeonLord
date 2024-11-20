@@ -776,7 +776,7 @@ public class Renderer {
         int torchCounter = 0;
 
         ArrayList<Region> visibleRegions = torchRegionIndexCuller.getContainedRegions(camX, camY);
-        System.out.println(visibleRegions.size());
+        
         for (Region region : visibleRegions) {
             for (int torchIndex : region.indices) {
                 Torch torch = torches.get(torchIndex);
