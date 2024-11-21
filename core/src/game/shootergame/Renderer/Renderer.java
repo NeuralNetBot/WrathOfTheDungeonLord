@@ -467,14 +467,18 @@ public class Renderer {
         sr.begin(ShapeType.Line);
 
         if(debugRayDraw) {
-            /*
             for (int i = 0; i < screenX; i++) {
                 Color c = new Color(0xffa500ff);
                 sr.setColor(c.lerp(Color.CYAN, (float)i / (float)screenX));
-                float idst = 1.0f / rayWallTex[i*2+1];
-                float dx = rayFloorData[i*4];
-                float dy = rayFloorData[i*4+1];
+                float idst = 1.0f / rayDepth[i];
 
+                Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
+                Vector2 right = new Vector2(forward.y, -forward.x);
+                float halfWidth = (float)Math.tan(Math.toRadians(fov * 0.5f));
+                float offset = ((screenX - i) * 2.0f / (screenX - 1.0f)) - 1.0f;
+
+                float dx = forward.x + offset * right.x * halfWidth;
+                float dy = forward.y + offset * right.y * halfWidth;
 
                 float tx = wx / Math.abs(dx);
                 float ty = wy / Math.abs(dy);
@@ -487,7 +491,7 @@ public class Renderer {
                 float y = (dy * idst / scale);
 
                 sr.line(offsetX, offsetY, x + offsetX, y + offsetY);
-            }*/
+            }
         }
         //Cohen-Sutherland box fitting algorithm
         //https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
