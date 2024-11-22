@@ -180,6 +180,50 @@ public class PhysicsWorld {
 
     //TODO: impliment
     public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
+        float closestDst = Float.MAX_VALUE;
+        Collider hit = null;
+        //check if hit collider
+        for (Collider collider : colliders) {
+            if(collider == self) continue;
+
+            Vector2 L = new Vector2(collider.x - x, collider.y - y);
+            float T = L.x * dx + L.y * dy;
+            float d2 = (L.x * L.x + L.y * L.y) - T * T;
+            if(d2 > collider.radius * collider.radius) continue;
+            float t = (float)Math.sqrt(collider.radius * collider.radius - d2);
+            float t1 = T - t;
+            float t2 = T + t;
+            float dst = 0.0f;
+            if(t1 >= 0) dst = t1;
+            else if(t2 >= 0) dst = t2;
+            else continue;
+            if(closestDst < dst) {
+                closestDst = dst;
+                hit = collider;
+            }
+        }
+
+        //if we hit then we need to check if we hit a wall first or not
+        if(hit != null) {
+            for (Wall wall : walls) {
+                //open door so we ignore hits
+                if(wall.yOffset >= 1.0f) continue;
+
+                Vector2 segDir = new Vector2(wall.a).sub(wall.b);
+                Vector2 segToRay = new Vector2(wall.b).sub(x, y);
+                float crossDir = new Vector2(dx, dy).crs(segDir);
+                float t = segToRay.crs(segDir) / crossDir;
+                float u = segToRay.crs(dx, dy) / crossDir;
+                if(crossDir != 0 && t >= 0 && u >= 0 && u <= 1) {
+                    float dst = t * new Vector2(dx, dy).len();
+                    if(dst < closestDst) { //wall hit was closer than hit entity so we stop
+                        hit = null;
+                        break;
+                    }
+                }
+            }
+        }
+
         return null;
     }
 }
