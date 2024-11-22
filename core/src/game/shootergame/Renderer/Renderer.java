@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -781,9 +782,11 @@ public class Renderer {
         int torchCounter = 0;
 
         ArrayList<Region> visibleRegions = torchRegionIndexCuller.getContainedRegions(camX, camY);
-        System.out.println(visibleRegions.size());
+        HashSet<Integer> alreadyProcesssed = new HashSet<>();
         for (Region region : visibleRegions) {
             for (int torchIndex : region.indices) {
+                if(alreadyProcesssed.contains(torchIndex)) { continue; }
+                alreadyProcesssed.add(torchIndex);
                 Torch torch = torches.get(torchIndex);
 
                 //max torches achieved per view
