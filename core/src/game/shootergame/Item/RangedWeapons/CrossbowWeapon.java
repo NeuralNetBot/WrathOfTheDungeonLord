@@ -70,13 +70,13 @@ public class CrossbowWeapon implements RangedWeapon {
 
     @Override
     public void fire() {
-        firing = true;
         if(ammo > 0) {
+            firing = true;
             ammo--;
             Vector2 d = new Vector2(World.getPlayer().dx(), World.getPlayer().dy()).nor();
             Collider hitCollider = World.getPhysicsWorld().rayCast(World.getPlayerCollider(), World.getPlayer().x(), World.getPlayer().y(), d.x, d.y);
             if(hitCollider != null) {
-                hitCollider.Callback(World.getPlayerCollider(), 0, 0, damage);
+                hitCollider.Callback(World.getPlayerCollider(), 0, 0, damage * World.getPlayer().damageMultiplier);
             }
         }
     }
