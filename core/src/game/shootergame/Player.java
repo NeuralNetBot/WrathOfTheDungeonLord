@@ -15,8 +15,6 @@ import game.shootergame.Physics.Collider;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Objects;
-
 public class Player {
     MeleeWeapon melee;
     RangedWeapon ranged;
