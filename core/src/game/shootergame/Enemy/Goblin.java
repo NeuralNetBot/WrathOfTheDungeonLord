@@ -1,5 +1,7 @@
 package game.shootergame.Enemy;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
@@ -20,10 +22,13 @@ public class Goblin implements Enemy{
 
     Collider currentTargetCollider = null;
 
-    final float moveSpeed = 1.0f;
+    final float moveSpeed = 3.5f;
 
     Texture tex;
     TextureRegion reg;
+
+    ArrayList<Vector2> navPath;
+    int targetIndex = 0;
 
     public Goblin(float x, float y) {
 
@@ -37,10 +42,11 @@ public class Goblin implements Enemy{
 
         //TODO: make dyanmically choose this target
         currentTargetCollider = World.getPlayerCollider();
+        navPath = null;
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
+        sprite = new Sprite2_5D(reg, x, y, -0.75f, 3.0f, 0.5f);
         Renderer.inst().addSprite(sprite);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -60,19 +66,19 @@ public class Goblin implements Enemy{
         x += dx;
         y += dy;
 
-        if(currentTargetCollider != null) {
-            //TODO: make this use path finding instead of "dumb" moves
-            Vector2 move = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y);
-            if(move.len() > 1.0f) {
-                move.nor();
-                move.scl(delta * moveSpeed);
-                dx = move.x;
-                dy = move.y;
-                collider.dx = dx;
-                collider.dy = dy;
+        if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
+            Vector2 targetNode = navPath.get(targetIndex).cpy();
+            Vector2 direction = targetNode.cpy().sub(x, y);
+            float dist = direction.len();
+            
+            if(dist < moveSpeed * delta) {
+                x = targetNode.x;
+                y = targetNode.y;
+                targetIndex++;
             } else {
-                collider.dx = 0.0f;
-                collider.dy = 0.0f;
+                direction.nor().scl(moveSpeed * delta);
+                collider.dx = direction.x;
+                collider.dy = direction.y;
             }
         } else {
             collider.dx = 0.0f;
@@ -88,6 +94,16 @@ public class Goblin implements Enemy{
 
     @Override
     public void tickPathing() {
+        if(currentTargetCollider != null) {
+            navPath = World.getNavMesh().pathFind(new Vector2(x, y), new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+            if(navPath == null) { //path find failed, so enter "dumb search" mode i.e. direct light on sight path
+                navPath = new ArrayList<>();
+                navPath.add(new Vector2(x, y));
+                navPath.add(new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+            }
+        } else {
+            navPath = null;
+        }
     }
 
     @Override

@@ -12,7 +12,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -29,7 +28,6 @@ import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.Wall;
-import game.shootergame.World;
 import game.shootergame.Renderer.RegionIndexCuller.Region;
 
 public class Renderer {
@@ -557,27 +555,8 @@ public class Renderer {
         sr.circle(offsetX, offsetY, 0.01f, 8);
         sr.line(offsetX, offsetY, offsetX + -(float)Math.cos(yawR) / 25, offsetY + (float)Math.sin(yawR) / 25);
 
-        if(Gdx.input.isKeyJustPressed(Keys.C)) {
-            theindex++;
-        }
-
-        path = World.getNavMesh().pathFind(new Vector2(0, 0), new Vector2(camX, camY));
-
-        if(path != null) {
-            for (int i = 0; i < path.size() - 1; i++) {
-                Vector2 a = path.get(i).cpy();
-                a.x = -a.x;
-                a.sub(-camX, camY).scl(1.0f / scale).add(offsetX, offsetY);
-                Vector2 b = path.get(i+1).cpy();
-                b.x = -b.x;
-                b.sub(-camX, camY).scl(1.0f / scale).add(offsetX, offsetY);
-                sr.line(a, b);
-            }
-        }
-
         sr.end();
     }
-    int theindex = 0;
     
     ArrayList<Vector2> path;
 

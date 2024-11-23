@@ -43,6 +43,7 @@ public class World {
     LinkedList<ItemPickup> items;
 
     LinkedList<Enemy> enemies;
+    int pathTickIndex = 0;
 
     NavMesh navMesh;
 
@@ -74,8 +75,17 @@ public class World {
             instance.walls.get(door).height = 1.0f - instance.walls.get(door).yOffset / 2.0f;
         }
 
+        int index = 0;
         for (Enemy enemy : instance.enemies) {
             enemy.update(delta);
+            if(index == instance.pathTickIndex)
+                enemy.tickPathing();
+            
+            index++;
+        }
+        instance.pathTickIndex++;
+        if(instance.pathTickIndex >= instance.enemies.size()) {
+            instance.pathTickIndex = 0;
         }
     }
 
