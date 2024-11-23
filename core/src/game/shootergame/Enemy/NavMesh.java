@@ -90,6 +90,16 @@ public class NavMesh {
         while(node != null) {
             Triangle tri = triangles.get(node.idx);
             Vector2 center = tri.getCenter();
+
+            if(node.parent != null) {
+                Triangle tri2 = triangles.get(node.parent.idx);
+                Vector2 center2 = tri2.getCenter();
+                Edge edge = tri2.getEdges()[node.parentEdgeIndex];
+                if(linesIntersect(center, center2, edge.a, edge.b)) {
+                    node = node.parent;
+                }
+            }
+
             path.add(center);
             node = node.parent;
         }
@@ -102,8 +112,9 @@ public class NavMesh {
         public float gCost;
         public float fCost;
         public Node parent;
+        public int parentEdgeIndex;
 
-        public Node(int idx) { this.idx = idx; parent = null; gCost = Float.MAX_VALUE; fCost = Float.MAX_VALUE; }
+        public Node(int idx) { this.idx = idx; parent = null; parentEdgeIndex = -1; gCost = Float.MAX_VALUE; fCost = Float.MAX_VALUE; }
     }
     
     private float heuristic(Node a, Node b) {
@@ -172,6 +183,7 @@ public class NavMesh {
                     neighbor.gCost = tG;
                     neighbor.fCost = tG + heuristic(neighbor, endN);
                     neighbor.parent = current;
+                    neighbor.parentEdgeIndex = i;
 
                     if(!openSet.contains(neighbor)) {
                         openSet.add(neighbor);
