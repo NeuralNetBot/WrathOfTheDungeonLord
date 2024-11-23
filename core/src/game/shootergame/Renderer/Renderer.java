@@ -449,7 +449,7 @@ public class Renderer {
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
-   }
+    }
 
     public void renderMinimap() {
         float yawR = (float)Math.toRadians(yaw);
@@ -561,7 +561,8 @@ public class Renderer {
             theindex++;
         }
 
-        path = World.getNavMesh().pathFind(new Vector2(camX, camY), new Vector2(0, 0));
+        path = World.getNavMesh().pathFind(new Vector2(0, 0), new Vector2(camX, camY));
+
         if(path != null) {
             for (int i = 0; i < path.size() - 1; i++) {
                 Vector2 a = path.get(i).cpy();

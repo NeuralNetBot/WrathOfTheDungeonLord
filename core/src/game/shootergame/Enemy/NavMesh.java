@@ -1,6 +1,7 @@
 package game.shootergame.Enemy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
@@ -87,6 +88,7 @@ public class NavMesh {
 
     private ArrayList<Vector2> reconstructPath(Node node, Vector2 start, Vector2 end) {
         ArrayList<Vector2> path = new ArrayList<>();
+        path.add(end);
         while(node != null) {
             Triangle tri = triangles.get(node.idx);
             Vector2 center = tri.getCenter();
@@ -103,7 +105,7 @@ public class NavMesh {
             path.add(center);
             node = node.parent;
         }
-        path.add(start);
+        Collections.reverse(path);
         return path;
     }
 
