@@ -12,6 +12,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
+import game.shootergame.Enemy.NavMesh;
+import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
@@ -41,6 +43,8 @@ public class World {
     LinkedList<ItemPickup> items;
 
     LinkedList<Enemy> enemies;
+
+    NavMesh navMesh;
 
     public static void createInstance() {
         instance = new World();
@@ -112,6 +116,10 @@ public class World {
         return instance.physicsWorld;
     }
 
+    public static NavMesh getNavMesh() {
+        return instance.navMesh;
+    }
+
     private World() {
         walls = new ArrayList<>();
         torches = new ArrayList<>();
@@ -119,6 +127,7 @@ public class World {
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
+        navMesh = new NavMesh();
     }
 
     private void loadFromFile(String mapName) {
@@ -161,6 +170,14 @@ public class World {
                         region.indices.add(Integer.parseInt(parts[i]));
                     }
                     torchRegionIndexCuller.regions.add(region);
+                } else if(type.equals("nav")) {
+                    float ax = -Float.parseFloat(parts[1]);
+                    float ay = Float.parseFloat(parts[2]);
+                    float bx = -Float.parseFloat(parts[3]);
+                    float by = Float.parseFloat(parts[4]);
+                    float cx = -Float.parseFloat(parts[5]);
+                    float cy = Float.parseFloat(parts[6]);
+                    navMesh.addTriangle(new Triangle(ax, ay, bx, by, cx, cy));
                 }
 
             }
