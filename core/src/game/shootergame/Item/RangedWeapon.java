@@ -8,4 +8,5 @@ public interface RangedWeapon {
     boolean isReloading();
     int getAmmo();
     boolean isHeld();
+    void setAmmo(int ammo);
 }

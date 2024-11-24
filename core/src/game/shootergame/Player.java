@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.Powerup;
 import game.shootergame.Item.RangedWeapon;
@@ -50,6 +51,11 @@ public class Player {
     float dodgeTime;
     float staminaRegenDelay;
 
+    final float regenCheckpointPercentage = 25.0f;
+    final float damageRegenDelayTime = 5.0f;
+    float regenDelayTimer = 0.0f;
+    final float regenRate = 10.0f;
+
     int lastMouse = 0;
 
     Collider collider;
@@ -57,6 +63,9 @@ public class Player {
     LinkedList<Powerup> activePowerups;
 
     Sprite barSprite;
+    Sprite powerupSprite;
+    Texture tex;
+    TextureRegion reg;
 
     public Player(MeleeWeapon melee) {
         this.melee = melee;
@@ -79,13 +88,18 @@ public class Player {
                 dx = newDX; dy = newDY;
             }
             if(damage != 0.0f) {
-                float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
-                health -= damageDone;
+                doDamage(damage);
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
 
         activePowerups = new LinkedList<>();
+    }
+
+    void doDamage(float damage) {
+        float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
+        health -= damageDone;
+        regenDelayTimer = 0.0f;//reset the timer when taken damage
     }
 
     void processInput() {
@@ -174,6 +188,16 @@ public class Player {
             }
         }
 
+        if(regenDelayTimer >= damageRegenDelayTime) {
+            float stepSize = (maxHealth * regenCheckpointPercentage) / 100.0f;
+            float checkPointIDX = (float)Math.ceil(health / stepSize);
+            float checkPointValue = checkPointIDX * stepSize;
+            health += regenRate * delta;
+            health = Math.min(checkPointValue, health);
+        } else {
+            regenDelayTimer += delta;
+        }
+
         rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
@@ -245,9 +269,25 @@ public class Player {
         barSprite.setSize(1.0f, 0.03f);
         barSprite.setColor(Color.BLACK);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
-        barSprite.setSize(health / maxHealth, 0.03f);
         barSprite.setColor(healthColor);
-        barSprite.draw(ShooterGame.getInstance().coreBatch);
+        int maxI = (int)(100.0f/ regenCheckpointPercentage);
+        for (int i = 0; i < maxI; i++) {
+            barSprite.setPosition(-aspect + 0.1f + (regenCheckpointPercentage / 100.0f * i), 0.9f);
+
+            float healthPerMaker = maxHealth * (regenCheckpointPercentage / 100.0f);
+            float healthMarkerMax = healthPerMaker * (i + 1);
+            float healthMarkerMin = healthPerMaker * (i);
+            if(health >= healthMarkerMin) {
+                float l = 0.0f;
+                if(health >= healthMarkerMax)
+                    l = (regenCheckpointPercentage / 100.0f);
+                else
+                    l = ((health - healthMarkerMin) / healthPerMaker) * (regenCheckpointPercentage / 100.0f);
+                
+                barSprite.setSize(l * (i == maxI-1 ? 1.0f : 0.95f), 0.03f);
+                barSprite.draw(ShooterGame.getInstance().coreBatch);
+            }
+        }
 
         barSprite.setPosition(-aspect + 0.1f, 0.8f);
 
@@ -257,6 +297,52 @@ public class Player {
         barSprite.setSize(stamina / maxStamina, 0.03f);
         barSprite.setColor(Color.GOLDENROD);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
+
+        int visibleIndex = 0;
+
+        for (int i = 0; i < activePowerups.size(); i++) {
+            Powerup powerup = activePowerups.get(i);
+
+            if (powerup.getName().equals("Health Pack")) {
+                reg = new TextureRegion(tex, 0, 256, 256, 256);
+                powerupSprite = new Sprite (reg);
+                powerupSprite.setPosition(-aspect + 1.11f, 0.88f);
+                powerupSprite.setSize(0.07f, 0.07f);
+                powerupSprite.draw(ShooterGame.getInstance().coreBatch);
+                continue;
+            }
+
+            barSprite.setPosition(-aspect + 0.1f, 0.7f - (0.1f * visibleIndex));
+            barSprite.setSize(0.5f, 0.03f);
+            barSprite.setColor(Color.BLACK);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+            barSprite.setSize((powerup.getRemainingTime() / powerup.getMaxTime()) * 0.5f, 0.03f);
+
+            tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
+
+            switch (powerup.getName()) {
+                case "Attack Speed":
+                    reg = new TextureRegion(tex, 0, 0, 256, 256);
+                    barSprite.setColor(Color.FIREBRICK);
+                    break;
+                case "Damage Boost":
+                    reg = new TextureRegion(tex, 256, 256, 256, 256);
+                    barSprite.setColor(Color.MAGENTA);
+                    break;
+                case "Damage Resist":
+                    reg = new TextureRegion(tex, 256, 0, 256, 256);
+                    barSprite.setColor(Color.BLUE);
+                    break;
+            }
+
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+
+            powerupSprite = new Sprite(reg);
+            powerupSprite.setPosition(-aspect + 0.015f, 0.68f - (0.1f * visibleIndex));
+            powerupSprite.setSize(0.07f, 0.07f);
+            powerupSprite.draw(ShooterGame.getInstance().coreBatch);
+            visibleIndex++;
+        }
     }
 
     void applyDamage(float damage) {
@@ -276,7 +362,7 @@ public class Player {
     public float getHealth() { return health; }
 
     public void addHealth(float health) {
-        this.health = Math.min(this.health + health, 100.0f);
+        this.health = Math.min(this.health + health, maxHealth);
     }
 
     public LinkedList<Powerup> getActivePowerups() { return activePowerups; }

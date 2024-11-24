@@ -14,9 +14,11 @@ public class AttackSpeedPowerup implements Powerup {
     private boolean isActive;
     Texture tex;
     TextureRegion reg;
+    float maxTime;
 
     public AttackSpeedPowerup() {
-        this.remainingTime = 10.0f;
+        this.maxTime = 15.f;
+        this.remainingTime = maxTime;
         this.isActive = true;
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -64,6 +66,10 @@ public class AttackSpeedPowerup implements Powerup {
     @Override
     public TextureRegion getItemTexture() {
         return reg;
+    }
+
+    public float getMaxTime() {
+        return maxTime;
     }
 
 }

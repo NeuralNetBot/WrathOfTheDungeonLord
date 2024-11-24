@@ -14,9 +14,11 @@ public class DamageResistPowerup implements Powerup {
     private boolean isActive;
     Texture tex;
     TextureRegion reg;
+    float maxTime;
 
     public DamageResistPowerup() {
-        this.remainingTime = 10.0f;
+        this.maxTime = 30.f;
+        this.remainingTime = maxTime;
         this.isActive = true;
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -66,4 +68,7 @@ public class DamageResistPowerup implements Powerup {
         return reg;
     }
 
+    public float getMaxTime() {
+        return maxTime;
+    }
 }
