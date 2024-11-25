@@ -19,6 +19,7 @@ import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
 import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
+import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
@@ -251,8 +252,6 @@ public class World {
         items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
 
         enemies.add(new Goblin(0.0f, 0.0f));
-        enemies.add(new Goblin(1.0f, 0.0f));
-        enemies.add(new Goblin(0.0f, 1.0f));
-        enemies.add(new Goblin(1.0f, 1.0f));
+        enemies.add(new Slime(1.0f, 0.0f));
     }
 }
