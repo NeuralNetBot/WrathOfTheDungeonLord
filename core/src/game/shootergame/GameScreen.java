@@ -22,6 +22,8 @@ public class GameScreen extends ScreenAdapter {
         renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
         renderer.setWalls(World.getWalls());
+        renderer.buildLightmap(World.getTorches());
+        renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 
@@ -72,12 +74,12 @@ public class GameScreen extends ScreenAdapter {
             Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
         }
 
-        if (!hud.isOpen()) {
+        if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
             World.processInput();
         }
 
         World.update(delta);
-        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation());
+        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation(), delta);
 
         ScreenUtils.clear(0, 0, 0, 1);
 
@@ -101,6 +103,7 @@ public class GameScreen extends ScreenAdapter {
         hud.draw(coreBatch);
         coreBatch.end();
 
+        renderer.renderMinimap();
     }
 
 	@Override

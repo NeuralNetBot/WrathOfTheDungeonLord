@@ -12,4 +12,5 @@ public interface Powerup {
     boolean isActive();
     String getName();
     TextureRegion getItemTexture();
+    float getMaxTime();
 }

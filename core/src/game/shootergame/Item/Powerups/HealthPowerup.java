@@ -13,25 +13,34 @@ public class HealthPowerup implements Powerup {
     boolean isActive;
     Texture tex;
     TextureRegion reg;
+    private float maxTime;
+    private float remainingTime;
 
     public HealthPowerup() {
+        maxTime = 1.5f;
+        this.remainingTime = maxTime;
         isActive = true;
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         reg = new TextureRegion(tex, 0, 256, 256, 256);
+
     }
 
     @Override
     public void update(float delta) {
-
+        if (isActive) {
+            remainingTime -= delta;
+            if (remainingTime <= 0) {
+                isActive = false;
+            }
+        }
     }
 
     @Override
     public void onActivate(Player player) {
         player.addHealth(25.0f);
         System.out.println("Player Health: " + player.getHealth());
-        isActive = false;
     }
 
     @Override
@@ -41,7 +50,7 @@ public class HealthPowerup implements Powerup {
 
     @Override
     public float getRemainingTime() {
-        return 0;
+        return remainingTime;
     }
 
     @Override
@@ -56,6 +65,10 @@ public class HealthPowerup implements Powerup {
     @Override
     public TextureRegion getItemTexture() {
         return reg;
+    }
+
+    public float getMaxTime() {
+        return maxTime;
     }
 
 }
