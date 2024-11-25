@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -100,13 +101,20 @@ public class World {
             entry.getValue().update(delta);
         }
 
-        for (Enemy enemy : instance.enemies) {
+        Iterator<Enemy> it = instance.enemies.iterator();
+        while(it.hasNext()) {
+            Enemy enemy = it.next();
             enemy.update(delta);
             if(index == instance.pathTickIndex)
-                enemy.tickPathing();
-            
+            enemy.tickPathing();
             index++;
+
+            if(!enemy.isAlive()) {
+                enemy.onKill();
+                it.remove();
+            }
         }
+
         instance.pathTickIndex++;
         if(instance.pathTickIndex >= instance.enemies.size()) {
             instance.pathTickIndex = 0;
