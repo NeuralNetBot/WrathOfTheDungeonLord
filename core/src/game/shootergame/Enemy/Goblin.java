@@ -33,7 +33,7 @@ public class Goblin implements Enemy{
         reg = new TextureRegion(tex, 0, 0, 1024, 1024);
 
 
-        health = 100.0f;
+        health = 25.0f;
 
         //TODO: make dyanmically choose this target
         currentTargetCollider = World.getPlayerCollider();
