@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
@@ -37,6 +38,8 @@ public class World {
     LinkedList<ItemPickup> items;
 
     LinkedList<Enemy> enemies;
+
+    Sound ambient;
 
     public static void createInstance() {
         instance = new World();
@@ -105,6 +108,11 @@ public class World {
         doors = new ArrayList<>();
         items = new LinkedList<>();
         enemies = new LinkedList<>();
+
+        ShooterGame.getInstance().am.load("dungeon_ambient.mp3", Sound.class);
+        ShooterGame.getInstance().am.finishLoading();
+        ambient = ShooterGame.getInstance().am.get("dungeon_ambient.mp3", Sound.class);
+        ambient.loop(0.15f);
     }
 
     private void loadFromFile(String mapName) {
