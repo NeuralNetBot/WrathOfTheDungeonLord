@@ -85,8 +85,10 @@ public class Player {
 
         ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
+        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);
+        footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
+        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
 
@@ -334,8 +336,6 @@ public class Player {
             barSprite.setColor(Color.BLACK);
             barSprite.draw(ShooterGame.getInstance().coreBatch);
             barSprite.setSize((powerup.getRemainingTime() / powerup.getMaxTime()) * 0.5f, 0.03f);
-
-            tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
 
             switch (powerup.getName()) {
                 case "Attack Speed":
