@@ -31,6 +31,8 @@ public class SwordWeapon implements MeleeWeapon{
     Sound wooshSound;
     Sound hitSound;
 
+    float animFrameSpeed = 0.04167f;
+
     public SwordWeapon() {
         ShooterGame.getInstance().am.load("sword_woosh.mp3", Sound.class);
         ShooterGame.getInstance().am.load("sword_hit.mp3", Sound.class);
@@ -47,7 +49,7 @@ public class SwordWeapon implements MeleeWeapon{
                 animFrames[index++] = tempFrames[i][j];
             }
         }
-        animation = new Animation<TextureRegion>(0.04167f, animFrames);
+        animation = new Animation<TextureRegion>(animFrameSpeed, animFrames);
         sprite = new Sprite(animation.getKeyFrame(0.0f));
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
         sprite.setOriginCenter();
@@ -79,6 +81,7 @@ public class SwordWeapon implements MeleeWeapon{
     @Override
     public void attackLight() {
         if(!attackingLight) {
+            animation.setFrameDuration(animFrameSpeed / World.getPlayer().attackSpeed);
             wooshSound.play();
             ArrayList<Collider> hits = World.getPhysicsWorld().runAngleSweep(World.getPlayerCollider(),
               World.getPlayer().x(), World.getPlayer().y(),
