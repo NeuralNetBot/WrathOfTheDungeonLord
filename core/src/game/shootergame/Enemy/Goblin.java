@@ -17,25 +17,31 @@ public class Goblin implements Enemy{
     float x, y;
     float dx, dy;
     float health;
-    Sprite2_5D sprite;
     Collider collider;
 
     Collider currentTargetCollider = null;
 
     final float moveSpeed = 3.5f;
 
-    Texture tex;
-    TextureRegion reg;
+    Sprite2_5D spriteLow;
+    Sprite2_5D spriteHigh;
+    Texture texLow;
+    Texture texHigh;
+    TextureRegion regLow;
+    TextureRegion regHigh;
 
     ArrayList<Vector2> navPath;
     int targetIndex = 0;
 
     public Goblin(float x, float y) {
 
-        ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_low.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_high.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
-        reg = new TextureRegion(tex, 0, 0, 1024, 1024);
+        texLow = ShooterGame.getInstance().am.get("goblin_low.png", Texture.class);
+        texHigh = ShooterGame.getInstance().am.get("goblin_high.png", Texture.class);
+        regLow = new TextureRegion(texLow, 0, 0, 128, 80);
+        regHigh = new TextureRegion(texHigh, 0, 0, 128, 80);
 
 
         health = 100.0f;
@@ -46,8 +52,10 @@ public class Goblin implements Enemy{
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(reg, x, y, -0.75f, 3.0f, 0.5f);
-        Renderer.inst().addSprite(sprite);
+        spriteLow = new Sprite2_5D(regLow, x, y, -1.35f, 1.25f, 2.0f);
+        Renderer.inst().addSprite(spriteLow);
+        spriteHigh = new Sprite2_5D(regHigh, x, y, -0.1f, 1.25f, 2.0f);
+        Renderer.inst().addSprite(spriteHigh);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
@@ -88,8 +96,10 @@ public class Goblin implements Enemy{
         collider.x = x;
         collider.y = y;
         
-        sprite.x = x;
-        sprite.y = y;
+        spriteLow.x = x;
+        spriteLow.y = y;
+        spriteHigh.x = x;
+        spriteHigh.y = y;
     }
 
     @Override
@@ -108,7 +118,8 @@ public class Goblin implements Enemy{
 
     @Override
     public void onKill() {
-        Renderer.inst().removeSprite(sprite);
+        Renderer.inst().removeSprite(spriteLow);
+        Renderer.inst().removeSprite(spriteHigh);
         World.getPhysicsWorld().removeCollider(collider);
     }
     
