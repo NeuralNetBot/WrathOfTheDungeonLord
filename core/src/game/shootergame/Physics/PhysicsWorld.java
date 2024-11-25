@@ -174,8 +174,8 @@ public class PhysicsWorld {
 
                 if(angleBetweenCenters > angleMin && angleBetweenCenters < angleMax) {
                     collider.Callback(collider, x, y, damage);
+                    hits.add(collider);
                 }
-                hits.add(collider);
             }
         }
         return hits;

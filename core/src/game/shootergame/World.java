@@ -251,5 +251,8 @@ public class World {
         items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
 
         enemies.add(new Goblin(0.0f, 0.0f));
+        enemies.add(new Goblin(1.0f, 0.0f));
+        enemies.add(new Goblin(0.0f, 1.0f));
+        enemies.add(new Goblin(1.0f, 1.0f));
     }
 }
