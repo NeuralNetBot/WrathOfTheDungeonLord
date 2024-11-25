@@ -5,8 +5,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
@@ -20,6 +24,9 @@ import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Network.Client;
+import game.shootergame.Network.RemotePlayer;
+import game.shootergame.Network.Server;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
 import game.shootergame.Renderer.RegionIndexCuller;
@@ -47,6 +54,12 @@ public class World {
 
     NavMesh navMesh;
 
+    ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
+
+    Server server;
+    Client client;
+    Sound ambient;
+
     public static void createInstance() {
         instance = new World();
         instance.init();
@@ -57,6 +70,13 @@ public class World {
     }
 
     public static void processInput() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            new Thread(new Server(instance.remotePlayers)).start();
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+            instance.client = new Client(instance.remotePlayers);
+        }
         instance.player.processInput();
     }
 
@@ -76,6 +96,10 @@ public class World {
         }
 
         int index = 0;
+        for (Entry<Integer, RemotePlayer> entry : instance.remotePlayers.entrySet()) {
+            entry.getValue().update(delta);
+        }
+
         for (Enemy enemy : instance.enemies) {
             enemy.update(delta);
             if(index == instance.pathTickIndex)
@@ -138,6 +162,12 @@ public class World {
         items = new LinkedList<>();
         enemies = new LinkedList<>();
         navMesh = new NavMesh();
+        remotePlayers = new ConcurrentHashMap<>();
+
+        ShooterGame.getInstance().am.load("dungeon_ambient.mp3", Sound.class);
+        ShooterGame.getInstance().am.finishLoading();
+        ambient = ShooterGame.getInstance().am.get("dungeon_ambient.mp3", Sound.class);
+        ambient.loop(0.15f);
     }
 
     private void loadFromFile(String mapName) {
@@ -191,6 +221,9 @@ public class World {
                 }
 
             }
+            System.out.println("Map: '" + mapName + "' loaded");
+            System.out.println((walls.size() - doors.size()) + " walls");
+            System.out.println(doors.size() + " doors");
         } catch (IOException e) {
             e.printStackTrace();
         }

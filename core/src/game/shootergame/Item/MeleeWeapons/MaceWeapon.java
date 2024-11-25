@@ -16,7 +16,9 @@ public class MaceWeapon implements MeleeWeapon {
 
     boolean attackingLight = false;
 
-    final float damage = 1.0f;
+    final float lightDamage = 12.0f;
+    final float heavyDamage = 28.0f;
+
     final float reach = 0.7f;
     final float angleReach = (float)Math.toRadians(30);
 
@@ -49,10 +51,6 @@ public class MaceWeapon implements MeleeWeapon {
                 animTime = 0.0f;
                 attackingLight = false;
             }
-            //TODO: make so it doesnt attack every frame while the attack is playing
-            World.getPhysicsWorld().runAngleSweep(World.getPlayerCollider(),
-                    World.getPlayer().x(), World.getPlayer().y(),
-                    (float) Math.toRadians(World.getPlayer().rotation()), angleReach, reach, damage * World.getPlayer().damageMultiplier);
         }
     }
 
@@ -67,6 +65,11 @@ public class MaceWeapon implements MeleeWeapon {
 
     @Override
     public void attackLight() {
+        if(!attackingLight) {
+            World.getPhysicsWorld().runAngleSweep(World.getPlayerCollider(),
+              World.getPlayer().x(), World.getPlayer().y(),
+               (float) Math.toRadians(World.getPlayer().rotation()), angleReach, reach, lightDamage * World.getPlayer().damageMultiplier);
+        }
         attackingLight = true;
     }
 
