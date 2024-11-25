@@ -1,5 +1,6 @@
 package game.shootergame.Item.MeleeWeapons;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -22,9 +23,13 @@ public class SwordWeapon implements MeleeWeapon{
     final float reach = 1.0f;
     final float angleReach = (float)Math.toRadians(30);
 
+    Sound wooshSound;
+
     public SwordWeapon() {
+        ShooterGame.getInstance().am.load("sword_woosh.mp3", Sound.class);
         ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
+        wooshSound = ShooterGame.getInstance().am.get("sword_woosh.mp3", Sound.class);
         spriteSheet = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
         TextureRegion[][] tempFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / 4, spriteSheet.getHeight() / 4);
         TextureRegion[] animFrames = new TextureRegion[4 * 4];
