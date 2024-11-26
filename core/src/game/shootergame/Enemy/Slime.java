@@ -22,9 +22,11 @@ public class Slime implements Enemy{
 
     Collider currentTargetCollider = null;
 
+    final float damage = 5.0f;
+
     final float moveSpeed = 2.0f;
     final float jumpDistance = 0.75f;
-    final float jumpCooldown = 0.3f;
+    final float jumpCooldown = 0.5f;
     float jumpCooldownTimer = 0.0f;
     float amountJumped = 0.0f;
     boolean isJumping = false;
@@ -86,7 +88,7 @@ public class Slime implements Enemy{
                 //TODO: check if its any player collider including remote
                 if(isJumping && jumpOnceDamage && collider == World.getPlayerCollider()) {
                     jumpOnceDamage = false;
-                    collider.Callback(this.collider, 0.0f, 0.0f, 10.0f);
+                    collider.Callback(this.collider, 0.0f, 0.0f, this.damage);
                 }
             }
             if(damage != 0.0f) {
