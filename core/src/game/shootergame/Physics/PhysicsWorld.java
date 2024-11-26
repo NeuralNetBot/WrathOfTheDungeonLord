@@ -160,28 +160,46 @@ public class PhysicsWorld {
     }
 
     public ArrayList<Collider> runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+
+        Vector2 leftPoint = new Vector2((float)Math.cos(direction + angle/2), (float)Math.sin(direction + angle/2));
+        Vector2 rightPoint = new Vector2((float)Math.cos(direction - angle/2), (float)Math.sin(direction - angle/2));
+
         ArrayList<Collider> hits = new ArrayList<>();
         for (Collider collider : colliders) {
             if(collider == self) continue;
             float dst = Vector2.dst(x, y, collider.x, collider.y);
             if(dst <= distance + collider.radius) {
-                float angleBetweenCenters = (float)Math.atan2(collider.y - y, collider.x - x);
-                direction = direction % (2.0f * (float)Math.PI);
-                float angleMax = direction + (angle / 2.0f);
-                angleMax = angleMax % (2.0f * (float)Math.PI);
-                float angleMin = direction - (angle / 2.0f);
-                angleMin = angleMin % (2.0f * (float)Math.PI);
-
-                if(angleBetweenCenters > angleMin && angleBetweenCenters < angleMax) {
+                Vector2 colliderVec = new Vector2(collider.x - x, collider.y - y);
+                float crsL = colliderVec.crs(leftPoint);
+                float crsR = colliderVec.crs(rightPoint);
+                if(crsL > 0 && crsR < 0) {
                     collider.Callback(collider, x, y, damage);
                     hits.add(collider);
+                    continue;
                 }
+
+                float tL = colliderVec.dot(leftPoint);
+                float tR = colliderVec.dot(rightPoint);
+
+                //both miss
+                if(tL < 0 && tR < 0) {
+                    continue;
+                }
+
+                float L2 = colliderVec.len2();
+                float dL = L2 - (tL * tL);
+                float dR = L2 - (tR * tR);
+                if(dL > collider.radius * collider.radius && dR > collider.radius * collider.radius) {
+                    continue;
+                }
+
+                collider.Callback(collider, x, y, damage);
+                hits.add(collider);
             }
         }
         return hits;
     }
 
-    //TODO: impliment
     public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
         float closestDst = Float.MAX_VALUE;
         Collider hit = null;
