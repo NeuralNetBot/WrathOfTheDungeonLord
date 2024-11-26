@@ -106,7 +106,7 @@ public class Player {
     }
 
     void doDamage(float damage) {
-        float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
+        float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
         health -= damageDone;
         regenDelayTimer = 0.0f;//reset the timer when taken damage
     }

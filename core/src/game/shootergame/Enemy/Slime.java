@@ -28,6 +28,7 @@ public class Slime implements Enemy{
     float jumpCooldownTimer = 0.0f;
     float amountJumped = 0.0f;
     boolean isJumping = false;
+    boolean jumpOnceDamage = false;
     Vector2 targetDirection;
 
     Texture tex;
@@ -81,6 +82,12 @@ public class Slime implements Enemy{
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
                 dx = newDX; dy = newDY;
+            } else {
+                //TODO: check if its any player collider including remote
+                if(isJumping && jumpOnceDamage && collider == World.getPlayerCollider()) {
+                    jumpOnceDamage = false;
+                    collider.Callback(this.collider, 0.0f, 0.0f, 10.0f);
+                }
             }
             if(damage != 0.0f) {
                 health -= damage;
@@ -102,10 +109,9 @@ public class Slime implements Enemy{
         y += dy;
 
         if(currentTargetCollider != null && !isJumping && jumpCooldownTimer >= jumpCooldown) {
-            targetDirection = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y);
-            float dst = targetDirection.len();
-            targetDirection.scl(1.0f / dst);
-            isJumping = dst >= jumpDistance + 1.0f;
+            targetDirection = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y).nor();
+            isJumping = true;
+            jumpOnceDamage = true;
         }
 
         if(isJumping) {
