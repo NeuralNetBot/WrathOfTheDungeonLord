@@ -159,7 +159,8 @@ public class PhysicsWorld {
         }
     }
 
-    public void runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+    public ArrayList<Collider> runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+        ArrayList<Collider> hits = new ArrayList<>();
         for (Collider collider : colliders) {
             if(collider == self) continue;
             float dst = Vector2.dst(x, y, collider.x, collider.y);
@@ -174,8 +175,10 @@ public class PhysicsWorld {
                 if(angleBetweenCenters > angleMin && angleBetweenCenters < angleMax) {
                     collider.Callback(collider, x, y, damage);
                 }
+                hits.add(collider);
             }
         }
+        return hits;
     }
 
     //TODO: impliment

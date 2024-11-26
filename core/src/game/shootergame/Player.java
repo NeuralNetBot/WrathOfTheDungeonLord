@@ -3,9 +3,11 @@ package game.shootergame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import game.shootergame.Item.MeleeWeapon;
@@ -33,6 +35,7 @@ public class Player {
 
     float x, y;
     float dx = 0.0f, dy = 0.0f;
+    float distanceMoved = 0.0f;
 
     float rotation;
 
@@ -61,6 +64,8 @@ public class Player {
     Texture tex;
     TextureRegion reg;
 
+    Sound footstepSound;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
@@ -72,8 +77,10 @@ public class Player {
         resistanceMultiplier = 1.0f;
         attackSpeed = 1.0f;
 
+        ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
+        footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
 
@@ -183,6 +190,14 @@ public class Player {
 
         x += dx;
         y += dy;
+
+        float dst = Vector2.dst(dx, dy, 0, 0);
+        distanceMoved += dst;
+        if(distanceMoved > 1.75f) {
+            footstepSound.play(0.05f, 0.75f, 0.0f);
+            distanceMoved = 0.0f;
+        }
+
         collider.x = x;
         collider.y = y;
 

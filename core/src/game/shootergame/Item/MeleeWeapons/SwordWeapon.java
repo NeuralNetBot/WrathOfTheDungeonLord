@@ -1,5 +1,8 @@
 package game.shootergame.Item.MeleeWeapons;
 
+import java.util.ArrayList;
+
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -7,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.Item.MeleeWeapon;
+import game.shootergame.Physics.Collider;
 import game.shootergame.World;
 
 public class SwordWeapon implements MeleeWeapon{
@@ -18,13 +22,22 @@ public class SwordWeapon implements MeleeWeapon{
 
     boolean attackingLight = false;
 
-    final float damage = 1.0f;
+    final float lightDamage = 10.0f;
+    final float heavyDamage = 25.0f;
+
     final float reach = 1.0f;
     final float angleReach = (float)Math.toRadians(30);
 
+    Sound wooshSound;
+    Sound hitSound;
+
     public SwordWeapon() {
+        ShooterGame.getInstance().am.load("sword_woosh.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("sword_hit.mp3", Sound.class);
         ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
+        wooshSound = ShooterGame.getInstance().am.get("sword_woosh.mp3", Sound.class);
+        hitSound = ShooterGame.getInstance().am.get("sword_hit.mp3", Sound.class);
         spriteSheet = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
         TextureRegion[][] tempFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / 4, spriteSheet.getHeight() / 4);
         TextureRegion[] animFrames = new TextureRegion[4 * 4];
@@ -51,10 +64,6 @@ public class SwordWeapon implements MeleeWeapon{
                 animTime = 0.0f;
                 attackingLight = false;
             }
-            //TODO: make so it doesnt attack every frame while the attack is playing
-            World.getPhysicsWorld().runAngleSweep(World.getPlayerCollider(),
-              World.getPlayer().x(), World.getPlayer().y(),
-               (float) Math.toRadians(World.getPlayer().rotation()), angleReach, reach, damage * World.getPlayer().damageMultiplier);
         }
     }
 
@@ -69,6 +78,19 @@ public class SwordWeapon implements MeleeWeapon{
 
     @Override
     public void attackLight() {
+        if(!attackingLight) {
+            wooshSound.play();
+            ArrayList<Collider> hits = World.getPhysicsWorld().runAngleSweep(World.getPlayerCollider(),
+              World.getPlayer().x(), World.getPlayer().y(),
+               (float) Math.toRadians(World.getPlayer().rotation()), angleReach, reach, lightDamage * World.getPlayer().damageMultiplier);
+
+            for (Collider collider : hits) {
+                if(!collider.isStatic) {
+                    hitSound.play(1.5f);
+                    break;
+                }
+            }
+        }
         attackingLight = true;
     }
 

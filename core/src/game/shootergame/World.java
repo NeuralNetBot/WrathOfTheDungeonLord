@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
@@ -48,6 +49,7 @@ public class World {
 
     Server server;
     Client client;
+    Sound ambient;
 
     public static void createInstance() {
         instance = new World();
@@ -128,6 +130,11 @@ public class World {
         items = new LinkedList<>();
         enemies = new LinkedList<>();
         remotePlayers = new ConcurrentHashMap<>();
+
+        ShooterGame.getInstance().am.load("dungeon_ambient.mp3", Sound.class);
+        ShooterGame.getInstance().am.finishLoading();
+        ambient = ShooterGame.getInstance().am.get("dungeon_ambient.mp3", Sound.class);
+        ambient.loop(0.15f);
     }
 
     private void loadFromFile(String mapName) {
@@ -156,6 +163,9 @@ public class World {
                 }
 
             }
+            System.out.println("Map: '" + mapName + "' loaded");
+            System.out.println((walls.size() - doors.size()) + " walls");
+            System.out.println(doors.size() + " doors");
         } catch (IOException e) {
             e.printStackTrace();
         }
