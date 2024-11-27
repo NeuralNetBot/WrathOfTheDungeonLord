@@ -665,6 +665,8 @@ public class Renderer {
                 left = left + (stopIndexLeft - leftRayIndex) * raysPerWidth;
                 sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);   
                 right = right - (rightRayIndex - stopIndexRight) * raysPerWidth;
+                sprite.textureCalc.setV(sprite.texture.getV());
+                sprite.textureCalc.setV2(sprite.texture.getV2());
 
 
                 sprite.scrX = (left + right) / 2.0f;

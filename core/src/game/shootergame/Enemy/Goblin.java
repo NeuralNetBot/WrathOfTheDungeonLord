@@ -3,6 +3,8 @@ package game.shootergame.Enemy;
 import java.util.ArrayList;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
@@ -16,6 +18,7 @@ public class Goblin implements Enemy{
 
     float x, y;
     float dx, dy;
+    float rotation;
     final float maxHealth = 25.0f;
     float health;
     Collider collider;
@@ -28,8 +31,8 @@ public class Goblin implements Enemy{
     Sprite2_5D spriteHigh;
     Sprite2_5D spriteHealth;
     Sprite2_5D spriteHealthBase;
-    Texture texLow;
-    Texture texHigh;
+    Texture texWalkLow;
+    Texture texAttackLowHigh;
     Texture texHealth;
     Texture texHealthBase;
     TextureRegion regLow;
@@ -40,22 +43,68 @@ public class Goblin implements Enemy{
     ArrayList<Vector2> navPath;
     int targetIndex = 0;
 
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsWalk = new Animation[8];
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsAttackLow = new Animation[8];
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsAttackHigh = new Animation[8];
+    float animTime = 0.0f;
+
     public Goblin(float x, float y) {
 
-        ShooterGame.getInstance().am.load("goblin_low.png", Texture.class);
-        ShooterGame.getInstance().am.load("goblin_high.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
         ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        texLow = ShooterGame.getInstance().am.get("goblin_low.png", Texture.class);
-        texHigh = ShooterGame.getInstance().am.get("goblin_high.png", Texture.class);
+        texWalkLow = ShooterGame.getInstance().am.get("goblin_walk_low.png", Texture.class);
+        texAttackLowHigh = ShooterGame.getInstance().am.get("goblin_attack_lowhigh.png", Texture.class);
         texHealth = ShooterGame.getInstance().am.get("red_bar.png", Texture.class);
         texHealthBase = ShooterGame.getInstance().am.get("bar.png", Texture.class);
-        regLow = new TextureRegion(texLow, 0, 0, 128, 80);
-        regHigh = new TextureRegion(texHigh, 0, 0, 128, 80);
+        regLow = new TextureRegion(texWalkLow, 0, 0, 128, 80);
+        regHigh = new TextureRegion(texAttackLowHigh, 0, 480, 128, 80);
         regHealth = new TextureRegion(texHealth, 0, 0, 64, 64);
         regHealthBase = new TextureRegion(texHealthBase, 0, 0, 64, 64);
 
+        {
+            //walk anims
+            //13 wide
+            //2 tall
+            //8 sides stacked
+            TextureRegion[][] tempFrames = TextureRegion.split(texWalkLow, texWalkLow.getWidth() / 13, texWalkLow.getHeight() / (8*2));
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[13 * 2];
+                for (int j = 0; j < 2; j++) {
+                    for (int k = 0; k < 13; k++) {
+                        animFrames[k + (13 * j)] = tempFrames[i * 2 + j][k];
+                    }
+                }
+                animationsWalk[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsWalk[i].setPlayMode(PlayMode.LOOP);
+            }
+        }
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(texWalkLow, texWalkLow.getWidth() / 15, texWalkLow.getHeight() / 16);
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[15];
+                for (int j = 0; j < 15; j++) {
+                    animFrames[j] = tempFrames[i*2+1][j];
+                }
+                animationsAttackLow[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackLow[i].setPlayMode(PlayMode.LOOP);
+            }
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[15];
+                for (int j = 0; j < 15; j++) {
+                    animFrames[j] = tempFrames[i*2][j];
+                }
+                animationsAttackHigh[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackHigh[i].setPlayMode(PlayMode.LOOP);
+            }
+        }
 
         health = maxHealth;
 
@@ -86,11 +135,37 @@ public class Goblin implements Enemy{
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
     }
-
+    
     @Override
     public void update(float delta) {
-        x += dx;
-        y += dy;
+        //x += dx;
+        //y += dy;
+
+        animTime += delta;
+
+        rotation += delta * 5;
+        rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+
+        Vector2 v = new Vector2(x - World.getPlayer().x(), y - World.getPlayer().y()).nor();
+
+        float angleToSprite = (float)Math.atan2(v.y, v.x);
+        float relAngle = angleToSprite - rotation;
+        relAngle = (relAngle + 2 * 3.141592653f) % (2 * 3.141592653f);
+        int index = ((int)Math.floor((Math.toDegrees(relAngle) + 22.5f) / 45.0f)) % 8;
+        int realIndex = 0;
+        switch (index) {
+            case 0: realIndex = 3; break;
+            case 1: realIndex = 5; break;
+            case 2: realIndex = 7; break;
+            case 3: realIndex = 2; break;
+            case 4: realIndex = 0; break;
+            case 5: realIndex = 1; break;
+            case 6: realIndex = 6; break;
+            case 7: realIndex = 4; break;
+        }
+        
+        spriteLow.texture = animationsWalk[realIndex].getKeyFrame(animTime);
+        spriteHigh.texture = animationsAttackHigh[realIndex].getKeyFrame(0.0f);
 
         if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
             Vector2 targetNode = navPath.get(targetIndex).cpy();
