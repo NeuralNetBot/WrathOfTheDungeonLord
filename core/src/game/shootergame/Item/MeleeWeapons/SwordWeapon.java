@@ -149,7 +149,7 @@ public class SwordWeapon implements MeleeWeapon{
     public void attackHeavy() {
         if(World.getPlayer().getStamina() < heavyAttackStaminaUsage) return;
         if(attackingLight) return;
-        if(!attackingLight) {
+        if(!attackingHeavy) {
             heavyDidDamage = false;
             animationHeavy.setFrameDuration(animFrameSpeed / World.getPlayer().attackSpeed);
         }

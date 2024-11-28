@@ -49,7 +49,7 @@ public class Player {
     final float maxDodgeTime = 0.3f;
     final float dodgeSpeedMultiplier = 3.0f;
     final float dodgeStaminaCost = 20.0f;
-    final float staminaRegenDelayMax = 0.65f;
+    final float staminaRegenDelayMax = 0.85f;
     boolean isDelaying;
     float dodgeTime;
     float staminaRegenDelay;
