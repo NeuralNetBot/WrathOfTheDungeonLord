@@ -117,6 +117,10 @@ public class Player {
         staminaRegenDelay = 0.0f;
     }
 
+    public float getStamina() {
+        return stamina;
+    }
+
     void processInput() {
 
         rotation += Gdx.input.getDeltaX() * 0.2f;

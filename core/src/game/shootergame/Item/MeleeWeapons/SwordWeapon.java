@@ -36,7 +36,7 @@ public class SwordWeapon implements MeleeWeapon{
     final float heavyAttackDamageDelay = 0.5f;
     boolean heavyDidDamage = false;
 
-    final float heavyAttackStaminaUsage = 30.0f;
+    final float heavyAttackStaminaUsage = 50.0f;
 
     Sound wooshSound;
     Sound hitSound;
@@ -147,6 +147,7 @@ public class SwordWeapon implements MeleeWeapon{
 
     @Override
     public void attackHeavy() {
+        if(World.getPlayer().getStamina() < heavyAttackStaminaUsage) return;
         if(attackingLight) return;
         if(!attackingLight) {
             heavyDidDamage = false;
