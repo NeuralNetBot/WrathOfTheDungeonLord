@@ -38,13 +38,13 @@ public class DamagePowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.damageMultiplier = 2.0f;
+        player.damageMultiplier += 1.0f;
         System.out.println("Damage Boost Initiated: Multiplier is " + player.damageMultiplier);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.damageMultiplier = 1.0f;
+        player.damageMultiplier -= 1.0f;
         System.out.println("Damage Boost Ended: Multiplier is " + player.damageMultiplier);
     }
 

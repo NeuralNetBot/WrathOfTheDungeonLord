@@ -1,6 +1,10 @@
 package game.shootergame.Enemy;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
@@ -14,34 +18,110 @@ public class Goblin implements Enemy{
 
     float x, y;
     float dx, dy;
+    float rotation;
+    final float maxHealth = 25.0f;
     float health;
-    Sprite2_5D sprite;
     Collider collider;
 
     Collider currentTargetCollider = null;
 
-    final float moveSpeed = 1.0f;
+    final float moveSpeed = 3.5f;
 
-    Texture tex;
-    TextureRegion reg;
+    Sprite2_5D spriteLow;
+    Sprite2_5D spriteHigh;
+    Sprite2_5D spriteHealth;
+    Sprite2_5D spriteHealthBase;
+    Texture texWalkLow;
+    Texture texAttackLowHigh;
+    Texture texHealth;
+    Texture texHealthBase;
+    TextureRegion regLow;
+    TextureRegion regHigh;
+    TextureRegion regHealth;
+    TextureRegion regHealthBase;
+
+    ArrayList<Vector2> navPath;
+    int targetIndex = 0;
+
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsWalk = new Animation[8];
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsAttackLow = new Animation[8];
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationsAttackHigh = new Animation[8];
+    float animTime = 0.0f;
 
     public Goblin(float x, float y) {
 
-        ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
+        ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
+        ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
+        ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
-        reg = new TextureRegion(tex, 0, 0, 1024, 1024);
+        texWalkLow = ShooterGame.getInstance().am.get("goblin_walk_low.png", Texture.class);
+        texAttackLowHigh = ShooterGame.getInstance().am.get("goblin_attack_lowhigh.png", Texture.class);
+        texHealth = ShooterGame.getInstance().am.get("red_bar.png", Texture.class);
+        texHealthBase = ShooterGame.getInstance().am.get("bar.png", Texture.class);
+        regLow = new TextureRegion(texWalkLow, 0, 0, 128, 80);
+        regHigh = new TextureRegion(texAttackLowHigh, 0, 480, 128, 80);
+        regHealth = new TextureRegion(texHealth, 0, 0, 64, 64);
+        regHealthBase = new TextureRegion(texHealthBase, 0, 0, 64, 64);
 
+        {
+            //walk anims
+            //13 wide
+            //2 tall
+            //8 sides stacked
+            TextureRegion[][] tempFrames = TextureRegion.split(texWalkLow, texWalkLow.getWidth() / 13, texWalkLow.getHeight() / (8*2));
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[13 * 2];
+                for (int j = 0; j < 2; j++) {
+                    for (int k = 0; k < 13; k++) {
+                        animFrames[k + (13 * j)] = tempFrames[i * 2 + j][k];
+                    }
+                }
+                animationsWalk[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsWalk[i].setPlayMode(PlayMode.LOOP);
+            }
+        }
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(texWalkLow, texWalkLow.getWidth() / 15, texWalkLow.getHeight() / 16);
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[15];
+                for (int j = 0; j < 15; j++) {
+                    animFrames[j] = tempFrames[i*2+1][j];
+                }
+                animationsAttackLow[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackLow[i].setPlayMode(PlayMode.LOOP);
+            }
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[15];
+                for (int j = 0; j < 15; j++) {
+                    animFrames[j] = tempFrames[i*2][j];
+                }
+                animationsAttackHigh[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackHigh[i].setPlayMode(PlayMode.LOOP);
+            }
+        }
 
-        health = 25.0f;
+        health = maxHealth;
 
         //TODO: make dyanmically choose this target
         currentTargetCollider = World.getPlayerCollider();
+        navPath = null;
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
-        Renderer.inst().addSprite(sprite);
+        spriteLow = new Sprite2_5D(regLow, x, y, -1.35f, 1.25f, 2.0f);
+        Renderer.inst().addSprite(spriteLow);
+        spriteHigh = new Sprite2_5D(regHigh, x, y, -0.1f, 1.25f, 2.0f);
+        Renderer.inst().addSprite(spriteHigh);
+        spriteHealthBase = new Sprite2_5D(regHealthBase, x, y, 0.1f, 0.01f, 0.35f);
+        Renderer.inst().addSprite(spriteHealthBase);
+        spriteHealth = new Sprite2_5D(regHealth, x, y, 0.1f, 0.01f, 0.35f);
+        Renderer.inst().addSprite(spriteHealth);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
@@ -49,30 +129,57 @@ public class Goblin implements Enemy{
             }
             if(damage != 0.0f) {
                 health -= damage;
+                spriteHealth.width = 0.35f * health/maxHealth;
                 System.out.println(health);
             }
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
     }
-
+    
     @Override
     public void update(float delta) {
-        x += dx;
-        y += dy;
+        //x += dx;
+        //y += dy;
 
-        if(currentTargetCollider != null) {
-            //TODO: make this use path finding instead of "dumb" moves
-            Vector2 move = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y);
-            if(move.len() > 1.0f) {
-                move.nor();
-                move.scl(delta * moveSpeed);
-                dx = move.x;
-                dy = move.y;
-                collider.dx = dx;
-                collider.dy = dy;
+        animTime += delta;
+
+        rotation += delta * 5;
+        rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+
+        Vector2 v = new Vector2(x - World.getPlayer().x(), y - World.getPlayer().y()).nor();
+
+        float angleToSprite = (float)Math.atan2(v.y, v.x);
+        float relAngle = angleToSprite - rotation;
+        relAngle = (relAngle + 2 * 3.141592653f) % (2 * 3.141592653f);
+        int index = ((int)Math.floor((Math.toDegrees(relAngle) + 22.5f) / 45.0f)) % 8;
+        int realIndex = 0;
+        switch (index) {
+            case 0: realIndex = 3; break;
+            case 1: realIndex = 5; break;
+            case 2: realIndex = 7; break;
+            case 3: realIndex = 2; break;
+            case 4: realIndex = 0; break;
+            case 5: realIndex = 1; break;
+            case 6: realIndex = 6; break;
+            case 7: realIndex = 4; break;
+        }
+        
+        spriteLow.texture = animationsWalk[realIndex].getKeyFrame(animTime);
+        spriteHigh.texture = animationsAttackHigh[realIndex].getKeyFrame(0.0f);
+
+        if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
+            Vector2 targetNode = navPath.get(targetIndex).cpy();
+            Vector2 direction = targetNode.cpy().sub(x, y);
+            float dist = direction.len();
+            
+            if(dist < moveSpeed * delta) {
+                x = targetNode.x;
+                y = targetNode.y;
+                targetIndex++;
             } else {
-                collider.dx = 0.0f;
-                collider.dy = 0.0f;
+                direction.nor().scl(moveSpeed * delta);
+                collider.dx = direction.x;
+                collider.dy = direction.y;
             }
         } else {
             collider.dx = 0.0f;
@@ -82,18 +189,42 @@ public class Goblin implements Enemy{
         collider.x = x;
         collider.y = y;
         
-        sprite.x = x;
-        sprite.y = y;
+        spriteLow.x = x;
+        spriteLow.y = y;
+        spriteHigh.x = x;
+        spriteHigh.y = y;
+        spriteHealth.x = x;
+        spriteHealth.y = y;
+        spriteHealthBase.x = x;
+        spriteHealthBase.y = y;
     }
 
     @Override
     public void tickPathing() {
+        if(currentTargetCollider != null) {
+            navPath = World.getNavMesh().pathFind(new Vector2(x, y), new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+            if(navPath == null) { //path find failed, so enter "dumb search" mode i.e. direct light on sight path
+                navPath = new ArrayList<>();
+                navPath.add(new Vector2(x, y));
+                navPath.add(new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+            }
+        } else {
+            navPath = null;
+        }
     }
 
     @Override
     public void onKill() {
-        Renderer.inst().removeSprite(sprite);
+        Renderer.inst().removeSprite(spriteLow);
+        Renderer.inst().removeSprite(spriteHigh);
+        Renderer.inst().removeSprite(spriteHealth);
+        Renderer.inst().removeSprite(spriteHealthBase);
         World.getPhysicsWorld().removeCollider(collider);
+    }
+
+    @Override
+    public boolean isAlive() {
+        return health > 0.0f;
     }
     
 }
