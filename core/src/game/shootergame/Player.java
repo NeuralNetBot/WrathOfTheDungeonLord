@@ -49,7 +49,7 @@ public class Player {
     final float maxDodgeTime = 0.3f;
     final float dodgeSpeedMultiplier = 3.0f;
     final float dodgeStaminaCost = 20.0f;
-    final float dodgeStaminaRegenDelay = 0.35f;
+    final float staminaRegenDelayMax = 0.65f;
     boolean isDelaying;
     float dodgeTime;
     float staminaRegenDelay;
@@ -111,6 +111,12 @@ public class Player {
         regenDelayTimer = 0.0f;//reset the timer when taken damage
     }
 
+    public void removeStamina(float stamina) {
+        this.stamina -= stamina;
+        isDelaying = true;
+        staminaRegenDelay = 0.0f;
+    }
+
     void processInput() {
 
         rotation += Gdx.input.getDeltaX() * 0.2f;
@@ -150,7 +156,7 @@ public class Player {
             }
         }
 
-        if(Gdx.input.isButtonJustPressed(Buttons.LEFT)) {
+        if(Gdx.input.isButtonJustPressed(Buttons.RIGHT)) {
             switch (selectedWeapon) {
             case 1:
                 melee.attackHeavy();
@@ -165,8 +171,7 @@ public class Player {
                 if(stamina >= dodgeStaminaCost) {
                     isDodging = true;
                     dodgeTime = 0.0f;
-                    stamina -= dodgeStaminaCost;
-                    isDelaying = false;
+                    removeStamina(dodgeStaminaCost);
                 }
             }
         }
@@ -184,12 +189,11 @@ public class Player {
             if(dodgeTime >= maxDodgeTime) {
                 isDodging = false;
                 isDelaying = true;
-                staminaRegenDelay = 0.0f;
             }
         }
         if(isDelaying) {
             staminaRegenDelay += delta;
-            if(staminaRegenDelay > dodgeStaminaRegenDelay) {
+            if(staminaRegenDelay > staminaRegenDelayMax) {
                 isDelaying = false;
             }
         } else {
@@ -360,11 +364,6 @@ public class Player {
             powerupSprite.draw(ShooterGame.getInstance().coreBatch);
             visibleIndex++;
         }
-    }
-
-    void applyDamage(float damage) {
-        if(!isDodging)
-            health -= damage * resistanceMultiplier;
     }
 
     public Collider getCollider() {
