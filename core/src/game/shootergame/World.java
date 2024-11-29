@@ -21,6 +21,7 @@ import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
+import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
@@ -244,7 +245,7 @@ public class World {
         physicsWorld = new PhysicsWorld(walls);
         itemPrompt = null;
 
-        player = new Player(new SwordWeapon());
+        player = new Player(new HalberdWeapon());
 
         items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
         items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
