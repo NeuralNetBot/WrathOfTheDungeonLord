@@ -22,6 +22,8 @@ import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Item.Powerups.CrossbowAmmoPowerup;
+import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Network.Client;
 import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Network.Server;
@@ -179,10 +181,12 @@ public class World {
 
         player = new Player(new SwordWeapon());
 
-        items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
-        items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
-        items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
-        items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
+        //items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
+        //items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
+        //items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
+        //items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
+        items.add(new ItemPickup(-1.0f, 1.0f, (new CrossbowWeapon())));
+        items.add(new ItemPickup(1.0f, 1.0f, (new CrossbowAmmoPowerup())));
 
         enemies.add(new Goblin(0.0f, 0.0f));
     }

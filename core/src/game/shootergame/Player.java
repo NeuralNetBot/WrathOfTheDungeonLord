@@ -338,6 +338,10 @@ public class Player {
         powerup.onActivate(this);
     }
 
+    public void addRangedWeapon(RangedWeapon weapon) {
+        ranged = weapon;
+    }
+
     public float getHealth() { return health; }
 
     public void addHealth(float health) {
@@ -345,4 +349,8 @@ public class Player {
     }
 
     public LinkedList<Powerup> getActivePowerups() { return activePowerups; }
+
+    public RangedWeapon getRangedWeapon() {
+        return ranged;
+    }
 }

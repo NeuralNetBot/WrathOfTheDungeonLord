@@ -17,6 +17,9 @@ public class MusketWeapon implements RangedWeapon {
     float animTime = 0.0f;
     Sprite sprite;
 
+    TextureRegion reg;
+    Texture tex;
+
     boolean firing = false;
     boolean reloading = false;
     boolean held = false;
@@ -25,7 +28,7 @@ public class MusketWeapon implements RangedWeapon {
 
     final float damage = 1.5f;
 
-    MusketWeapon() {
+    public MusketWeapon() {
         ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         spriteSheet = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
@@ -42,6 +45,11 @@ public class MusketWeapon implements RangedWeapon {
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
         sprite.setOriginCenter();
         sprite.setOriginBasedPosition(0.0f, 0.0f);
+
+        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.finishLoading();
+        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
+        reg = new TextureRegion(tex, 0, 0, 256, 256);
     }
 
     @Override
@@ -97,5 +105,15 @@ public class MusketWeapon implements RangedWeapon {
     @Override
     public void setAmmo(int ammo) {
         this.ammo += ammo;
+    }
+
+    @Override
+    public TextureRegion getItemTexture() {
+        return reg;
+    }
+
+    @Override
+    public String getName() {
+        return "Musket";
     }
 }

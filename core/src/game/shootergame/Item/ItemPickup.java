@@ -34,6 +34,7 @@ public class ItemPickup {
         this.x = x; this.y = y;
         createPickupSprite();
         createCollider();
+        this.name = weapon.getName();
         isActive = true;
     }
 
@@ -61,8 +62,8 @@ public class ItemPickup {
         TextureRegion reg;
         switch (payload) {
             case RANGED_WEAPON:
-                return;//TODO:
-                //break;
+                reg = weapon.getItemTexture(); //TODO: MAKE SPRITE FOR RANGED WEAPONS
+                break;
             case POWERUP:
                 reg = powerup.getItemTexture();
                 break;
@@ -82,6 +83,13 @@ public class ItemPickup {
                         if (Gdx.input.isKeyPressed(Input.Keys.E)) {
                             Renderer.inst().removeSprite(sprite);
                             World.getPlayer().addPowerup(powerup);
+                            isActive = false;
+                        }
+                    }
+                    if (payload == Payload.RANGED_WEAPON) {
+                        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+                            Renderer.inst().removeSprite(sprite);
+                            World.getPlayer().addRangedWeapon(weapon);
                             isActive = false;
                         }
                     }
