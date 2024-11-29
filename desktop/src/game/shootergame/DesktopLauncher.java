@@ -10,6 +10,7 @@ public class DesktopLauncher {
 		config.setForegroundFPS(0);
 		config.setTitle("MechGame");
 		config.setWindowedMode(800, 600);
+		//config.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
 		config.useVsync(true);
 		config.setBackBufferConfig(8, 8, 8, 8, 16, 0, 4);
 		new Lwjgl3Application(new ShooterGame(), config);

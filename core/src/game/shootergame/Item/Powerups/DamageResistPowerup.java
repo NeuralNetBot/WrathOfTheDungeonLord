@@ -38,13 +38,13 @@ public class DamageResistPowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.resistanceMultiplier = 2.0f;
+        player.resistanceMultiplier += 1.0f;
         System.out.println("Damage Resist Initiated: Multiplier is " + player.resistanceMultiplier);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.resistanceMultiplier = 1.0f;
+        player.resistanceMultiplier -= 1.0f;
         System.out.println("Damage Resist Ended: Multiplier is " + player.resistanceMultiplier);
     }
 
