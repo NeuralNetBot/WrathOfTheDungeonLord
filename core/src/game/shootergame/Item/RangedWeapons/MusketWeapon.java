@@ -12,46 +12,81 @@ import game.shootergame.ShooterGame;
 import game.shootergame.World;
 
 public class MusketWeapon implements RangedWeapon {
-    Texture spriteSheet;
-    Animation<TextureRegion> animation;
+    Texture spriteSheetFire;
+    Texture spriteSheetReload;
+    Animation<TextureRegion> animationFire;
+    Animation<TextureRegion> animationReload;
     float animTime = 0.0f;
+    float pauseTime = 0.0f;
+    final float maxPauseTime = 0.0f;
     Sprite sprite;
 
     boolean firing = false;
     boolean reloading = false;
     boolean held = false;
 
-    int ammo = 0;
+    int ammo = 10;
 
-    final float damage = 1.5f;
+    final float damage = 50.0f;
 
-    MusketWeapon() {
-        ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
+    public MusketWeapon() {
+        ShooterGame.getInstance().am.load("musket_fire.png", Texture.class);
+        ShooterGame.getInstance().am.load("musket_reload.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        spriteSheet = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
-        TextureRegion[][] tempFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / 4, spriteSheet.getHeight() / 4);
-        TextureRegion[] animFrames = new TextureRegion[4 * 4];
-        int index = 0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                animFrames[index++] = tempFrames[i][j];
+        spriteSheetFire = ShooterGame.getInstance().am.get("musket_fire.png", Texture.class);
+        spriteSheetReload = ShooterGame.getInstance().am.get("musket_reload.png", Texture.class);
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetFire, spriteSheetFire.getWidth() / 6, spriteSheetFire.getHeight() / 6);
+            TextureRegion[] animFrames = new TextureRegion[6 * 6];
+            int index = 0;
+            for (int i = 0; i < 6; i++) {
+                for (int j = 0; j < 6; j++) {
+                    animFrames[index++] = tempFrames[i][j];
+                }
             }
+            animationFire = new Animation<TextureRegion>(0.04167f, animFrames);
         }
-        animation = new Animation<TextureRegion>(0.04167f, animFrames);
-        sprite = new Sprite(animation.getKeyFrame(0.0f));
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetReload, spriteSheetReload.getWidth() / 8, spriteSheetReload.getHeight() / 6);
+            TextureRegion[] animFrames = new TextureRegion[8 * 6];
+            int index = 0;
+            for (int i = 0; i < 6; i++) {
+                for (int j = 0; j < 8; j++) {
+                    animFrames[index++] = tempFrames[i][j];
+                }
+            }
+            animationReload = new Animation<TextureRegion>(0.04167f, animFrames);
+        }
+
+        sprite = new Sprite(animationFire.getKeyFrame(0.0f));
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
         sprite.setOriginCenter();
         sprite.setOriginBasedPosition(0.0f, 0.0f);
     }
 
+
+
     @Override
     public void update(float delta) {
+        if(reloading) {
+            pauseTime += delta;
+            if(pauseTime >= maxPauseTime) {
+                animTime += delta;
+                sprite.setRegion(animationReload.getKeyFrame(animTime));
+                if(animationReload.isAnimationFinished(animTime)) {
+                    animTime = 0.0f;
+                    reloading = false;
+                    pauseTime = 0.0f;
+                }
+            }
+        }
         if (firing) {
             animTime += delta;
-            sprite.setRegion(animation.getKeyFrame(animTime));
-            if(animation.isAnimationFinished(animTime)) {
+            sprite.setRegion(animationFire.getKeyFrame(animTime));
+            if(animationFire.isAnimationFinished(animTime)) {
                 animTime = 0.0f;
                 firing = false;
+                reloading = true;
             }
         }
     }
@@ -68,6 +103,7 @@ public class MusketWeapon implements RangedWeapon {
 
     @Override
     public void fire() {
+        if(reloading) return;
         if(ammo > 0) {
             firing = true;
             ammo--;

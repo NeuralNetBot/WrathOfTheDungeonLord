@@ -29,6 +29,7 @@ import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
+import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.Network.Client;
 import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Network.Server;
@@ -248,7 +249,7 @@ public class World {
         itemPrompt = null;
 
         player = new Player(new HalberdWeapon());
-        player.setRangedWeapon(new CrossbowWeapon());
+        player.setRangedWeapon(new MusketWeapon());
 
         items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
         items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
