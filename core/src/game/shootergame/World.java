@@ -257,8 +257,8 @@ public class World {
         //items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
         //items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
         //items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
-        items.add(new ItemPickup(-1.0f, 1.0f, (new CrossbowWeapon())));
-        items.add(new ItemPickup(1.0f, 1.0f, (new CrossbowAmmoPowerup())));
+        items.add(new ItemPickup(-1.0f, 1.0f, 2.0f, new CrossbowWeapon()));
+        items.add(new ItemPickup(1.0f, 1.0f, 1.0f, new CrossbowAmmoPowerup()));
 
         enemies.add(new Goblin(0.0f, 0.0f));
         enemies.add(new Slime(1.0f, 0.0f));

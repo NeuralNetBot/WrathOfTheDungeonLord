@@ -27,23 +27,23 @@ public class ItemPickup {
 
     Sprite2_5D sprite;
 
-    public ItemPickup(float x, float y, RangedWeapon weapon) {
+    public ItemPickup(float x, float y, float itemScale, RangedWeapon weapon) {
         payload = Payload.RANGED_WEAPON;
         this.weapon = weapon;
         powerup = null;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(itemScale);
         createCollider();
         this.name = weapon.getName();
         isActive = true;
     }
 
-    public ItemPickup(float x, float y, Powerup powerup) {
+    public ItemPickup(float x, float y, float itemScale, Powerup powerup) {
         payload = Payload.POWERUP;
         weapon = null;
         this.powerup = powerup;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(itemScale);
         createCollider();
         this.name = powerup.getName();
         isActive = true;
@@ -54,11 +54,11 @@ public class ItemPickup {
         weapon = null;
         powerup = null;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(1.0f);
         createCollider();
     }
 
-    private void createPickupSprite() {
+    private void createPickupSprite(float itemScale) {
         TextureRegion reg;
         switch (payload) {
             case RANGED_WEAPON:
@@ -70,7 +70,7 @@ public class ItemPickup {
             default:
                 return;
         }
-        sprite = new Sprite2_5D(reg, x, y, -0.7f, 0.3f, 0.3f);
+        sprite = new Sprite2_5D(reg, x, y, -0.7f, 0.3f * itemScale, 0.3f * itemScale);
         Renderer.inst().addSprite(sprite);
     }
 

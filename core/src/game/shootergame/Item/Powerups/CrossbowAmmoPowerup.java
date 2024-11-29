@@ -14,9 +14,9 @@ public class CrossbowAmmoPowerup implements Powerup {
 
     public CrossbowAmmoPowerup() {
         this.isActive = true;
-        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.load("ranged_ammo_pickups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
+        tex = ShooterGame.getInstance().am.get("ranged_ammo_pickups.png", Texture.class);
         reg = new TextureRegion(tex, 0, 0, 256, 256);
     }
 

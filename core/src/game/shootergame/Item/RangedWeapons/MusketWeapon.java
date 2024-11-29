@@ -66,10 +66,10 @@ public class MusketWeapon implements RangedWeapon {
         sprite.setOriginCenter();
         sprite.setOriginBasedPosition(0.0f, 0.0f);
 
-        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.load("ranged_ammo_pickups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
-        reg = new TextureRegion(tex, 0, 0, 256, 256);
+        tex = ShooterGame.getInstance().am.get("ranged_ammo_pickups.png", Texture.class);
+        reg = new TextureRegion(tex, 256, 256, 256, 256);
     }
 
 

@@ -16,10 +16,10 @@ public class MusketAmmoPowerup implements Powerup {
     public MusketAmmoPowerup() {
 
         this.isActive = true;
-        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.load("ranged_ammo_pickups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
-        reg = new TextureRegion(tex, 0, 256, 256, 256);
+        tex = ShooterGame.getInstance().am.get("ranged_ammo_pickups.png", Texture.class);
+        reg = new TextureRegion(tex, 256, 0, 256, 256);
     }
 
     @Override
