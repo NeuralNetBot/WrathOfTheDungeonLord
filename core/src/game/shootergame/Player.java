@@ -107,12 +107,18 @@ public class Player {
 
     void doDamage(float damage) {
         float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
+        float blockingMultiplier = melee.getBlockMultiplier();
+        if(blockingMultiplier != 1.0f) {
+            removeStamina(damage * 2.0f);
+        }
+        damageDone *= blockingMultiplier;
         health -= damageDone;
         regenDelayTimer = 0.0f;//reset the timer when taken damage
     }
 
     public void removeStamina(float stamina) {
         this.stamina -= stamina;
+        if(this.stamina <= 0.0f) this.stamina = 0.0f;
         isDelaying = true;
         staminaRegenDelay = 0.0f;
     }
@@ -168,6 +174,12 @@ public class Player {
             default:
                 break;
             }
+        }
+
+        if(Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)) {
+            melee.beginBlock();
+        } else {
+            melee.endBlock();
         }
 
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)) {

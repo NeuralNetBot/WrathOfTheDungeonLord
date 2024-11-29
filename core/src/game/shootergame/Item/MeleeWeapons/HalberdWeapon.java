@@ -84,4 +84,9 @@ public class HalberdWeapon implements MeleeWeapon {
     @Override
     public void endBlock() {
     }
+
+    @Override
+    public float getBlockMultiplier() {
+        return 1.0f;
+    }
 }

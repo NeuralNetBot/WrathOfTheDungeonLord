@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.Item.MeleeWeapon;
@@ -17,13 +18,17 @@ public class SwordWeapon implements MeleeWeapon{
 
     Texture spriteSheetLight;
     Texture spriteSheetHeavy;
+    Texture spriteSheetBlock;
     Animation<TextureRegion> animationLight;
     Animation<TextureRegion> animationHeavy;
+    Animation<TextureRegion> animationBlock;
     float animTime = 0.0f;
     Sprite sprite;
 
     boolean attackingLight = false;
     boolean attackingHeavy = false;
+    boolean blocking = false;
+    boolean playingBlockAnimation = false;
 
     final float lightDamage = 10.0f;
     final float heavyDamage = 25.0f;
@@ -38,6 +43,8 @@ public class SwordWeapon implements MeleeWeapon{
 
     final float heavyAttackStaminaUsage = 50.0f;
 
+    final float blockingMultiplier = 0.1f;
+
     Sound wooshSound;
     Sound hitSound;
 
@@ -48,11 +55,13 @@ public class SwordWeapon implements MeleeWeapon{
         ShooterGame.getInstance().am.load("sword_hit.mp3", Sound.class);
         ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
         ShooterGame.getInstance().am.load("sword_heavy.png", Texture.class);
+        ShooterGame.getInstance().am.load("sword_block.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         wooshSound = ShooterGame.getInstance().am.get("sword_woosh.mp3", Sound.class);
         hitSound = ShooterGame.getInstance().am.get("sword_hit.mp3", Sound.class);
         spriteSheetLight = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
         spriteSheetHeavy = ShooterGame.getInstance().am.get("sword_heavy.png", Texture.class);
+        spriteSheetBlock = ShooterGame.getInstance().am.get("sword_block.png", Texture.class);
         {
             TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetLight, spriteSheetLight.getWidth() / 4, spriteSheetLight.getHeight() / 4);
             TextureRegion[] animFrames = new TextureRegion[4 * 4];
@@ -74,6 +83,10 @@ public class SwordWeapon implements MeleeWeapon{
                 }
             }
             animationHeavy = new Animation<TextureRegion>(animFrameSpeed, animFrames);
+        }
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetBlock, spriteSheetBlock.getWidth() / 8, spriteSheetBlock.getHeight());
+            animationBlock = new Animation<TextureRegion>(animFrameSpeed, tempFrames[0]);
         }
         sprite = new Sprite(animationLight.getKeyFrame(0.0f));
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
@@ -114,6 +127,15 @@ public class SwordWeapon implements MeleeWeapon{
                 attackingHeavy = false;
             }
         }
+
+        if(playingBlockAnimation) {
+            animTime += delta;
+            sprite.setRegion(animationBlock.getKeyFrame(animTime));
+            if(animationBlock.isAnimationFinished(animTime)) {
+                animTime = 0.0f;
+                playingBlockAnimation = false;
+            }
+        }
     }
 
     @Override
@@ -127,6 +149,7 @@ public class SwordWeapon implements MeleeWeapon{
 
     @Override
     public void attackLight() {
+        if(blocking) return;
         if(attackingHeavy) return;
         if(!attackingLight) {
             animationLight.setFrameDuration(animFrameSpeed / World.getPlayer().attackSpeed);
@@ -147,6 +170,7 @@ public class SwordWeapon implements MeleeWeapon{
 
     @Override
     public void attackHeavy() {
+        if(blocking) return;
         if(World.getPlayer().getStamina() < heavyAttackStaminaUsage) return;
         if(attackingLight) return;
         if(!attackingHeavy) {
@@ -158,10 +182,26 @@ public class SwordWeapon implements MeleeWeapon{
 
     @Override
     public void beginBlock() {
+        if(attackingHeavy || attackingLight) return;
+        if(!blocking) {
+            animationBlock.setPlayMode(PlayMode.NORMAL);
+            playingBlockAnimation = true;
+        }
+        blocking = true;
     }
 
     @Override
     public void endBlock() {
+        if(blocking) {
+            animationBlock.setPlayMode(PlayMode.REVERSED);
+            playingBlockAnimation = true;
+        }
+        blocking = false;
+    }
+
+    @Override
+    public float getBlockMultiplier() {
+        return blocking ? blockingMultiplier : 1.0f;
     }
     
 }
