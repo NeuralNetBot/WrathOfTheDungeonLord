@@ -18,6 +18,8 @@ import game.shootergame.Physics.Collider;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.w3c.dom.ranges.Range;
+
 public class Player {
     MeleeWeapon melee;
     RangedWeapon ranged;
@@ -398,4 +400,8 @@ public class Player {
     }
 
     public LinkedList<Powerup> getActivePowerups() { return activePowerups; }
+
+    public void setRangedWeapon(RangedWeapon weapon) {
+        this.ranged = weapon;
+    }
 }

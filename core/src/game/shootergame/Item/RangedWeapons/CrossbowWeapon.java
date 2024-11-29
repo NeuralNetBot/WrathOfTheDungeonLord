@@ -12,33 +12,46 @@ import game.shootergame.ShooterGame;
 import game.shootergame.World;
 
 public class CrossbowWeapon implements RangedWeapon {
-    Texture spriteSheet;
-    Animation<TextureRegion> animation;
+    Texture spriteSheetFire;
+    Texture spriteSheetReload;
+    Animation<TextureRegion> animationFire;
+    Animation<TextureRegion> animationReload;
     float animTime = 0.0f;
+    float pauseTime = 0.0f;
+    final float maxPauseTime = 0.3f;
     Sprite sprite;
 
     boolean firing = false;
     boolean reloading = false;
     boolean held = false;
 
-    int ammo = 0;
+    int ammo = 10;
 
-    final float damage = 1.0f;
+    final float damage = 30.0f;
 
-    CrossbowWeapon() {
-        ShooterGame.getInstance().am.load("sword_light.png", Texture.class);
+    public CrossbowWeapon() {
+        ShooterGame.getInstance().am.load("crossbow_fire.png", Texture.class);
+        ShooterGame.getInstance().am.load("crossbow_reload.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        spriteSheet = ShooterGame.getInstance().am.get("sword_light.png", Texture.class);
-        TextureRegion[][] tempFrames = TextureRegion.split(spriteSheet, spriteSheet.getWidth() / 4, spriteSheet.getHeight() / 4);
-        TextureRegion[] animFrames = new TextureRegion[4 * 4];
-        int index = 0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                animFrames[index++] = tempFrames[i][j];
-            }
+        spriteSheetFire = ShooterGame.getInstance().am.get("crossbow_fire.png", Texture.class);
+        spriteSheetReload = ShooterGame.getInstance().am.get("crossbow_reload.png", Texture.class);
+        {
+        TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetFire, spriteSheetFire.getWidth() / 2, spriteSheetFire.getHeight());
+        animationFire = new Animation<TextureRegion>(0.04167f, tempFrames[0]);
         }
-        animation = new Animation<TextureRegion>(0.04167f, animFrames);
-        sprite = new Sprite(animation.getKeyFrame(0.0f));
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetReload, spriteSheetReload.getWidth() / 4, spriteSheetReload.getHeight() / 3);
+            TextureRegion[] animFrames = new TextureRegion[4 * 3];
+            int index = 0;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 4; j++) {
+                    animFrames[index++] = tempFrames[i][j];
+                }
+            }
+            animationReload = new Animation<TextureRegion>(0.04167f, animFrames);
+        }
+
+        sprite = new Sprite(animationFire.getKeyFrame(0.0f));
         sprite.setSize(2.0f * 16.0f / 9.0f, 2.0f);
         sprite.setOriginCenter();
         sprite.setOriginBasedPosition(0.0f, 0.0f);
@@ -48,12 +61,25 @@ public class CrossbowWeapon implements RangedWeapon {
 
     @Override
     public void update(float delta) {
+        if(reloading) {
+            pauseTime += delta;
+            if(pauseTime >= maxPauseTime) {
+                animTime += delta;
+                sprite.setRegion(animationReload.getKeyFrame(animTime));
+                if(animationReload.isAnimationFinished(animTime)) {
+                    animTime = 0.0f;
+                    reloading = false;
+                    pauseTime = 0.0f;
+                }
+            }
+        }
         if (firing) {
             animTime += delta;
-            sprite.setRegion(animation.getKeyFrame(animTime));
-            if(animation.isAnimationFinished(animTime)) {
+            sprite.setRegion(animationFire.getKeyFrame(animTime));
+            if(animationFire.isAnimationFinished(animTime)) {
                 animTime = 0.0f;
                 firing = false;
+                reloading = true;
             }
         }
     }
@@ -70,6 +96,7 @@ public class CrossbowWeapon implements RangedWeapon {
 
     @Override
     public void fire() {
+        if(reloading) return;
         if(ammo > 0) {
             firing = true;
             ammo--;
