@@ -1,5 +1,6 @@
 package game.shootergame.Item.RangedWeapons;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -32,12 +33,19 @@ public class CrossbowWeapon implements RangedWeapon {
 
     final float damage = 30.0f;
 
+    Sound soundFire;
+    Sound soundReload;
+
     public CrossbowWeapon() {
         ShooterGame.getInstance().am.load("crossbow_fire.png", Texture.class);
         ShooterGame.getInstance().am.load("crossbow_reload.png", Texture.class);
+        ShooterGame.getInstance().am.load("crossbow_fire.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("crossbow_reload.mp3", Sound.class);
         ShooterGame.getInstance().am.finishLoading();
         spriteSheetFire = ShooterGame.getInstance().am.get("crossbow_fire.png", Texture.class);
         spriteSheetReload = ShooterGame.getInstance().am.get("crossbow_reload.png", Texture.class);
+        soundFire = ShooterGame.getInstance().am.get("crossbow_fire.mp3", Sound.class);
+        soundReload = ShooterGame.getInstance().am.get("crossbow_reload.mp3", Sound.class);
         {
         TextureRegion[][] tempFrames = TextureRegion.split(spriteSheetFire, spriteSheetFire.getWidth() / 2, spriteSheetFire.getHeight());
         animationFire = new Animation<TextureRegion>(0.04167f, tempFrames[0]);
@@ -87,7 +95,10 @@ public class CrossbowWeapon implements RangedWeapon {
             if(animationFire.isAnimationFinished(animTime)) {
                 animTime = 0.0f;
                 firing = false;
-                reloading = true;
+                if(ammo > 0) {
+                    reloading = true;
+                    soundReload.play();
+                }
             }
         }
     }
@@ -106,6 +117,7 @@ public class CrossbowWeapon implements RangedWeapon {
     public void fire() {
         if(reloading) return;
         if(ammo > 0) {
+            soundFire.play();
             firing = true;
             ammo--;
             Vector2 d = new Vector2(World.getPlayer().dx(), World.getPlayer().dy()).nor();
