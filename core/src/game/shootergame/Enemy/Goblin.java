@@ -62,8 +62,8 @@ public class Goblin implements Enemy{
         texAttackLowHigh = ShooterGame.getInstance().am.get("goblin_attack_lowhigh.png", Texture.class);
         texHealth = ShooterGame.getInstance().am.get("red_bar.png", Texture.class);
         texHealthBase = ShooterGame.getInstance().am.get("bar.png", Texture.class);
-        regLow = new TextureRegion(texWalkLow, 0, 0, 128, 80);
-        regHigh = new TextureRegion(texAttackLowHigh, 0, 480, 128, 80);
+        regLow = new TextureRegion(texAttackLowHigh, 0, 0, 128, 80);
+        regHigh = new TextureRegion(texAttackLowHigh, 0, 0, 128, 80);
         regHealth = new TextureRegion(texHealth, 0, 0, 64, 64);
         regHealthBase = new TextureRegion(texHealthBase, 0, 0, 64, 64);
 
@@ -86,12 +86,12 @@ public class Goblin implements Enemy{
             }
         }
         {
-            TextureRegion[][] tempFrames = TextureRegion.split(texWalkLow, texWalkLow.getWidth() / 15, texWalkLow.getHeight() / 16);
+            TextureRegion[][] tempFrames = TextureRegion.split(texAttackLowHigh, texAttackLowHigh.getWidth() / 15, texAttackLowHigh.getHeight() / 16);
             
             for (int i = 0; i < 8; i++) {
                 TextureRegion[] animFrames = new TextureRegion[15];
                 for (int j = 0; j < 15; j++) {
-                    animFrames[j] = tempFrames[i*2+1][j];
+                    animFrames[j] = tempFrames[(i*2)+1][j];
                 }
                 animationsAttackLow[i] = new Animation<TextureRegion>(0.06f, animFrames);
                 animationsAttackLow[i].setPlayMode(PlayMode.LOOP);
@@ -143,7 +143,7 @@ public class Goblin implements Enemy{
 
         animTime += delta;
 
-        rotation += delta * 5;
+        //rotation += delta * 5;
         rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
 
         Vector2 v = new Vector2(x - World.getPlayer().x(), y - World.getPlayer().y()).nor();
@@ -163,9 +163,9 @@ public class Goblin implements Enemy{
             case 6: realIndex = 6; break;
             case 7: realIndex = 4; break;
         }
-        
-        spriteLow.texture = animationsWalk[realIndex].getKeyFrame(animTime);
-        spriteHigh.texture = animationsAttackHigh[realIndex].getKeyFrame(0.0f);
+
+        spriteLow.setRegion(animationsAttackLow[realIndex].getKeyFrame(animTime));
+        spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(animTime));
 
         if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
             Vector2 targetNode = navPath.get(targetIndex).cpy();
