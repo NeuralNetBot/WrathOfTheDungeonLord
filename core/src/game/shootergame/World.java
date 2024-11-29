@@ -22,6 +22,7 @@ import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
+import game.shootergame.Item.MeleeWeapons.MaceWeapon;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
