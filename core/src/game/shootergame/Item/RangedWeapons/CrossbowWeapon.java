@@ -120,7 +120,8 @@ public class CrossbowWeapon implements RangedWeapon {
             soundFire.play();
             firing = true;
             ammo--;
-            Vector2 d = new Vector2(World.getPlayer().dx(), World.getPlayer().dy()).nor();
+            float r = (float)Math.toRadians(World.getPlayer().rotation());
+            Vector2 d = new Vector2((float)Math.cos(r), (float)Math.sin(r)).nor();
             Collider hitCollider = World.getPhysicsWorld().rayCast(World.getPlayerCollider(), World.getPlayer().x(), World.getPlayer().y(), d.x, d.y);
             if(hitCollider != null) {
                 hitCollider.Callback(World.getPlayerCollider(), 0, 0, damage * World.getPlayer().damageMultiplier);

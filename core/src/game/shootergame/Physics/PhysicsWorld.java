@@ -203,6 +203,8 @@ public class PhysicsWorld {
     public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
         float closestDst = Float.MAX_VALUE;
         Collider hit = null;
+        System.out.println(dx);
+        System.out.println(dy);
         //check if hit collider
         for (Collider collider : colliders) {
             if(collider == self) continue;
@@ -218,7 +220,7 @@ public class PhysicsWorld {
             if(t1 >= 0) dst = t1;
             else if(t2 >= 0) dst = t2;
             else continue;
-            if(closestDst < dst) {
+            if(dst < closestDst) {
                 closestDst = dst;
                 hit = collider;
             }
@@ -245,6 +247,6 @@ public class PhysicsWorld {
             }
         }
 
-        return null;
+        return hit;
     }
 }
