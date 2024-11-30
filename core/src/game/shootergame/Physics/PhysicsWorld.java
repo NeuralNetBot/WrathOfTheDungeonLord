@@ -203,11 +203,10 @@ public class PhysicsWorld {
     public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
         float closestDst = Float.MAX_VALUE;
         Collider hit = null;
-        System.out.println(dx);
-        System.out.println(dy);
         //check if hit collider
         for (Collider collider : colliders) {
             if(collider == self) continue;
+            if(collider.isStatic) continue;
 
             Vector2 L = new Vector2(collider.x - x, collider.y - y);
             float T = L.x * dx + L.y * dy;
