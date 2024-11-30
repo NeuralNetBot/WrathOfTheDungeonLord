@@ -105,6 +105,8 @@ public class MusketWeapon implements RangedWeapon {
                 if(ammo > 0) {
                     reloading = true;
                     soundReload.play();
+                } else {
+                    sprite.setRegion(animationReload.getKeyFrame(0.0f));
                 }
             }
         }
