@@ -183,6 +183,8 @@ public class World {
         navMesh = new NavMesh();
         remotePlayers = new ConcurrentHashMap<>();
 
+        RemotePlayer.initTextures();
+
         ShooterGame.getInstance().am.load("dungeon_ambient.mp3", Sound.class);
         ShooterGame.getInstance().am.finishLoading();
         ambient = ShooterGame.getInstance().am.get("dungeon_ambient.mp3", Sound.class);
@@ -254,7 +256,7 @@ public class World {
 
     private void init() {
         physicsWorld = new PhysicsWorld();
-        
+
         loadFromFile("assets/map0.data");
 
         physicsWorld.setWalls(walls);

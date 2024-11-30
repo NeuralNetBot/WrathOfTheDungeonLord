@@ -17,10 +17,15 @@ public class RemotePlayer {
 
     Collider collider;
 
-    RemotePlayer() {
+    static Texture tex;
+
+    public static void initTextures() {
         ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        Texture tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
+        tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
+    }
+
+    RemotePlayer() {
         TextureRegion reg = new TextureRegion(tex, 0, 0, 1024, 1024);
 
         sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
