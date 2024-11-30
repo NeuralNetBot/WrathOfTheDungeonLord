@@ -50,7 +50,7 @@ public class Slime implements Enemy{
     Animation<TextureRegion> animation;
     float animTime = 0.0f;
 
-    final float agressionRange = 7.0f;
+    final float agressionRange = 10.0f;
     final float aggroSightLossTimeout = 2.0f;
     float aggroLossTimer = 0.0f;
     boolean isAgrro = false;

@@ -237,6 +237,10 @@ public class World {
                     float cx = -Float.parseFloat(parts[5]);
                     float cy = Float.parseFloat(parts[6]);
                     navMesh.addTriangle(new Triangle(ax, ay, bx, by, cx, cy));
+                } else if(type.equals("slime")) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    enemies.add(new Slime(x, y));
                 }
 
             }
@@ -249,9 +253,11 @@ public class World {
     }
 
     private void init() {
+        physicsWorld = new PhysicsWorld();
+        
         loadFromFile("assets/map0.data");
 
-        physicsWorld = new PhysicsWorld(walls);
+        physicsWorld.setWalls(walls);
         itemPrompt = null;
 
         player = new Player(new HalberdWeapon());

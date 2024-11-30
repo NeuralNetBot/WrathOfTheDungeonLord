@@ -12,7 +12,9 @@ public class PhysicsWorld {
     LinkedList<Collider> colliders = new LinkedList<>();
     ArrayList<Wall> walls;
 
-    public PhysicsWorld(ArrayList<Wall> walls) {
+    public PhysicsWorld() { }
+
+    public void setWalls(ArrayList<Wall> walls) {
         this.walls = walls;
     }
 
