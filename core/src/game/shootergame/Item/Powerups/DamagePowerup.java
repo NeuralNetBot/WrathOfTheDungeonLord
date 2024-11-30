@@ -14,9 +14,11 @@ public class DamagePowerup implements Powerup {
     private boolean isActive;
     Texture tex;
     TextureRegion reg;
+    float maxTime;
 
     public DamagePowerup() {
-        this.remainingTime = 10.0f;
+        this.maxTime = 15.f;
+        this.remainingTime = maxTime;
         this.isActive = true;
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -36,13 +38,13 @@ public class DamagePowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.damageMultiplier = 2.0f;
+        player.damageMultiplier += 1.0f;
         System.out.println("Damage Boost Initiated: Multiplier is " + player.damageMultiplier);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.damageMultiplier = 1.0f;
+        player.damageMultiplier -= 1.0f;
         System.out.println("Damage Boost Ended: Multiplier is " + player.damageMultiplier);
     }
 
@@ -64,6 +66,10 @@ public class DamagePowerup implements Powerup {
     @Override
     public TextureRegion getItemTexture() {
         return reg;
+    }
+
+    public float getMaxTime() {
+        return maxTime;
     }
 
 }
