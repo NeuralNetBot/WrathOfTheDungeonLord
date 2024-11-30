@@ -169,6 +169,10 @@ public class World {
         return instance.navMesh;
     }
 
+    public static ConcurrentHashMap<Integer, RemotePlayer> getRemotePlayers() {
+        return instance.remotePlayers;
+    }
+
     private World() {
         walls = new ArrayList<>();
         torches = new ArrayList<>();

@@ -226,5 +226,10 @@ public class Goblin implements Enemy{
     public boolean isAlive() {
         return health > 0.0f;
     }
+
+    @Override
+    public boolean isAggro() {
+        return false;
+    }
     
 }

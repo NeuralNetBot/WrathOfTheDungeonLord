@@ -4,6 +4,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import game.shootergame.ShooterGame;
+import game.shootergame.World;
+import game.shootergame.Physics.Collider;
 import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Sprite2_5D;
 
@@ -13,6 +15,8 @@ public class RemotePlayer {
     float rotation;
     Sprite2_5D sprite;
 
+    Collider collider;
+
     RemotePlayer() {
         ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -21,6 +25,9 @@ public class RemotePlayer {
 
         sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
         Renderer.inst().addSprite(sprite);
+
+        collider = new Collider(x, y, 0.5f, null);
+        World.getPhysicsWorld().addCollider(collider);
     }
 
     public void update(float delta) {
@@ -29,6 +36,11 @@ public class RemotePlayer {
 
         sprite.x = x;
         sprite.y = y;
+        
+        collider.dx = dx;
+        collider.dy = dy;
+        collider.x = x;
+        collider.y = y;
     }
 
     public void updateNetwork(float x, float y, float dx, float dy, float rotation) {
@@ -41,5 +53,9 @@ public class RemotePlayer {
 
     public void kill() {
         Renderer.inst().removeSprite(sprite);
+    }
+
+    public Collider getCollider() {
+        return collider;
     }
 }

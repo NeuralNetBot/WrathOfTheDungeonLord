@@ -5,4 +5,5 @@ public interface Enemy {
     public void tickPathing();
     public void onKill();
     public boolean isAlive();
+    public boolean isAggro();
 }

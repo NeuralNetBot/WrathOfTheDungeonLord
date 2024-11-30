@@ -1,5 +1,8 @@
 package game.shootergame.Enemy;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
@@ -8,6 +11,7 @@ import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.World;
+import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Sprite2_5D;
@@ -45,6 +49,11 @@ public class Slime implements Enemy{
 
     Animation<TextureRegion> animation;
     float animTime = 0.0f;
+
+    final float agressionRange = 7.0f;
+    final float aggroSightLossTimeout = 2.0f;
+    float aggroLossTimer = 0.0f;
+    boolean isAgrro = false;
 
     public Slime(float x, float y) {
         this.x = x; this.y = y;
@@ -99,14 +108,51 @@ public class Slime implements Enemy{
         }, false, 1.3f);
         World.getPhysicsWorld().addCollider(collider);
 
-        //TODO: make dyanmically choose this target
-        currentTargetCollider = World.getPlayerCollider();
+        currentTargetCollider = null;
     }
 
     @Override
     public void update(float delta) {
         animTime += delta;
         currentRegion.setRegion(animation.getKeyFrame(animTime));
+
+        if(currentTargetCollider == null || aggroLossTimer >= aggroSightLossTimeout) {
+            float closest = Float.MAX_VALUE;
+            Collider close = null;
+            Iterator<Map.Entry<Integer, RemotePlayer>> iterator = World.getRemotePlayers().entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Integer, RemotePlayer> entry = iterator.next();
+                Collider eCollider = entry.getValue().getCollider();
+                float dst = Vector2.dst(eCollider.x, eCollider.y, x, y);
+                if(dst < agressionRange && dst < closest) {
+                    closest = dst;
+                    close = eCollider;
+                    isAgrro = true;
+                    aggroLossTimer = 0.0f;
+                }
+            }
+            Collider playerC = World.getPlayerCollider();
+            float dst = Vector2.dst(playerC.x, playerC.y, x, y);
+            if(dst < agressionRange && dst < closest) {
+                closest = dst;
+                close = playerC;
+                isAgrro = true;
+                aggroLossTimer = 0.0f;
+            }
+            currentTargetCollider = close;
+        }
+
+        if(aggroLossTimer >= aggroSightLossTimeout) {
+            isAgrro = false;
+            currentTargetCollider = null;
+        }
+
+        if(currentTargetCollider != null && Vector2.dst(currentTargetCollider.x, currentTargetCollider.y, x, y) > agressionRange) {
+            aggroLossTimer += delta;
+        } else {
+            aggroLossTimer = 0.0f;
+        }
+
         x += dx;
         y += dy;
 
@@ -164,6 +210,11 @@ public class Slime implements Enemy{
     @Override
     public boolean isAlive() {
         return health > 0.0f;
+    }
+
+    @Override
+    public boolean isAggro() {
+        return isAgrro;
     }
     
 }
