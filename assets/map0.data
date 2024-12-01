@@ -940,3 +940,13 @@ slime 49.0192 10.4207
 slime 46.0127 15.0189
 slime 49.5498 18.7328
 slime 49.0192 14.1346
+
+powerup 0.0 0.0 damage
+powerup 0.0 1.0 health
+powerup 1.0 0.0 resist
+powerup 1.0 1.0 attackspeed
+
+weapon 0.5 0.0 crossbow
+weapon 0.0 -1.0 musket
+weapon -1.0 0.0 crossbowammo
+weapon -1.0 -1.0 musketammo

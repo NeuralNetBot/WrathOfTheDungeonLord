@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
@@ -25,6 +26,7 @@ import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Item.Powerups.MusketAmmoPowerup;
 import game.shootergame.Item.Powerups.CrossbowAmmoPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
@@ -196,7 +198,7 @@ public class World {
         ambient.loop(0.15f);
     }
 
-    private void loadFromFile(String mapName) {
+    public static void loadFromFile(String mapName) {
         try (BufferedReader br = new BufferedReader(new FileReader(mapName))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -216,16 +218,16 @@ public class World {
                     float textureID = Float.parseFloat(parts[6]);
                     boolean isDoor = Boolean.parseBoolean(parts[7]);
                     Wall wall = new Wall(ax, ay, bx, by, height, textureID, isDoor);
-                    walls.add(wall);
+                    instance.walls.add(wall);
                     if(parts.length == 9) { wall.yOffset = Float.parseFloat(parts[8]); }
                     else if(isDoor) {
-                        doors.add(walls.size() - 1);
+                        instance.doors.add(instance.walls.size() - 1);
                     }
                 } else if(type.equals("torch")) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
                     float radius = Float.parseFloat(parts[3]);
-                    torches.add(new Torch(x, y, radius));
+                    instance.torches.add(new Torch(x, y, radius));
                 } else if(type.equals("region")) {
                     float minX = -Float.parseFloat(parts[1]);
                     float minY = Float.parseFloat(parts[2]);
@@ -235,7 +237,7 @@ public class World {
                     for (int i = 5; i < parts.length; i++) {
                         region.indices.add(Integer.parseInt(parts[i]));
                     }
-                    torchRegionIndexCuller.regions.add(region);
+                    instance.torchRegionIndexCuller.regions.add(region);
                 } else if(type.equals("nav") && instance.networkMode == NetworkMode.SERVER) {
                     float ax = -Float.parseFloat(parts[1]);
                     float ay = Float.parseFloat(parts[2]);
@@ -243,17 +245,44 @@ public class World {
                     float by = Float.parseFloat(parts[4]);
                     float cx = -Float.parseFloat(parts[5]);
                     float cy = Float.parseFloat(parts[6]);
-                    navMesh.addTriangle(new Triangle(ax, ay, bx, by, cx, cy));
+                    instance.navMesh.addTriangle(new Triangle(ax, ay, bx, by, cx, cy));
                 } else if(type.equals("slime") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
-                    enemies.add(new Slime(x, y));
+                    instance.enemies.add(new Slime(x, y));
+                } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+                    if(parts[3].equals("damage")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new DamagePowerup()));
+                    } else if(parts[3].equals("health")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new HealthPowerup()));
+                    } else if(parts[3].equals("resist")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new DamageResistPowerup()));
+                    } else if(parts[3].equals("attackspeed")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new AttackSpeedPowerup()));
+                    }
+                } else if(type.equals("weapon") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+
+                    if(parts[3].equals("crossbow")) {
+                        instance.items.put(id, new ItemPickup(x, y, 2.0f, new CrossbowWeapon()));
+                    } else if(parts[3].equals("musket")) {
+                        instance.items.put(id, new ItemPickup(x, y, 2.0f, new MusketWeapon()));
+                    } else if(parts[3].equals("crossbowammo")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new CrossbowAmmoPowerup()));
+                    } else if(parts[3].equals("musketammo")) {
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new MusketAmmoPowerup()));
+                    }
                 }
 
             }
             System.out.println("Map: '" + mapName + "' loaded");
-            System.out.println((walls.size() - doors.size()) + " walls");
-            System.out.println(doors.size() + " doors");
+            System.out.println((instance.walls.size() - instance.doors.size()) + " walls");
+            System.out.println(instance.doors.size() + " doors");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -262,22 +291,10 @@ public class World {
     private void init() {
         physicsWorld = new PhysicsWorld();
 
-        loadFromFile("assets/map0.data");
-
         physicsWorld.setWalls(walls);
         itemPrompt = null;
 
         player = new Player(new NullWeapon());
         player.setRangedWeapon(new MusketWeapon());
-
-        //items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));
-        //items.add(new ItemPickup(-1.0f, -1.0f, (new HealthPowerup())));
-        //items.add(new ItemPickup(0.0f, 0.0f, (new DamageResistPowerup())));
-        //items.add(new ItemPickup(-1.0f, 1.0f, (new AttackSpeedPowerup())));
-        items.put(0, new ItemPickup(-1.0f, 1.0f, 2.0f, new CrossbowWeapon()));
-        items.put(1, new ItemPickup(1.0f, 1.0f, 1.0f, new CrossbowAmmoPowerup()));
-
-        enemies.add(new Goblin(0.0f, 0.0f));
-        enemies.add(new Slime(1.0f, 0.0f));
     }
 }

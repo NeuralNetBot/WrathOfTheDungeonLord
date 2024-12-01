@@ -39,6 +39,13 @@ type add? id         x          y           payload    subtype
 type
 0x05
 
+-load map
+type strlen
+0x10 0x0E "map name string"
+
+-ready to play
+0x11
+
 ------client sends to server------
 -player positions send
 type x          y          dx         dy         rotation

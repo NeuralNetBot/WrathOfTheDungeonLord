@@ -30,8 +30,6 @@ public class GameScreen extends ScreenAdapter {
         renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
         renderer.setWalls(World.getWalls());
-        renderer.buildLightmap(World.getTorches());
-        renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 
@@ -95,6 +93,9 @@ public class GameScreen extends ScreenAdapter {
                 case 2: World.getPlayer().setMeleeWeapon(new MaceWeapon()); break;
                 case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
             }
+            World.loadFromFile("assets/map0.data");
+            renderer.buildLightmap(World.getTorches());
+            renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
             doOnceLaunch = false;
         }
 
