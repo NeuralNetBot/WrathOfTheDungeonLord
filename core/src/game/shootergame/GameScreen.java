@@ -8,6 +8,10 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
+import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
+import game.shootergame.Item.MeleeWeapons.MaceWeapon;
+import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Renderer.Renderer;
 
 
@@ -72,6 +76,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     boolean doOnce = true;
+    boolean doOnceLaunch = true;
 
     @Override
     public void render(float delta) {
@@ -83,7 +88,15 @@ public class GameScreen extends ScreenAdapter {
             }
             doOnce = false;
         }
-        
+        if(menu.shouldLaunchGame() && doOnceLaunch) {
+            switch (menu.getSelectedWeapon()) {
+                case 0: World.getPlayer().setMeleeWeapon(new SwordWeapon()); break;
+                case 1: World.getPlayer().setMeleeWeapon(new HalberdWeapon()); break;
+                case 2: World.getPlayer().setMeleeWeapon(new MaceWeapon()); break;
+                case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
+            }
+            doOnceLaunch = false;
+        }
 
         ScreenUtils.clear(0, 0, 0, 1);
 
@@ -124,7 +137,9 @@ public class GameScreen extends ScreenAdapter {
         hud.draw(coreBatch);
         coreBatch.end();
 
-        renderer.renderMinimap();
+        if(menu.shouldLaunchGame()) {
+            renderer.renderMinimap();
+        }
     }
 
 	@Override

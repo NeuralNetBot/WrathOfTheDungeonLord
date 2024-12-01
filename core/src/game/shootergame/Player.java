@@ -407,6 +407,10 @@ public class Player {
         return ranged;
     }
 
+    public void setMeleeWeapon(MeleeWeapon weapon) {
+        this.melee = weapon;
+    }
+
     public void setRangedWeapon(RangedWeapon weapon) {
         this.ranged = weapon;
     }

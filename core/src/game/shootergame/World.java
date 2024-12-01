@@ -20,8 +20,10 @@ import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
+import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
 import game.shootergame.Item.MeleeWeapons.MaceWeapon;
+import game.shootergame.Item.MeleeWeapons.NullWeapon;
 import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
@@ -262,7 +264,7 @@ public class World {
         physicsWorld.setWalls(walls);
         itemPrompt = null;
 
-        player = new Player(new HalberdWeapon());
+        player = new Player(new NullWeapon());
         player.setRangedWeapon(new MusketWeapon());
 
         //items.add(new ItemPickup(1.0f, 1.0f, (new DamagePowerup())));

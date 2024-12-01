@@ -24,6 +24,11 @@ public class MainMenu {
     TextureRegion exitReg;
     TextureRegion startGameReg;
     TextureRegion connectReg;
+    
+    TextureRegion swordReg;
+    TextureRegion halberdReg;
+    TextureRegion maceReg;
+    TextureRegion brassReg;
 
     Sprite sprite;
 
@@ -33,6 +38,8 @@ public class MainMenu {
     boolean isDone = false;
     boolean mode = false; //false client, true server
     boolean launchGame = false;
+
+    int selectedWeaponIndex = 0;
 
     public MainMenu() {
         currentState = State.MAIN;
@@ -48,19 +55,30 @@ public class MainMenu {
         exitReg = new TextureRegion(atlas, 0, 216, 216, 108);
         startGameReg = new TextureRegion(atlas, 216, 0, 216, 108);
         connectReg = new TextureRegion(atlas, 216, 108, 324, 108);
+        
+        swordReg = new TextureRegion(atlas, 0, 324, 216, 108);
+        halberdReg = new TextureRegion(atlas, 216, 324, 216, 108);
+        maceReg = new TextureRegion(atlas, 0, 432, 216, 108);
+        brassReg = new TextureRegion(atlas, 216, 432, 216, 108);
 
         sprite = new Sprite(atlas);
     }
 
     private void showPlayerList() {
-        
     }
 
     private void showWeaponSelect() {
-        
+        if(getAndRenderButton(swordReg, -0.7f, -0.45f, 0.5f, 0.25f, selectedWeaponIndex == 0)) { selectedWeaponIndex = 0; }
+        if(getAndRenderButton(halberdReg, -0.2f, -0.45f, 0.5f, 0.25f, selectedWeaponIndex == 1)) { selectedWeaponIndex = 1; }
+        if(getAndRenderButton(maceReg, -0.7f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 2)) { selectedWeaponIndex = 2; }
+        if(getAndRenderButton(brassReg, -0.2f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 3)) { selectedWeaponIndex = 3; }
     }
 
     private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height) {
+        return getAndRenderButton(reg, x, y, width, height, false);
+    }
+
+    private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height, boolean overrideSelection) {
         sprite.setRegion(reg);
         sprite.setSize(width, height);
         sprite.setOriginCenter();
@@ -73,6 +91,9 @@ public class MainMenu {
             pressed =  Gdx.input.isButtonPressed(Buttons.LEFT);
         } else {
             sprite.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+        if(overrideSelection) {
+            sprite.setColor(0.7f, 0.7f, 0.7f, 0.7f);
         }
 
         sprite.draw(ShooterGame.getInstance().coreBatch);
@@ -103,6 +124,11 @@ public class MainMenu {
         return "localhost";
     }
 
+    public int getSelectedWeapon() {
+        System.out.println(selectedWeaponIndex);
+        return selectedWeaponIndex;
+    }
+
     public void update() {
         float aspect = (float)Gdx.graphics.getHeight() / (float)Gdx.graphics.getWidth();
         mouseX = (float)Gdx.input.getX() / (float)Gdx.graphics.getWidth() * (2f / aspect) - (1f / aspect);
@@ -118,7 +144,7 @@ public class MainMenu {
             break;
         case SERVER_HOST:
 
-            if(getAndRenderButton(startGameReg, 0, 0, 0.5f, 0.25f)) { launchGame = true; }
+            if(getAndRenderButton(startGameReg, -0.7f, 0.7f, 0.5f, 0.25f)) { launchGame = true; }
             showPlayerList();
             showWeaponSelect();
 
