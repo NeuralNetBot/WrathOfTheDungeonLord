@@ -5,6 +5,8 @@ import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
+import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
+import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.Item.RangedWeapon;
 import game.shootergame.World;
 import org.w3c.dom.ranges.Range;
@@ -93,13 +95,13 @@ public class Client {
                     case 0x02:
                         switch (subtype) {
                             case 0x00000001:
-                                //CrossbowWeapon crossbow = new CrossbowWeapon();
-                                //items.put(ID, new ItemPickup(x, y crossbow));
-                                //break;
+                                CrossbowWeapon crossbow = new CrossbowWeapon();
+                                items.put(ID, new ItemPickup(x, y, 2.0f, crossbow));
+                                break;
                             case 0x00000002:
-                                //MusketWeapon musket = new MusketWeapon();
-                                //items.put(ID, new ItemPickup(x, y, musket));
-                                //break;
+                                MusketWeapon musket = new MusketWeapon();
+                                items.put(ID, new ItemPickup(x, y, 2.0f, musket));
+                                break;
                         }
                         break;
                     case 0x03:
