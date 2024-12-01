@@ -20,17 +20,12 @@ import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
-import game.shootergame.Item.MeleeWeapon;
-import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
-import game.shootergame.Item.MeleeWeapons.MaceWeapon;
 import game.shootergame.Item.MeleeWeapons.NullWeapon;
-import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.Powerups.CrossbowAmmoPowerup;
-import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.Network.Client;
@@ -69,6 +64,12 @@ public class World {
     Client client;
     Sound ambient;
 
+    enum NetworkMode {
+        SERVER,
+        CLIENT;
+    }
+    NetworkMode networkMode;
+
     public static void createInstance() {
         instance = new World();
         instance.init();
@@ -84,10 +85,12 @@ public class World {
 
     public static void startAsServer() {
         new Thread(new Server(instance.remotePlayers)).start();
+        instance.networkMode = NetworkMode.SERVER;
     }
 
     public static void startAsClient() {
         instance.client = new Client(instance.remotePlayers, instance.items);
+        instance.networkMode = NetworkMode.CLIENT;
     }
 
     float wx = 0.0f;
@@ -233,7 +236,7 @@ public class World {
                         region.indices.add(Integer.parseInt(parts[i]));
                     }
                     torchRegionIndexCuller.regions.add(region);
-                } else if(type.equals("nav")) {
+                } else if(type.equals("nav") && instance.networkMode == NetworkMode.SERVER) {
                     float ax = -Float.parseFloat(parts[1]);
                     float ay = Float.parseFloat(parts[2]);
                     float bx = -Float.parseFloat(parts[3]);
@@ -241,7 +244,7 @@ public class World {
                     float cx = -Float.parseFloat(parts[5]);
                     float cy = Float.parseFloat(parts[6]);
                     navMesh.addTriangle(new Triangle(ax, ay, bx, by, cx, cy));
-                } else if(type.equals("slime")) {
+                } else if(type.equals("slime") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
                     enemies.add(new Slime(x, y));
