@@ -37,9 +37,11 @@ public class MainMenu {
 
     boolean isDone = false;
     boolean mode = false; //false client, true server
-    boolean launchGame = false;
+    boolean runGame = false;
 
     int selectedWeaponIndex = 0;
+
+    boolean clientConnected = false;
 
     public MainMenu() {
         currentState = State.MAIN;
@@ -112,8 +114,8 @@ public class MainMenu {
         return mode;
     }
 
-    public boolean shouldLaunchGame() {
-        return launchGame;
+    public boolean shouldRunGame() {
+        return runGame;
     }
 
     public int getPort() {
@@ -127,6 +129,10 @@ public class MainMenu {
     public int getSelectedWeapon() {
         System.out.println(selectedWeaponIndex);
         return selectedWeaponIndex;
+    }
+
+    public void setClientConnected(boolean connected) {
+        this.clientConnected = connected;
     }
 
     public void update() {
@@ -144,14 +150,14 @@ public class MainMenu {
             break;
         case SERVER_HOST:
 
-            if(getAndRenderButton(startGameReg, -0.7f, 0.7f, 0.5f, 0.25f)) { launchGame = true; }
+            if(getAndRenderButton(startGameReg, -0.7f, 0.7f, 0.5f, 0.25f)) { runGame = true; }
             showPlayerList();
             showWeaponSelect();
 
             break;
         case CLIENT_CONNECT:
 
-            if(getAndRenderButton(connectReg, 0, 0, 0.5f, 0.25f)) { launchGame = true; }
+            if(getAndRenderButton(connectReg, 0, 0, 0.5f, 0.25f)) { currentState = State.CLIENT_WAIT; }
 
             break;
         case CLIENT_WAIT:
@@ -161,6 +167,10 @@ public class MainMenu {
 
             showPlayerList();
             showWeaponSelect();
+
+            if(clientConnected) {
+                runGame = true;
+            }
 
             break;
         default:

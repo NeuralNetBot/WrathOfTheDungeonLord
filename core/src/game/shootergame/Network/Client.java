@@ -7,15 +7,14 @@ import game.shootergame.Item.Powerups.DamageResistPowerup;
 import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
-import game.shootergame.Item.RangedWeapon;
 import game.shootergame.World;
-import org.w3c.dom.ranges.Range;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Client {
@@ -25,6 +24,11 @@ public class Client {
     private Socket socket;
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
+
+    private volatile boolean hasMapLoad = false;
+    private volatile String mapName = null;
+
+    private volatile boolean readyToPlay = false;
 
     public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
         this.remotePlayers = remotePlayers;
@@ -42,6 +46,23 @@ public class Client {
         catch (IOException e) {
 
         }
+    }
+
+    public boolean hasMapLoad() {
+        return hasMapLoad;
+    }
+
+    /**
+     * resets hasMapLoad flag when called
+     * @return map name
+     */
+    public String getMapName() {
+        hasMapLoad = false;
+        return mapName;
+    }
+
+    public boolean isReadyToPlay() {
+        return readyToPlay;
     }
 
     private class InputHandler implements Runnable {
@@ -128,6 +149,18 @@ public class Client {
             }
         }
 
+        private void processLoadMap(ByteBuffer buffer) {
+            byte strLen = buffer.get();
+            byte[] strBytes = new byte[strLen];
+            buffer.get(strBytes);
+            hasMapLoad = true;
+            mapName = new String(strBytes, StandardCharsets.UTF_8);
+        }
+
+        private void processReadyPlay(ByteBuffer buffer) {
+            readyToPlay = true;
+        }
+
         @Override
         public void run() {
             try {
@@ -151,6 +184,10 @@ public class Client {
                         case PLAYER_UPDATE:   break;
                         case PLAYER_ATTACK:   break;
                         case ITEM_INTERACT:   break;
+                        case LOAD_MAP:
+                            processLoadMap(buffer);   break;
+                        case READY_PLAY:
+                            processReadyPlay(buffer);   break;
                         default: break;
                         }
                     }

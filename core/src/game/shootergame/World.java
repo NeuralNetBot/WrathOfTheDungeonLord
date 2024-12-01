@@ -21,7 +21,11 @@ import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
+import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
+import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
+import game.shootergame.Item.MeleeWeapons.MaceWeapon;
 import game.shootergame.Item.MeleeWeapons.NullWeapon;
+import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
 import game.shootergame.Item.Powerups.DamageResistPowerup;
@@ -36,6 +40,7 @@ import game.shootergame.Network.Server;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Physics.PhysicsWorld;
 import game.shootergame.Renderer.RegionIndexCuller;
+import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Torch;
 
 public class World {
@@ -66,6 +71,8 @@ public class World {
     Client client;
     Sound ambient;
 
+    MainMenu mainMenu;
+
     enum NetworkMode {
         SERVER,
         CLIENT;
@@ -86,7 +93,8 @@ public class World {
     }
 
     public static void startAsServer() {
-        new Thread(new Server(instance.remotePlayers)).start();
+        instance.server = new Server(instance.remotePlayers);
+        new Thread(instance.server).start();
         instance.networkMode = NetworkMode.SERVER;
     }
 
@@ -95,8 +103,62 @@ public class World {
         instance.networkMode = NetworkMode.CLIENT;
     }
 
+    public static void startMainMenu(MainMenu menu) {
+        instance.mainMenu = menu;
+    }
+
     float wx = 0.0f;
+    
+    boolean doOnce = true;
+    boolean doOnceLaunch = true;
     public static void update(float delta) {
+
+        if(instance.mainMenu.isDone() && instance.doOnce) {
+            if(instance.mainMenu.getSelectedMode()) {
+                World.startAsServer();
+            } else {
+                World.startAsClient();
+            }
+            instance.doOnce = false;
+        }
+        if(instance.mainMenu.shouldRunGame() && instance.doOnceLaunch) {
+            switch (instance.mainMenu.getSelectedWeapon()) {
+                case 0: World.getPlayer().setMeleeWeapon(new SwordWeapon()); break;
+                case 1: World.getPlayer().setMeleeWeapon(new HalberdWeapon()); break;
+                case 2: World.getPlayer().setMeleeWeapon(new MaceWeapon()); break;
+                case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
+            }
+            if(instance.networkMode == NetworkMode.SERVER) {
+                instance.server.broadcastLoadMap("assets/map0.data");
+                
+                World.loadFromFile("assets/map0.data");
+                Renderer.inst().buildLightmap(World.getTorches());
+                Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
+
+                //TODO: broadcast item/enemy data
+
+                instance.server.broadcastReadyPlay();
+
+            } else if(instance.networkMode == NetworkMode.CLIENT) {
+                //nothing happens until client recieves packets from server
+            }
+
+
+            instance.doOnceLaunch = false;
+        }
+        if(instance.networkMode == NetworkMode.CLIENT) {
+            if(instance.client.hasMapLoad()) {
+                World.loadFromFile(instance.client.getMapName());
+                Renderer.inst().buildLightmap(World.getTorches());
+                Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
+            }
+            if(instance.client.isReadyToPlay()) {
+                instance.mainMenu.setClientConnected(true);
+            }
+        }
+
+        if(!instance.mainMenu.shouldRunGame()) return;
+
         instance.itemPrompt = null;
         
         instance.physicsWorld.update();
@@ -133,13 +195,22 @@ public class World {
         if(instance.pathTickIndex >= instance.enemies.size()) {
             instance.pathTickIndex = 0;
         }
+
+        Renderer.inst().update(instance.player.x(), instance.player.y(), instance.player.rotation(), delta);
     }
 
     public static void render() {
-        instance.player.render();
+        if(instance.mainMenu.shouldRunGame()) {
+            instance.player.render();
+        } else {
+            instance.mainMenu.update();
+        }
     }
 
     public static void renderHud() {
+        if(!instance.mainMenu.shouldRunGame())
+            return;
+
         if(instance.itemPrompt != null) {
             String name = instance.itemPrompt.getName();
             BitmapFont font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT);

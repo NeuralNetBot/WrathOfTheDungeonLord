@@ -3,6 +3,7 @@ package game.shootergame.Network;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -29,6 +31,7 @@ public class Server implements Runnable{
         private Socket socket;
         private RemotePlayer remotePlayer;
         private int remotePlayerID;
+        private ConcurrentLinkedQueue<ByteBuffer> outputQueue = new ConcurrentLinkedQueue<>();
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
@@ -81,20 +84,8 @@ public class Server implements Runnable{
             }
         }
 
-        public void handlewNewItem(int id, boolean add, int payload, int subtype, DataOutputStream out) {
-            System.out.println("writing " + id + " to new item");
-            ByteBuffer buffer = ByteBuffer.allocate(21);
-            buffer.put(PacketInfo.getByte(PacketInfo.NEW_ITEM));
-            buffer.put(add ? (byte)0x01 : (byte)0x00);
-            buffer.putInt(id);
-            buffer.putInt(payload);
-            buffer.putInt(subtype);
-            try {
-                out.write(buffer.array());
-                out.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        public void sendBytes(ByteBuffer bytes) {
+            outputQueue.add(bytes);
         }
 
         private class InputHandler implements Runnable {
@@ -169,6 +160,15 @@ public class Server implements Runnable{
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    ByteBuffer itemBuffer;
+                    while((itemBuffer = outputQueue.poll()) != null) {
+                        try {
+                            out.write(itemBuffer.array());
+                            out.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
 
                     ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
                     buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
@@ -211,6 +211,42 @@ public class Server implements Runnable{
 
     public Server (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers) {
         this.remotePlayers = remotePlayers;
+    }
+
+    public void broadcastLoadMap(String mapPath) {
+        byte[] strBytes;
+        try {
+            strBytes = mapPath.getBytes("UTF-8");
+            ByteBuffer buffer = ByteBuffer.allocate(2 + strBytes.length);
+            buffer.put(PacketInfo.getByte(PacketInfo.LOAD_MAP));
+            buffer.put((byte)strBytes.length);
+            buffer.put(strBytes);
+            for (ClientHandler client : clients) {
+                client.sendBytes(buffer);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void broadcastReadyPlay() {
+        ByteBuffer buffer = ByteBuffer.allocate(1);
+        buffer.put(PacketInfo.getByte(PacketInfo.READY_PLAY));
+        for (ClientHandler client : clients) {
+            client.sendBytes(buffer);
+        }
+    }
+
+    public void broadcastNewItem(int id, boolean add, int payload, int subtype, DataOutputStream out) {
+        ByteBuffer buffer = ByteBuffer.allocate(21);
+        buffer.put(PacketInfo.getByte(PacketInfo.NEW_ITEM));
+        buffer.put(add ? (byte)0x01 : (byte)0x00);
+        buffer.putInt(id);
+        buffer.putInt(payload);
+        buffer.putInt(subtype);
+        for (ClientHandler client : clients) {
+            client.sendBytes(buffer);
+        }
     }
 
     @Override

@@ -31,6 +31,8 @@ public class GameScreen extends ScreenAdapter {
         World.createInstance();
         renderer.setWalls(World.getWalls());
 
+        World.startMainMenu(menu);
+
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 
         // the HUD will show FPS always, by default.  Here's how
@@ -73,35 +75,11 @@ public class GameScreen extends ScreenAdapter {
         
     }
 
-    boolean doOnce = true;
-    boolean doOnceLaunch = true;
-
     @Override
     public void render(float delta) {
-        if(menu.isDone() && doOnce) {
-            if(menu.getSelectedMode()) {
-                World.startAsServer();
-            } else {
-                World.startAsClient();
-            }
-            doOnce = false;
-        }
-        if(menu.shouldLaunchGame() && doOnceLaunch) {
-            switch (menu.getSelectedWeapon()) {
-                case 0: World.getPlayer().setMeleeWeapon(new SwordWeapon()); break;
-                case 1: World.getPlayer().setMeleeWeapon(new HalberdWeapon()); break;
-                case 2: World.getPlayer().setMeleeWeapon(new MaceWeapon()); break;
-                case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
-            }
-            World.loadFromFile("assets/map0.data");
-            renderer.buildLightmap(World.getTorches());
-            renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
-            doOnceLaunch = false;
-        }
-
         ScreenUtils.clear(0, 0, 0, 1);
 
-        if(menu.shouldLaunchGame()) {
+        if(menu.shouldRunGame()) {
             if(Gdx.input.isKeyJustPressed(Keys.T)) {
                 Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
             }
@@ -109,10 +87,11 @@ public class GameScreen extends ScreenAdapter {
             if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
                 World.processInput();
             }
-
-            World.update(delta);
-            renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation(), delta);
-
+        }
+        
+        World.update(delta);
+            
+        if(menu.shouldRunGame()) {
             renderer.render();
         }
 
@@ -121,24 +100,20 @@ public class GameScreen extends ScreenAdapter {
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
-        if(menu.shouldLaunchGame()) {
+        if(menu.shouldRunGame()) {
             renderer.processSpriteDraws();
-            World.render();
-        } else {
-            menu.update();
         }
+        World.render();
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         
-        if(menu.shouldLaunchGame()) {
-            World.renderHud();
-        }
+        World.renderHud();
 
         //we always want the hud to be visible
         hud.draw(coreBatch);
         coreBatch.end();
 
-        if(menu.shouldLaunchGame()) {
+        if(menu.shouldRunGame()) {
             renderer.renderMinimap();
         }
     }
