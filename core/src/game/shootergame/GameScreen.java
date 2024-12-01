@@ -8,6 +8,10 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
+import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
+import game.shootergame.Item.MeleeWeapons.MaceWeapon;
+import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Renderer.Renderer;
 
 
@@ -17,11 +21,17 @@ public class GameScreen extends ScreenAdapter {
 
     private Renderer renderer;
 
+    private MainMenu menu;
+
     public GameScreen() {
+
+        menu = new MainMenu();
 
         renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
         renderer.setWalls(World.getWalls());
+        renderer.buildLightmap(World.getTorches());
+        renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 
@@ -65,42 +75,71 @@ public class GameScreen extends ScreenAdapter {
         
     }
 
+    boolean doOnce = true;
+    boolean doOnceLaunch = true;
+
     @Override
     public void render(float delta) {
-
-        if(Gdx.input.isKeyJustPressed(Keys.T)) {
-            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+        if(menu.isDone() && doOnce) {
+            if(menu.getSelectedMode()) {
+                World.startAsServer();
+            } else {
+                World.startAsClient();
+            }
+            doOnce = false;
         }
-
-        if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
-            World.processInput();
+        if(menu.shouldLaunchGame() && doOnceLaunch) {
+            switch (menu.getSelectedWeapon()) {
+                case 0: World.getPlayer().setMeleeWeapon(new SwordWeapon()); break;
+                case 1: World.getPlayer().setMeleeWeapon(new HalberdWeapon()); break;
+                case 2: World.getPlayer().setMeleeWeapon(new MaceWeapon()); break;
+                case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
+            }
+            doOnceLaunch = false;
         }
-
-        World.update(delta);
-        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation());
 
         ScreenUtils.clear(0, 0, 0, 1);
 
+        if(menu.shouldLaunchGame()) {
+            if(Gdx.input.isKeyJustPressed(Keys.T)) {
+                Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+            }
 
-        renderer.render();
+            if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
+                World.processInput();
+            }
+
+            World.update(delta);
+            renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation(), delta);
+
+            renderer.render();
+        }
 
         SpriteBatch coreBatch = ShooterGame.getInstance().coreBatch;
         ShooterGame.getInstance().coreCamera.update();
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
-        renderer.processSpriteDraws();
-
-        World.render();
+        if(menu.shouldLaunchGame()) {
+            renderer.processSpriteDraws();
+            World.render();
+        } else {
+            menu.update();
+        }
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
-
-        World.renderHud();
+        
+        if(menu.shouldLaunchGame()) {
+            World.renderHud();
+        }
 
         //we always want the hud to be visible
         hud.draw(coreBatch);
         coreBatch.end();
 
+        if(menu.shouldLaunchGame()) {
+            renderer.renderMinimap();
+        }
     }
 
 	@Override

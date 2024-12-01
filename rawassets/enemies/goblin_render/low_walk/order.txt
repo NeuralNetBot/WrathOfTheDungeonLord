@@ -1,0 +1,8 @@
+back
+back_left
+back_right
+front
+front_left
+front_right
+left
+right

@@ -14,9 +14,11 @@ public class DamageResistPowerup implements Powerup {
     private boolean isActive;
     Texture tex;
     TextureRegion reg;
+    float maxTime;
 
     public DamageResistPowerup() {
-        this.remainingTime = 10.0f;
+        this.maxTime = 30.f;
+        this.remainingTime = maxTime;
         this.isActive = true;
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -36,13 +38,13 @@ public class DamageResistPowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.resistanceMultiplier = 2.0f;
+        player.resistanceMultiplier += 1.0f;
         System.out.println("Damage Resist Initiated: Multiplier is " + player.resistanceMultiplier);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.resistanceMultiplier = 1.0f;
+        player.resistanceMultiplier -= 1.0f;
         System.out.println("Damage Resist Ended: Multiplier is " + player.resistanceMultiplier);
     }
 
@@ -66,4 +68,7 @@ public class DamageResistPowerup implements Powerup {
         return reg;
     }
 
+    public float getMaxTime() {
+        return maxTime;
+    }
 }

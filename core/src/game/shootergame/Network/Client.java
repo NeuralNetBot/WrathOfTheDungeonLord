@@ -105,16 +105,16 @@ public class Client {
                     case 0x03:
                         switch (subtype) {
                             case 0x00000001:
-                                items.put(ID, new ItemPickup(x, y, (new AttackSpeedPowerup())));
+                                items.put(ID, new ItemPickup(x, y, 1.0f, (new AttackSpeedPowerup())));
                                 break;
                             case 0x00000002:
-                                items.put(ID, new ItemPickup(x, y, (new DamagePowerup())));
+                                items.put(ID, new ItemPickup(x, y, 1.0f, (new DamagePowerup())));
                                 break;
                             case 0x00000003:
-                                items.put(ID, new ItemPickup(x, y, (new DamageResistPowerup())));
+                                items.put(ID, new ItemPickup(x, y, 1.0f, (new DamageResistPowerup())));
                                 break;
                             case 0x00000004:
-                                items.put(ID, new ItemPickup(x, y, (new HealthPowerup())));
+                                items.put(ID, new ItemPickup(x, y, 1.0f, (new HealthPowerup())));
                                 break;
                         }
                         break;
