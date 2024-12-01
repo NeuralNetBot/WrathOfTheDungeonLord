@@ -26,6 +26,20 @@ public class Server implements Runnable{
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
 
+    public Server(ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
+        this.remotePlayers = remotePlayers;
+        this.items = items;
+    }
+
+    public interface RemoveItemHandler {
+        void callback();
+    }
+    private ConcurrentLinkedQueue<RemoveItemHandler> itemRemoveQueue = new ConcurrentLinkedQueue<>();
+
+    public ConcurrentLinkedQueue<RemoveItemHandler> getRemoveItemQueue() {
+        return itemRemoveQueue;
+    }
+
     private class ClientHandler {
 
         private Socket socket;
@@ -120,7 +134,18 @@ public class Server implements Runnable{
                             case NEW_ITEM:        break;
                             case PLAYER_UPDATE:   break;
                             case PLAYER_ATTACK:   break;
-                            case ITEM_INTERACT:   break;
+                            case ITEM_INTERACT:
+                                int id = buffer.getInt();
+                                broadcastNewItem(id, 0, 0, false, null, null, null);
+                                itemRemoveQueue.add(()->{
+                                    ItemPickup item = items.get(id);
+                                    if(item != null) {
+                                        item.removeFromWorld();
+                                        items.remove(id);
+                                    }
+                                });
+
+                                break;
                             default: break;
                             }
                         }

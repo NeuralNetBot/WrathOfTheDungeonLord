@@ -92,12 +92,18 @@ public class World {
     public static void processInput() {
         if(instance.itemPrompt != null) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-                instance.itemPrompt.removeFromWorld();
-                if(instance.networkMode == NetworkMode.SERVER) {
-                    for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
-                        if(entry.getValue() == instance.itemPrompt)
-                            instance.server.broadcastNewItem(entry.getKey(), 0, 0, false, null, null, null);
+                instance.itemPrompt.addAndRemoveFromWorld();
+                int key = 0;
+                for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
+                    if(entry.getValue() == instance.itemPrompt) {
+                        key = entry.getKey();
+                        break;
                     }
+                }
+                if(instance.networkMode == NetworkMode.SERVER) {
+                    instance.server.broadcastNewItem(key, 0, 0, false, null, null, null);
+                } else if(instance.networkMode == NetworkMode.CLIENT) {
+                    instance.client.handleItemInteract(key);
                 }
             }
         }
@@ -106,7 +112,7 @@ public class World {
     }
 
     public static void startAsServer() {
-        instance.server = new Server(instance.remotePlayers);
+        instance.server = new Server(instance.remotePlayers, instance.items);
         new Thread(instance.server).start();
         instance.networkMode = NetworkMode.SERVER;
     }
@@ -192,7 +198,13 @@ public class World {
 
             instance.doOnceLaunch = false;
         }
-        if(instance.networkMode == NetworkMode.CLIENT) {
+        if(instance.networkMode == NetworkMode.SERVER) {
+            Server.RemoveItemHandler itemHandlertem;
+            while((itemHandlertem = instance.server.getRemoveItemQueue().poll()) != null) {
+                itemHandlertem.callback();
+            }
+        }
+        else if(instance.networkMode == NetworkMode.CLIENT) {
             if(instance.client.hasMapLoad()) {
                 World.loadFromFile(instance.client.getMapName());
                 Renderer.inst().buildLightmap(World.getTorches());

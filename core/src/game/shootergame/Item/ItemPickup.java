@@ -99,14 +99,19 @@ public class ItemPickup {
         return this.name;
     }
 
-    public void removeFromWorld() {
-        isActive = false;
-        Renderer.inst().removeSprite(sprite);
+    public void addAndRemoveFromWorld() {
         if (payload == ItemPickup.Payload.POWERUP) {
             World.getPlayer().addPowerup(powerup);
         } else if(payload == ItemPickup.Payload.RANGED_WEAPON) {
             World.getPlayer().addRangedWeapon(weapon);
         }
+        removeFromWorld();
+    }
+
+    public void removeFromWorld() {
+        isActive = false;
+        Renderer.inst().removeSprite(sprite);
+        World.getPhysicsWorld().removeCollider(collider);
     }
 
 }

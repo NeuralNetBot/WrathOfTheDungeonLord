@@ -35,6 +35,8 @@ public class Client {
         void callback();
     }
     private ConcurrentLinkedQueue<NewItemHandler> newItemQueue = new ConcurrentLinkedQueue<>();
+    
+    private ConcurrentLinkedQueue<ByteBuffer> outputQueue = new ConcurrentLinkedQueue<>();
 
     public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
         this.remotePlayers = remotePlayers;
@@ -73,6 +75,14 @@ public class Client {
 
     public boolean isReadyToPlay() {
         return readyToPlay;
+    }
+
+    public void handleItemInteract(int id) {
+        ByteBuffer buffer = ByteBuffer.allocate(5);
+        buffer.put(PacketInfo.getByte(PacketInfo.ITEM_INTERACT));
+        buffer.putInt(id);
+
+        outputQueue.add(buffer);
     }
 
     private class InputHandler implements Runnable {
@@ -230,6 +240,16 @@ public class Client {
                         e.printStackTrace();
                     }
 
+                    ByteBuffer itemBuffer;
+                    while((itemBuffer = outputQueue.poll()) != null) {
+                        try {
+                            out.write(itemBuffer.array());
+                            out.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     ByteBuffer buffer = ByteBuffer.allocate(21);
                     buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
                     buffer.putFloat(World.getPlayer().x());
@@ -242,19 +262,6 @@ public class Client {
                 }
             } catch (IOException e) {
                 System.out.println("Client Disconnecting: " + e.getMessage());
-            }
-        }
-
-        public void handleItemInteract(int id, DataOutputStream out) {
-            System.out.println("writing " + id + " item interact");
-            ByteBuffer buffer = ByteBuffer.allocate(4);
-            buffer.put(PacketInfo.getByte(PacketInfo.ITEM_INTERACT));
-            buffer.putInt(id);
-            try {
-                out.write(buffer.array());
-                out.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
