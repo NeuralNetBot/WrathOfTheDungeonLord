@@ -3,6 +3,7 @@ package game.shootergame;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -35,6 +36,7 @@ import game.shootergame.Item.Powerups.CrossbowAmmoPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.Network.Client;
+import game.shootergame.Network.Client.NewItemHandler;
 import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Network.Server;
 import game.shootergame.Physics.Collider;
@@ -136,6 +138,39 @@ public class World {
                 Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
                 //TODO: broadcast item/enemy data
+                for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
+                    String payload = null;
+                    String subtype = null;
+                    if(entry.getValue().getPayloadType() == ItemPickup.Payload.POWERUP) {
+                        String name = entry.getValue().getPowerup().getName();
+                        payload = "powerup";
+                        if(name.equals(AttackSpeedPowerup.getSName())) {
+                            subtype = "attackspeed";
+                        } else if(name.equals(DamagePowerup.getSName())) {
+                            subtype = "damage";
+                        } else if(name.equals(HealthPowerup.getSName())) {
+                            subtype = "health";
+                        } else if(name.equals(DamageResistPowerup.getSName())) {
+                            subtype = "resist";
+                        } else {
+                            subtype = "";
+                        }
+                    } else if(entry.getValue().getPayloadType() == ItemPickup.Payload.RANGED_WEAPON) {
+                        String name = entry.getValue().getRangedWeapon().getName();
+                        payload = "weapon";
+                        if(name.equals("Crossbow")) {
+                            subtype = "crossbow";
+                        } else if(name.equals("Musket")) {
+                            subtype = "musket";
+                        } else {
+                            subtype = "";
+                        }
+                    }
+                    float x = entry.getValue().collider.x;
+                    float y = entry.getValue().collider.y;
+                    instance.server.broadcastNewItem(entry.getKey(), x, y, true, payload, subtype, null);
+                }
+        
 
                 instance.server.broadcastReadyPlay();
 
@@ -154,6 +189,11 @@ public class World {
             }
             if(instance.client.isReadyToPlay()) {
                 instance.mainMenu.setClientConnected(true);
+            }
+
+            Client.NewItemHandler newItem;
+            while((newItem = instance.client.getNewItemQueue().poll()) != null) {
+                newItem.callback();
             }
         }
 

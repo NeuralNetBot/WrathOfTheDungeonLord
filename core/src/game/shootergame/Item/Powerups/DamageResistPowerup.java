@@ -58,9 +58,13 @@ public class DamageResistPowerup implements Powerup {
         return isActive;
     }
 
+    public static String getSName() {
+        return "Damage Resist";
+    }
+
     @Override
     public String getName() {
-        return "Damage Resist";
+        return getSName();
     }
 
     @Override

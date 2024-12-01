@@ -49,9 +49,13 @@ public class MusketAmmoPowerup implements Powerup {
         return isActive;
     }
 
+    public static String getSName() {
+        return "Musket Ammo";
+    }
+
     @Override
     public String getName() {
-        return "Musket Ammo";
+        return getSName();
     }
 
     @Override

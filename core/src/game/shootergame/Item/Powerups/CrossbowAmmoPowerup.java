@@ -47,9 +47,13 @@ public class CrossbowAmmoPowerup implements Powerup {
         return isActive;
     }
 
+    public static String getSName() {
+        return "Crossbow Ammo";
+    }
+
     @Override
     public String getName() {
-        return "Crossbow Ammo";
+        return getSName();
     }
 
     @Override

@@ -16,6 +16,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client {
 
@@ -29,6 +30,11 @@ public class Client {
     private volatile String mapName = null;
 
     private volatile boolean readyToPlay = false;
+
+    public interface NewItemHandler {
+        void callback();
+    }
+    private ConcurrentLinkedQueue<NewItemHandler> newItemQueue = new ConcurrentLinkedQueue<>();
 
     public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
         this.remotePlayers = remotePlayers;
@@ -46,6 +52,10 @@ public class Client {
         catch (IOException e) {
 
         }
+    }
+
+    public ConcurrentLinkedQueue<NewItemHandler> getNewItemQueue() {
+        return newItemQueue;
     }
 
     public boolean hasMapLoad() {
@@ -108,6 +118,7 @@ public class Client {
             float y = buffer.getFloat();
             int payload = buffer.getInt();
             int subtype = buffer.getInt();
+            System.out.println("recieve new item " + payload + " " + subtype);
             if (add == 0x01) {
                 switch (payload) {
                     case 0x01:
@@ -116,28 +127,26 @@ public class Client {
                     case 0x02:
                         switch (subtype) {
                             case 0x00000001:
-                                CrossbowWeapon crossbow = new CrossbowWeapon();
-                                items.put(ID, new ItemPickup(x, y, 2.0f, crossbow));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 2.0f, new CrossbowWeapon())); });
                                 break;
                             case 0x00000002:
-                                MusketWeapon musket = new MusketWeapon();
-                                items.put(ID, new ItemPickup(x, y, 2.0f, musket));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 2.0f, new MusketWeapon())); });
                                 break;
                         }
                         break;
                     case 0x03:
                         switch (subtype) {
                             case 0x00000001:
-                                items.put(ID, new ItemPickup(x, y, 1.0f, (new AttackSpeedPowerup())));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 1.0f, new AttackSpeedPowerup())); });
                                 break;
                             case 0x00000002:
-                                items.put(ID, new ItemPickup(x, y, 1.0f, (new DamagePowerup())));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 1.0f, new DamagePowerup())); });
                                 break;
                             case 0x00000003:
-                                items.put(ID, new ItemPickup(x, y, 1.0f, (new DamageResistPowerup())));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 1.0f, new DamageResistPowerup())); });
                                 break;
                             case 0x00000004:
-                                items.put(ID, new ItemPickup(x, y, 1.0f, (new HealthPowerup())));
+                                newItemQueue.add(()->{ items.put(ID, new ItemPickup(x, y, 1.0f, new HealthPowerup())); });
                                 break;
                         }
                         break;

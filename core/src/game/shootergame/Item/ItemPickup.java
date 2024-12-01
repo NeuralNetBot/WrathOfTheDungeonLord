@@ -10,7 +10,7 @@ import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Sprite2_5D;
 
 public class ItemPickup {
-    public enum Payload {
+    public static enum Payload {
         POWERUP,
         RANGED_WEAPON,
         NONE

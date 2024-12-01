@@ -237,13 +237,37 @@ public class Server implements Runnable{
         }
     }
 
-    public void broadcastNewItem(int id, boolean add, int payload, int subtype, DataOutputStream out) {
-        ByteBuffer buffer = ByteBuffer.allocate(21);
+    public void broadcastNewItem(int id, float x, float y, boolean add, String payload, String subtype, DataOutputStream out) {
+        int payloadI = 0x00000000;
+        int subtypeI = 0x00000000;
+        if(payload.equals("weapon")) {
+            payloadI = 0x00000002;
+            if(subtype.equals("crossbow")) {
+                subtypeI = 0x00000001;
+            } else if(subtype.equals("musket")) {
+                subtypeI = 0x00000002;
+            }
+        } else if(payload.equals("powerup")) {
+            payloadI = 0x00000003;
+            if(subtype.equals("damage")) {
+                subtypeI = 0x00000002;
+            } else if(subtype.equals("health")) {
+                subtypeI = 0x00000004;
+            } else if(subtype.equals("resist")) {
+                subtypeI = 0x00000003;
+            } else if(subtype.equals("attackspeed")) {
+                subtypeI = 0x00000001;
+            }
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(22);
         buffer.put(PacketInfo.getByte(PacketInfo.NEW_ITEM));
         buffer.put(add ? (byte)0x01 : (byte)0x00);
         buffer.putInt(id);
-        buffer.putInt(payload);
-        buffer.putInt(subtype);
+        buffer.putFloat(x);
+        buffer.putFloat(y);
+        buffer.putInt(payloadI);
+        buffer.putInt(subtypeI);
         for (ClientHandler client : clients) {
             client.sendBytes(buffer);
         }
