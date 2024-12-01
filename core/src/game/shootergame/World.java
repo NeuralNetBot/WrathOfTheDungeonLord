@@ -3,7 +3,6 @@ package game.shootergame;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -36,7 +36,6 @@ import game.shootergame.Item.Powerups.CrossbowAmmoPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.Network.Client;
-import game.shootergame.Network.Client.NewItemHandler;
 import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Network.Server;
 import game.shootergame.Physics.Collider;
@@ -91,6 +90,18 @@ public class World {
     }
 
     public static void processInput() {
+        if(instance.itemPrompt != null) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                instance.itemPrompt.removeFromWorld();
+                if(instance.networkMode == NetworkMode.SERVER) {
+                    for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
+                        if(entry.getValue() == instance.itemPrompt)
+                            instance.server.broadcastNewItem(entry.getKey(), 0, 0, false, null, null, null);
+                    }
+                }
+            }
+        }
+
         instance.player.processInput();
     }
 

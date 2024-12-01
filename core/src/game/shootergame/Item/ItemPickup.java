@@ -1,7 +1,5 @@
 package game.shootergame.Item;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import game.shootergame.World;
@@ -79,20 +77,6 @@ public class ItemPickup {
             if (collider == World.getPlayerCollider()) {
                 if (isActive) {
                     World.showPickupPrompt(this);
-                    if (payload == Payload.POWERUP && powerup.isActive()) {
-                        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-                            Renderer.inst().removeSprite(sprite);
-                            World.getPlayer().addPowerup(powerup);
-                            isActive = false;
-                        }
-                    }
-                    if (payload == Payload.RANGED_WEAPON) {
-                        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-                            Renderer.inst().removeSprite(sprite);
-                            World.getPlayer().addRangedWeapon(weapon);
-                            isActive = false;
-                        }
-                    }
                 }
             }
         });
@@ -113,6 +97,16 @@ public class ItemPickup {
 
     public String getName() {
         return this.name;
+    }
+
+    public void removeFromWorld() {
+        isActive = false;
+        Renderer.inst().removeSprite(sprite);
+        if (payload == ItemPickup.Payload.POWERUP) {
+            World.getPlayer().addPowerup(powerup);
+        } else if(payload == ItemPickup.Payload.RANGED_WEAPON) {
+            World.getPlayer().addRangedWeapon(weapon);
+        }
     }
 
 }

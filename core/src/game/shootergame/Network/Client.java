@@ -118,7 +118,6 @@ public class Client {
             float y = buffer.getFloat();
             int payload = buffer.getInt();
             int subtype = buffer.getInt();
-            System.out.println("recieve new item " + payload + " " + subtype);
             if (add == 0x01) {
                 switch (payload) {
                     case 0x01:
@@ -152,9 +151,14 @@ public class Client {
                         break;
                 }
             }
-
             else {
-                items.remove(ID);
+                newItemQueue.add(()->{ 
+                    ItemPickup item = items.get(ID);
+                    if(item != null) {
+                        item.removeFromWorld();
+                        items.remove(ID);
+                    }
+                });
             }
         }
 

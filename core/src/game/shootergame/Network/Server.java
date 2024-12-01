@@ -240,23 +240,25 @@ public class Server implements Runnable{
     public void broadcastNewItem(int id, float x, float y, boolean add, String payload, String subtype, DataOutputStream out) {
         int payloadI = 0x00000000;
         int subtypeI = 0x00000000;
-        if(payload.equals("weapon")) {
-            payloadI = 0x00000002;
-            if(subtype.equals("crossbow")) {
-                subtypeI = 0x00000001;
-            } else if(subtype.equals("musket")) {
-                subtypeI = 0x00000002;
-            }
-        } else if(payload.equals("powerup")) {
-            payloadI = 0x00000003;
-            if(subtype.equals("damage")) {
-                subtypeI = 0x00000002;
-            } else if(subtype.equals("health")) {
-                subtypeI = 0x00000004;
-            } else if(subtype.equals("resist")) {
-                subtypeI = 0x00000003;
-            } else if(subtype.equals("attackspeed")) {
-                subtypeI = 0x00000001;
+        if(add) {
+            if(payload.equals("weapon")) {
+                payloadI = 0x00000002;
+                if(subtype.equals("crossbow")) {
+                    subtypeI = 0x00000001;
+                } else if(subtype.equals("musket")) {
+                    subtypeI = 0x00000002;
+                }
+            } else if(payload.equals("powerup")) {
+                payloadI = 0x00000003;
+                if(subtype.equals("damage")) {
+                    subtypeI = 0x00000002;
+                } else if(subtype.equals("health")) {
+                    subtypeI = 0x00000004;
+                } else if(subtype.equals("resist")) {
+                    subtypeI = 0x00000003;
+                } else if(subtype.equals("attackspeed")) {
+                    subtypeI = 0x00000001;
+                }
             }
         }
 

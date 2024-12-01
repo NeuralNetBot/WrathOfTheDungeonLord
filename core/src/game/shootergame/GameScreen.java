@@ -8,10 +8,6 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 
-import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
-import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
-import game.shootergame.Item.MeleeWeapons.MaceWeapon;
-import game.shootergame.Item.MeleeWeapons.SwordWeapon;
 import game.shootergame.Renderer.Renderer;
 
 
