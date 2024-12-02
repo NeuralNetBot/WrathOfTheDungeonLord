@@ -58,8 +58,13 @@ public class HealthPowerup implements Powerup {
         return isActive;
     }
 
-    public String getName() {
+    public static String getSName() {
         return "Health Pack";
+    }
+
+    @Override
+    public String getName() {
+        return getSName();
     }
 
     @Override

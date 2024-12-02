@@ -33,4 +33,9 @@ public class Sprite2_5D {
         float aspect = Math.abs(texture.getU2() - texture.getU()) / Math.abs(texture.getV2() - texture.getV());
         this.width = height * aspect;
     }
+
+    public void setRegion(TextureRegion region) {
+        this.texture = region;
+        this.textureCalc.setTexture(region.getTexture());
+    }
 }

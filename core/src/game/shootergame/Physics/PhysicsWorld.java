@@ -12,7 +12,9 @@ public class PhysicsWorld {
     LinkedList<Collider> colliders = new LinkedList<>();
     ArrayList<Wall> walls;
 
-    public PhysicsWorld(ArrayList<Wall> walls) {
+    public PhysicsWorld() { }
+
+    public void setWalls(ArrayList<Wall> walls) {
         this.walls = walls;
     }
 
@@ -159,27 +161,93 @@ public class PhysicsWorld {
         }
     }
 
-    public void runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+    public ArrayList<Collider> runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+
+        Vector2 leftPoint = new Vector2((float)Math.cos(direction + angle/2), (float)Math.sin(direction + angle/2));
+        Vector2 rightPoint = new Vector2((float)Math.cos(direction - angle/2), (float)Math.sin(direction - angle/2));
+
+        ArrayList<Collider> hits = new ArrayList<>();
         for (Collider collider : colliders) {
             if(collider == self) continue;
             float dst = Vector2.dst(x, y, collider.x, collider.y);
             if(dst <= distance + collider.radius) {
-                float angleBetweenCenters = (float)Math.atan2(collider.y - y, collider.x - x);
-                direction = direction % (2.0f * (float)Math.PI);
-                float angleMax = direction + (angle / 2.0f);
-                angleMax = angleMax % (2.0f * (float)Math.PI);
-                float angleMin = direction - (angle / 2.0f);
-                angleMin = angleMin % (2.0f * (float)Math.PI);
-
-                if(angleBetweenCenters > angleMin && angleBetweenCenters < angleMax) {
+                Vector2 colliderVec = new Vector2(collider.x - x, collider.y - y);
+                float crsL = colliderVec.crs(leftPoint);
+                float crsR = colliderVec.crs(rightPoint);
+                if(crsL > 0 && crsR < 0) {
                     collider.Callback(collider, x, y, damage);
+                    hits.add(collider);
+                    continue;
+                }
+
+                float tL = colliderVec.dot(leftPoint);
+                float tR = colliderVec.dot(rightPoint);
+
+                //both miss
+                if(tL < 0 && tR < 0) {
+                    continue;
+                }
+
+                float L2 = colliderVec.len2();
+                float dL = L2 - (tL * tL);
+                float dR = L2 - (tR * tR);
+                if(dL > collider.radius * collider.radius && dR > collider.radius * collider.radius) {
+                    continue;
+                }
+
+                collider.Callback(collider, x, y, damage);
+                hits.add(collider);
+            }
+        }
+        return hits;
+    }
+
+    public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
+        float closestDst = Float.MAX_VALUE;
+        Collider hit = null;
+        //check if hit collider
+        for (Collider collider : colliders) {
+            if(collider == self) continue;
+            if(collider.isStatic) continue;
+
+            Vector2 L = new Vector2(collider.x - x, collider.y - y);
+            float T = L.x * dx + L.y * dy;
+            float d2 = (L.x * L.x + L.y * L.y) - T * T;
+            if(d2 > collider.radius * collider.radius) continue;
+            float t = (float)Math.sqrt(collider.radius * collider.radius - d2);
+            float t1 = T - t;
+            float t2 = T + t;
+            float dst = 0.0f;
+            if(t1 >= 0) dst = t1;
+            else if(t2 >= 0) dst = t2;
+            else continue;
+            if(dst < closestDst) {
+                closestDst = dst;
+                hit = collider;
+            }
+        }
+
+        //if we hit then we need to check if we hit a wall first or not
+        if(hit != null) {
+            for (Wall wall : walls) {
+                //open door so we ignore hits
+                if(wall.yOffset >= 1.0f) continue;
+
+                Vector2 segDir = new Vector2(wall.a).sub(wall.b);
+                Vector2 segToRay = new Vector2(wall.b).sub(x, y);
+                float crossDir = new Vector2(dx, dy).crs(segDir);
+                float t = segToRay.crs(segDir) / crossDir;
+                float u = segToRay.crs(dx, dy) / crossDir;
+                if(crossDir != 0 && t >= 0 && u >= 0 && u <= 1) {
+                    float dst = t * new Vector2(dx, dy).len();
+                    if(dst < closestDst) { //wall hit was closer than hit entity so we stop
+                        hit = null;
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    //TODO: impliment
-    public Collider rayCast(Collider self, float x, float y, float dx, float dy) {
-        return null;
+        return hit;
     }
 }

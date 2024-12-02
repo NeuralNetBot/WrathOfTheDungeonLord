@@ -464,7 +464,7 @@ public class Renderer {
 
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         Gdx.gl.glBindTexture(GL20.GL_TEXTURE_2D, 0);
-   }
+    }
 
     public void renderMinimap() {
         float yawR = (float)Math.toRadians(yaw);
@@ -574,6 +574,8 @@ public class Renderer {
 
         sr.end();
     }
+    
+    ArrayList<Vector2> path;
 
     private enum RegionCode {
         TOP(1 << 0),
@@ -680,6 +682,8 @@ public class Renderer {
                 left = left + (stopIndexLeft - leftRayIndex) * raysPerWidth;
                 sprite.textureCalc.setU2(sprite.texture.getU2() - (rightRayIndex - stopIndexRight) * raysPerU);   
                 right = right - (rightRayIndex - stopIndexRight) * raysPerWidth;
+                sprite.textureCalc.setV(sprite.texture.getV());
+                sprite.textureCalc.setV2(sprite.texture.getV2());
 
 
                 sprite.scrX = (left + right) / 2.0f;

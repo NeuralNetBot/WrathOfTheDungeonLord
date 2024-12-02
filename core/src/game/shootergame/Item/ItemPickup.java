@@ -1,7 +1,5 @@
 package game.shootergame.Item;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import game.shootergame.World;
@@ -10,7 +8,7 @@ import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Sprite2_5D;
 
 public class ItemPickup {
-    public enum Payload {
+    public static enum Payload {
         POWERUP,
         RANGED_WEAPON,
         NONE
@@ -27,22 +25,23 @@ public class ItemPickup {
 
     Sprite2_5D sprite;
 
-    public ItemPickup(float x, float y, RangedWeapon weapon) {
+    public ItemPickup(float x, float y, float itemScale, RangedWeapon weapon) {
         payload = Payload.RANGED_WEAPON;
         this.weapon = weapon;
         powerup = null;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(itemScale);
         createCollider();
+        this.name = weapon.getName();
         isActive = true;
     }
 
-    public ItemPickup(float x, float y, Powerup powerup) {
+    public ItemPickup(float x, float y, float itemScale, Powerup powerup) {
         payload = Payload.POWERUP;
         weapon = null;
         this.powerup = powerup;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(itemScale);
         createCollider();
         this.name = powerup.getName();
         isActive = true;
@@ -53,23 +52,23 @@ public class ItemPickup {
         weapon = null;
         powerup = null;
         this.x = x; this.y = y;
-        createPickupSprite();
+        createPickupSprite(1.0f);
         createCollider();
     }
 
-    private void createPickupSprite() {
+    private void createPickupSprite(float itemScale) {
         TextureRegion reg;
         switch (payload) {
             case RANGED_WEAPON:
-                return;//TODO:
-                //break;
+                reg = weapon.getItemTexture(); //TODO: MAKE SPRITE FOR RANGED WEAPONS
+                break;
             case POWERUP:
                 reg = powerup.getItemTexture();
                 break;
             default:
                 return;
         }
-        sprite = new Sprite2_5D(reg, x, y, -0.7f, 0.3f, 0.3f);
+        sprite = new Sprite2_5D(reg, x, y, -0.7f, 0.3f * itemScale, 0.3f * itemScale);
         Renderer.inst().addSprite(sprite);
     }
 
@@ -78,13 +77,6 @@ public class ItemPickup {
             if (collider == World.getPlayerCollider()) {
                 if (isActive) {
                     World.showPickupPrompt(this);
-                    if (payload == Payload.POWERUP && powerup.isActive()) {
-                        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-                            Renderer.inst().removeSprite(sprite);
-                            World.getPlayer().addPowerup(powerup);
-                            isActive = false;
-                        }
-                    }
                 }
             }
         });
@@ -105,6 +97,21 @@ public class ItemPickup {
 
     public String getName() {
         return this.name;
+    }
+
+    public void addAndRemoveFromWorld() {
+        if (payload == ItemPickup.Payload.POWERUP) {
+            World.getPlayer().addPowerup(powerup);
+        } else if(payload == ItemPickup.Payload.RANGED_WEAPON) {
+            World.getPlayer().addRangedWeapon(weapon);
+        }
+        removeFromWorld();
+    }
+
+    public void removeFromWorld() {
+        isActive = false;
+        Renderer.inst().removeSprite(sprite);
+        World.getPhysicsWorld().removeCollider(collider);
     }
 
 }

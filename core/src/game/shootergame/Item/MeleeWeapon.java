@@ -8,4 +8,5 @@ public interface MeleeWeapon {
     void attackHeavy();
     void beginBlock();
     void endBlock();
+    float getBlockMultiplier();
 }

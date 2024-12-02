@@ -38,13 +38,13 @@ public class AttackSpeedPowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        player.attackSpeed = 2.0f;
+        player.attackSpeed += 1.0f;
         System.out.println("Attack Speed Boost Initiated: Multiplier is " + player.attackSpeed);
     }
 
     @Override
     public void onTimeout(Player player) {
-        player.attackSpeed = 1.0f;
+        player.attackSpeed -= 1.0f;
         System.out.println("Attack Speed Boost Ended: Multiplier is " + player.attackSpeed);
     }
 
@@ -58,9 +58,13 @@ public class AttackSpeedPowerup implements Powerup {
         return isActive;
     }
 
+    public static String getSName() {
+        return "Attack Speed";
+    }
+
     @Override
     public String getName() {
-        return "Attack Speed";
+        return getSName();
     }
 
     @Override
