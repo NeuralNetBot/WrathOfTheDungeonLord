@@ -17,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ByteArray;
 
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.World;
@@ -369,6 +370,18 @@ public class Server implements Runnable{
         buffer.put(typeB);
         for (ClientHandler client : clients) {
             client.sendBytes(buffer);
+        }
+    }
+
+    public void sendClientRecieveDamage(int id, float damage) {
+        ByteBuffer buffer = ByteBuffer.allocate(5);
+        buffer.put(PacketInfo.getByte(PacketInfo.ENEMY_DAMAGE));
+        buffer.putFloat(damage);
+        for (ClientHandler client : clients) {
+            if(client.remotePlayerID == id) {
+                client.sendBytes(buffer);
+                break;
+            }
         }
     }
 

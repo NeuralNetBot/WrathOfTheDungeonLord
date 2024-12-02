@@ -175,7 +175,7 @@ public class PhysicsWorld {
                 float crsL = colliderVec.crs(leftPoint);
                 float crsR = colliderVec.crs(rightPoint);
                 if(crsL > 0 && crsR < 0) {
-                    collider.Callback(collider, x, y, damage);
+                    collider.Callback(self, x, y, damage);
                     hits.add(collider);
                     continue;
                 }
@@ -195,7 +195,7 @@ public class PhysicsWorld {
                     continue;
                 }
 
-                collider.Callback(collider, x, y, damage);
+                collider.Callback(self, x, y, damage);
                 hits.add(collider);
             }
         }

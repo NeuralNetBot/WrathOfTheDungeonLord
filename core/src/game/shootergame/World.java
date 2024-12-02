@@ -243,6 +243,12 @@ public class World {
         int index = 0;
         for (Entry<Integer, RemotePlayer> entry : instance.remotePlayers.entrySet()) {
             entry.getValue().update(delta);
+            if(instance.networkMode == NetworkMode.SERVER) {
+                float recentDamage = entry.getValue().GetRecentDamage();
+                if(recentDamage != 0.0f) {
+                    instance.server.sendClientRecieveDamage(entry.getKey(), recentDamage);
+                }
+            }
         }
 
         Iterator<Map.Entry<Integer,Enemy>> it = instance.enemies.entrySet().iterator();

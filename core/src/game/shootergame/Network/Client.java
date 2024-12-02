@@ -228,6 +228,11 @@ public class Client {
             }
         }
 
+        private void processEnemyDamage(ByteBuffer buffer) {
+            float damage = buffer.getFloat();
+            World.getPlayer().doDamage(damage);
+        }
+
         private void processLoadMap(ByteBuffer buffer) {
             byte strLen = buffer.get();
             byte[] strBytes = new byte[strLen];
@@ -267,6 +272,8 @@ public class Client {
                         case PLAYER_UPDATE:   break;
                         case PLAYER_ATTACK:   break;
                         case ITEM_INTERACT:   break;
+                        case ENEMY_DAMAGE:
+                            processEnemyDamage(buffer); break;
                         case LOAD_MAP:
                             processLoadMap(buffer);   break;
                         case READY_PLAY:

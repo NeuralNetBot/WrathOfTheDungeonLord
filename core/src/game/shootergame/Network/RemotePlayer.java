@@ -19,6 +19,8 @@ public class RemotePlayer {
 
     static Texture tex;
 
+    float recentDamage = 0.0f;
+
     public static void initTextures() {
         ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
@@ -31,7 +33,12 @@ public class RemotePlayer {
         sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
         Renderer.inst().addSprite(sprite);
 
-        collider = new Collider(x, y, 0.5f, null);
+        collider = new Collider(x, y, 0.5f, (Collider collider, float newDX, float newDY, float damage)->{
+            if(!collider.isPlayer) {
+                recentDamage += damage;
+            }
+        });
+        collider.isPlayer = true;
         World.getPhysicsWorld().addCollider(collider);
     }
 
@@ -63,5 +70,11 @@ public class RemotePlayer {
 
     public Collider getCollider() {
         return collider;
+    }
+
+    public float GetRecentDamage() {
+        float dmg = recentDamage;
+        recentDamage = 0.0f;
+        return dmg;
     }
 }

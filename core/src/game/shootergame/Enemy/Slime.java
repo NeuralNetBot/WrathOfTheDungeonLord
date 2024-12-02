@@ -101,13 +101,12 @@ public class Slime implements Enemy{
                 if(collider == null) { //wall coll
                     dx = newDX; dy = newDY;
                 } else {
-                    //TODO: check if its any player collider including remote
-                    if(isJumping && jumpOnceDamage && collider == World.getPlayerCollider()) {
+                    if(isJumping && jumpOnceDamage) {
                         jumpOnceDamage = false;
                         collider.Callback(this.collider, 0.0f, 0.0f, this.damage);
                     }
                 }
-                if(damage != 0.0f) {
+                if(damage != 0.0f && collider.isPlayer) {
                     health -= damage;
                     spriteHealth.width = 0.35f * health/maxHealth;
                     System.out.println(health);

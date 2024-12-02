@@ -100,12 +100,13 @@ public class Player {
                 doDamage(damage);
             }
         }, false, 1.3f);
+        collider.isPlayer = true;
         World.getPhysicsWorld().addCollider(collider);
 
         activePowerups = new LinkedList<>();
     }
 
-    void doDamage(float damage) {
+    public void doDamage(float damage) {
         float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
         float blockingMultiplier = melee.getBlockMultiplier();
         if(blockingMultiplier != 1.0f) {

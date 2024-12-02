@@ -172,7 +172,7 @@ public class Goblin implements Enemy{
                 if(collider == null) { //wall coll
                     dx = newDX; dy = newDY;
                 }
-                if(damage != 0.0f) {
+                if(damage != 0.0f && collider.isPlayer) {
                     doDamage(damage, 0);
                     spriteHealth.width = 0.35f * health/maxHealth;
                     System.out.println(health);
@@ -217,7 +217,8 @@ public class Goblin implements Enemy{
                 attackCooldown = 0.0f;
             }
             if(animAttackTime >= 0.3f && !hasDoneDamage) {
-                World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation, 10.0f, 1.5f, damage);
+                if(!isRemote)
+                    World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation, 10.0f, 1.5f, damage);
                 hasDoneDamage = true;
             }
             spriteLow.setRegion(animationsAttackLow[realIndex].getKeyFrame(animAttackTime));
@@ -303,6 +304,7 @@ public class Goblin implements Enemy{
                     collider.dy = direction.y;
                 }
             } else {
+                targetIndex = 0;
                 collider.dx = 0.0f;
                 collider.dy = 0.0f;
             }

@@ -6,6 +6,7 @@ public class Collider {
     public float height;
     public float radius;
     public boolean isStatic;
+    public boolean isPlayer;
 
     public Collider(float x, float y, float radius, ColliderCallback callback) {
         this.x = x; this.y = y;
@@ -13,6 +14,7 @@ public class Collider {
         this.radius = radius;
         this.callback = callback;
         this.isStatic = true;
+        this.isPlayer = false;
     }
 
     public Collider(float x, float y, float radius, ColliderCallback callback, boolean isStatic, float height) {
@@ -22,6 +24,7 @@ public class Collider {
         this.radius = radius;
         this.callback = callback;
         this.isStatic = isStatic;
+        this.isPlayer = false;
     }
 
     public interface ColliderCallback {
