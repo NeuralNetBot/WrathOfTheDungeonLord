@@ -131,7 +131,6 @@ public class Renderer {
     }
 
     public void setWalls(ArrayList<Wall> walls) {
-        stats.walls = walls.size();
         this.walls = walls;
     }
 
@@ -715,6 +714,7 @@ public class Renderer {
 
     public void buildLightmap(ArrayList<Torch> torches) {
         stats.torches = torches.size();
+        stats.walls = walls.size();
         this.torches = torches;
         System.out.printf("Building lightmap. Walls: %d Torches: %d\n", walls.size(), torches.size());
         long start = System.nanoTime();
