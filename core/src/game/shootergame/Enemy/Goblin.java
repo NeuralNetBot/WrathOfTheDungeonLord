@@ -30,7 +30,7 @@ public class Goblin implements Enemy{
 
     Collider currentTargetCollider = null;
 
-    final float moveSpeed = 3.5f;
+    final float moveSpeed = 1.5f;
 
     Sprite2_5D spriteLow;
     Sprite2_5D spriteHigh;
@@ -55,6 +55,7 @@ public class Goblin implements Enemy{
     @SuppressWarnings("unchecked")
     Animation<TextureRegion>[] animationsAttackHigh = new Animation[8];
     float animTime = 0.0f;
+    float animAttackTime = 0.0f;
 
     boolean isRemote;
     float recentDamage = 0.0f;
@@ -72,6 +73,12 @@ public class Goblin implements Enemy{
     final float rangeHateRange = 12.0f;
 
     boolean isAggro = false;
+
+    boolean isAttacking = false;
+    float attackCooldown = 0.0f;
+    final float attackCooldownMax = 0.5f;
+    final float damage = 10.0f;
+    boolean hasDoneDamage = false;
 
     public Goblin(float x, float y, boolean isRemote) {
         this.isRemote = isRemote;
@@ -116,7 +123,7 @@ public class Goblin implements Enemy{
                     animFrames[j] = tempFrames[(i*2)+1][j];
                 }
                 animationsAttackLow[i] = new Animation<TextureRegion>(0.06f, animFrames);
-                animationsAttackLow[i].setPlayMode(PlayMode.LOOP);
+                animationsAttackLow[i].setPlayMode(PlayMode.NORMAL);
             }
             for (int i = 0; i < 8; i++) {
                 TextureRegion[] animFrames = new TextureRegion[15];
@@ -124,7 +131,7 @@ public class Goblin implements Enemy{
                     animFrames[j] = tempFrames[i*2][j];
                 }
                 animationsAttackHigh[i] = new Animation<TextureRegion>(0.06f, animFrames);
-                animationsAttackHigh[i].setPlayMode(PlayMode.LOOP);
+                animationsAttackHigh[i].setPlayMode(PlayMode.NORMAL);
             }
         }
 
@@ -193,8 +200,31 @@ public class Goblin implements Enemy{
             case 7: realIndex = 4; break;
         }
 
-        spriteLow.setRegion(animationsWalk[realIndex].getKeyFrame(animTime));
-        spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(0.0f));
+        if(isAttacking && attackCooldown > attackCooldownMax) {
+            if(animAttackTime == 0.0f) {
+                attackCooldown = 0.0f;
+            }
+            if(animAttackTime >= 0.6f && !hasDoneDamage) {
+                World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation, 10.0f, 1.5f, damage);
+                hasDoneDamage = true;
+            }
+            spriteLow.setRegion(animationsAttackLow[realIndex].getKeyFrame(animAttackTime));
+            spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(animAttackTime));
+            animAttackTime += delta;
+            if(animationsAttackHigh[realIndex].isAnimationFinished(animAttackTime)) {
+                isAttacking = false;
+                hasDoneDamage = false;
+                animAttackTime = 0.0f;
+            }
+        } else if(dx != 0.0f || dy != 0.0f) {
+            attackCooldown += delta;
+            spriteLow.setRegion(animationsWalk[realIndex].getKeyFrame(animTime));
+            spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(0.0f));
+        } else {
+            attackCooldown += delta;
+            spriteLow.setRegion(animationsWalk[realIndex].getKeyFrame(0.0f));
+            spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(0.0f));
+        }
 
         if(!isRemote) {
             {
@@ -226,12 +256,16 @@ public class Goblin implements Enemy{
                 currentTargetCollider = highestHate.collider;
             }
             if(currentTargetCollider != null) {
-                Vector2 targetV = new Vector2(x - currentTargetCollider.x, y - currentTargetCollider.y).nor();
-                rotation = (float)Math.atan2(targetV.y, targetV.x);
+                Vector2 targetV = new Vector2(x - currentTargetCollider.x, y - currentTargetCollider.y);
+                Vector2 targetVNorm = targetV.cpy().nor();
+                rotation = (float)Math.atan2(targetVNorm.y, targetVNorm.x);
                 rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+            
+                float distanceToTarget = targetV.len();
+                System.out.println(distanceToTarget);
+                isAttacking = distanceToTarget < 1.0f;
             }
-
-            if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
+            if(!isAttacking && currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
                 Vector2 targetNode = navPath.get(targetIndex).cpy();
                 Vector2 direction = targetNode.cpy().sub(x, y);
                 float dist = direction.len();
@@ -273,6 +307,8 @@ public class Goblin implements Enemy{
         this.rotation = rotation;
         this.health = health;
         spriteHealth.width = 0.35f * health/maxHealth;
+
+        isAttacking = z != 0.0f;
     }
 
     @Override
@@ -325,7 +361,7 @@ public class Goblin implements Enemy{
 
     @Override
     public float getZ() {
-        return 0;
+        return isAttacking ? 1.0f : 0.0f;
     }
 
     @Override
