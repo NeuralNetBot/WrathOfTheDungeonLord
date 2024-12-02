@@ -51,8 +51,11 @@ public class Goblin implements Enemy{
     Animation<TextureRegion>[] animationsAttackHigh = new Animation[8];
     float animTime = 0.0f;
 
-    public Goblin(float x, float y, boolean isRemote) {
+    boolean isRemote;
+    float recentDamage = 0.0f;
 
+    public Goblin(float x, float y, boolean isRemote) {
+        this.isRemote = isRemote;
         ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
         ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
         ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
@@ -123,28 +126,31 @@ public class Goblin implements Enemy{
         spriteHealth = new Sprite2_5D(regHealth, x, y, 0.1f, 0.01f, 0.35f);
         Renderer.inst().addSprite(spriteHealth);
 
-        collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
-            if(collider == null) { //wall coll
-                dx = newDX; dy = newDY;
-            }
-            if(damage != 0.0f) {
-                health -= damage;
-                spriteHealth.width = 0.35f * health/maxHealth;
-                System.out.println(health);
-            }
-        }, false, 1.3f);
+        if(isRemote) {
+            collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
+                recentDamage += damage;
+            }, false, 1.3f);
+        } else {
+            collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
+                if(collider == null) { //wall coll
+                    dx = newDX; dy = newDY;
+                }
+                if(damage != 0.0f) {
+                    health -= damage;
+                    spriteHealth.width = 0.35f * health/maxHealth;
+                    System.out.println(health);
+                }
+            }, false, 1.3f);
+        }
         World.getPhysicsWorld().addCollider(collider);
     }
     
     @Override
     public void update(float delta) {
-        //x += dx;
-        //y += dy;
+        x += dx;
+        y += dy;
 
-        animTime += delta;
-
-        //rotation += delta * 5;
-        rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+        animTime += delta * 2;
 
         Vector2 v = new Vector2(x - World.getPlayer().x(), y - World.getPlayer().y()).nor();
 
@@ -164,26 +170,31 @@ public class Goblin implements Enemy{
             case 7: realIndex = 4; break;
         }
 
-        spriteLow.setRegion(animationsAttackLow[realIndex].getKeyFrame(animTime));
-        spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(animTime));
+        spriteLow.setRegion(animationsWalk[realIndex].getKeyFrame(animTime));
+        spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(0.0f));
 
-        if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
-            Vector2 targetNode = navPath.get(targetIndex).cpy();
-            Vector2 direction = targetNode.cpy().sub(x, y);
-            float dist = direction.len();
-            
-            if(dist < moveSpeed * delta) {
-                x = targetNode.x;
-                y = targetNode.y;
-                targetIndex++;
+        if(!isRemote) {
+            rotation = (float)Math.atan2(v.y, v.x);
+            rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+
+            if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
+                Vector2 targetNode = navPath.get(targetIndex).cpy();
+                Vector2 direction = targetNode.cpy().sub(x, y);
+                float dist = direction.len();
+                
+                if(dist < moveSpeed * delta) {
+                    x = targetNode.x;
+                    y = targetNode.y;
+                    targetIndex++;
+                } else {
+                    direction.nor().scl(moveSpeed * delta);
+                    collider.dx = direction.x;
+                    collider.dy = direction.y;
+                }
             } else {
-                direction.nor().scl(moveSpeed * delta);
-                collider.dx = direction.x;
-                collider.dy = direction.y;
+                collider.dx = 0.0f;
+                collider.dy = 0.0f;
             }
-        } else {
-            collider.dx = 0.0f;
-            collider.dy = 0.0f;
         }
 
         collider.x = x;
@@ -201,7 +212,13 @@ public class Goblin implements Enemy{
 
     @Override
     public void updateFromNetwork(float x, float y, float z, float dx, float dy, float rotation, float health) {
-
+        this.x = x;
+        this.y = y;
+        this.dx = dx;
+        this.dy = dy;
+        this.rotation = rotation;
+        this.health = health;
+        spriteHealth.width = 0.35f * health/maxHealth;
     }
 
     @Override
@@ -234,7 +251,7 @@ public class Goblin implements Enemy{
 
     @Override
     public boolean isAggro() {
-        return false;
+        return true;
     }
 
     @Override
@@ -284,9 +301,9 @@ public class Goblin implements Enemy{
 
     @Override
     public float getRecentDamage() {
-        //float dmg = recentDamage;
-        //recentDamage = 0.0f;
-        return 0.0f;
+        float dmg = recentDamage;
+        recentDamage = 0.0f;
+        return dmg;
     }
 
 }

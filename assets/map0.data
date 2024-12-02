@@ -941,6 +941,8 @@ slime 46.0127 15.0189
 slime 49.5498 18.7328
 slime 49.0192 14.1346
 
+goblin 0.0 0.0
+
 powerup 0.0 0.0 damage
 powerup 0.0 1.0 health
 powerup 1.0 0.0 resist

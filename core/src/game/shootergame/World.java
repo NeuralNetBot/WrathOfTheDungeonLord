@@ -400,6 +400,11 @@ public class World {
                     float y = Float.parseFloat(parts[2]);
                     int id = ThreadLocalRandom.current().nextInt();
                     instance.enemies.put(id, new Slime(x, y, false));
+                } else if(type.equals("goblin") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+                    instance.enemies.put(id, new Goblin(x, y, false));
                 } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
