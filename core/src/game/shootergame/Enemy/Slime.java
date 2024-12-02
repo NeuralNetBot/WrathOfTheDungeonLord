@@ -55,7 +55,10 @@ public class Slime implements Enemy{
     float aggroLossTimer = 0.0f;
     boolean isAgrro = false;
 
-    public Slime(float x, float y) {
+    boolean isRemote;
+
+    public Slime(float x, float y, boolean isRemote) {
+        this.isRemote = isRemote;
         this.x = x; this.y = y;
         dx = 0; dy = 0;
         health = maxHealth;
@@ -89,23 +92,26 @@ public class Slime implements Enemy{
         Renderer.inst().addSprite(spriteHealthBase);
         spriteHealth = new Sprite2_5D(regHealth, x, y, 0.0f, 0.01f, 0.35f);
         Renderer.inst().addSprite(spriteHealth);
-
-        collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
-            if(collider == null) { //wall coll
-                dx = newDX; dy = newDY;
-            } else {
-                //TODO: check if its any player collider including remote
-                if(isJumping && jumpOnceDamage && collider == World.getPlayerCollider()) {
-                    jumpOnceDamage = false;
-                    collider.Callback(this.collider, 0.0f, 0.0f, this.damage);
+        if(isRemote) {
+            collider = new Collider(x, y, 0.5f, null, false, 1.3f);
+        } else {
+            collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
+                if(collider == null) { //wall coll
+                    dx = newDX; dy = newDY;
+                } else {
+                    //TODO: check if its any player collider including remote
+                    if(isJumping && jumpOnceDamage && collider == World.getPlayerCollider()) {
+                        jumpOnceDamage = false;
+                        collider.Callback(this.collider, 0.0f, 0.0f, this.damage);
+                    }
                 }
-            }
-            if(damage != 0.0f) {
-                health -= damage;
-                spriteHealth.width = 0.35f * health/maxHealth;
-                System.out.println(health);
-            }
-        }, false, 1.3f);
+                if(damage != 0.0f) {
+                    health -= damage;
+                    spriteHealth.width = 0.35f * health/maxHealth;
+                    System.out.println(health);
+                }
+            }, false, 1.3f);
+        }
         World.getPhysicsWorld().addCollider(collider);
 
         currentTargetCollider = null;
@@ -116,72 +122,76 @@ public class Slime implements Enemy{
         animTime += delta;
         currentRegion.setRegion(animation.getKeyFrame(animTime));
 
-        if(currentTargetCollider == null || aggroLossTimer >= aggroSightLossTimeout) {
-            float closest = Float.MAX_VALUE;
-            Collider close = null;
-            Iterator<Map.Entry<Integer, RemotePlayer>> iterator = World.getRemotePlayers().entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<Integer, RemotePlayer> entry = iterator.next();
-                Collider eCollider = entry.getValue().getCollider();
-                float dst = Vector2.dst(eCollider.x, eCollider.y, x, y);
+        if(!isRemote) {
+            if(currentTargetCollider == null || aggroLossTimer >= aggroSightLossTimeout) {
+                float closest = Float.MAX_VALUE;
+                Collider close = null;
+                Iterator<Map.Entry<Integer, RemotePlayer>> iterator = World.getRemotePlayers().entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<Integer, RemotePlayer> entry = iterator.next();
+                    Collider eCollider = entry.getValue().getCollider();
+                    float dst = Vector2.dst(eCollider.x, eCollider.y, x, y);
+                    if(dst < agressionRange && dst < closest) {
+                        closest = dst;
+                        close = eCollider;
+                        isAgrro = true;
+                        aggroLossTimer = 0.0f;
+                    }
+                }
+                Collider playerC = World.getPlayerCollider();
+                float dst = Vector2.dst(playerC.x, playerC.y, x, y);
                 if(dst < agressionRange && dst < closest) {
                     closest = dst;
-                    close = eCollider;
+                    close = playerC;
                     isAgrro = true;
                     aggroLossTimer = 0.0f;
                 }
+                currentTargetCollider = close;
             }
-            Collider playerC = World.getPlayerCollider();
-            float dst = Vector2.dst(playerC.x, playerC.y, x, y);
-            if(dst < agressionRange && dst < closest) {
-                closest = dst;
-                close = playerC;
-                isAgrro = true;
+
+            if(aggroLossTimer >= aggroSightLossTimeout) {
+                isAgrro = false;
+                currentTargetCollider = null;
+            }
+
+            if(currentTargetCollider != null && Vector2.dst(currentTargetCollider.x, currentTargetCollider.y, x, y) > agressionRange) {
+                aggroLossTimer += delta;
+            } else {
                 aggroLossTimer = 0.0f;
             }
-            currentTargetCollider = close;
-        }
-
-        if(aggroLossTimer >= aggroSightLossTimeout) {
-            isAgrro = false;
-            currentTargetCollider = null;
-        }
-
-        if(currentTargetCollider != null && Vector2.dst(currentTargetCollider.x, currentTargetCollider.y, x, y) > agressionRange) {
-            aggroLossTimer += delta;
-        } else {
-            aggroLossTimer = 0.0f;
-        }
+        }   
 
         x += dx;
         y += dy;
 
-        if(currentTargetCollider != null && !isJumping && jumpCooldownTimer >= jumpCooldown) {
-            targetDirection = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y).nor();
-            isJumping = true;
-            jumpOnceDamage = true;
-        }
-
-        if(isJumping) {
-            jumpCooldownTimer = 0.0f;
-            dx = targetDirection.x * delta * moveSpeed;
-            dy = targetDirection.y * delta * moveSpeed;
-            collider.dx = dx;
-            collider.dy = dy;
-            amountJumped += Vector2.len(dx, dy);
-            if(amountJumped >= jumpDistance) {
-                amountJumped = 0.0f;
-                isJumping = false;
+        if(!isRemote) {
+            if(currentTargetCollider != null && !isJumping && jumpCooldownTimer >= jumpCooldown) {
+                targetDirection = new Vector2(currentTargetCollider.x, currentTargetCollider.y).sub(x, y).nor();
+                isJumping = true;
+                jumpOnceDamage = true;
             }
 
-            float l = amountJumped / jumpDistance;
-            sprite.z = -0.75f + (float)Math.sin(l * Math.PI);
-            spriteHealthBase.z = sprite.z + 0.5f;
-            spriteHealth.z = sprite.z + 0.5f;
-        } else {
-            jumpCooldownTimer += delta;
-            collider.dx = dx = 0.0f;
-            collider.dy = dy = 0.0f;
+            if(isJumping) {
+                jumpCooldownTimer = 0.0f;
+                dx = targetDirection.x * delta * moveSpeed;
+                dy = targetDirection.y * delta * moveSpeed;
+                collider.dx = dx;
+                collider.dy = dy;
+                amountJumped += Vector2.len(dx, dy);
+                if(amountJumped >= jumpDistance) {
+                    amountJumped = 0.0f;
+                    isJumping = false;
+                }
+
+                float l = amountJumped / jumpDistance;
+                sprite.z = -0.75f + (float)Math.sin(l * Math.PI);
+                spriteHealthBase.z = sprite.z + 0.5f;
+                spriteHealth.z = sprite.z + 0.5f;
+            } else {
+                jumpCooldownTimer += delta;
+                collider.dx = dx = 0.0f;
+                collider.dy = dy = 0.0f;
+            }
         }
 
         collider.x = x;
@@ -193,6 +203,22 @@ public class Slime implements Enemy{
         spriteHealthBase.y = y;
         spriteHealth.x = x;
         spriteHealth.y = y;
+
+        if(isRemote) {
+            spriteHealthBase.z = sprite.z + 0.5f;
+            spriteHealth.z = sprite.z + 0.5f;
+            spriteHealth.width = 0.35f * health/maxHealth;
+        }
+    }
+
+    @Override
+    public void updateFromNetwork(float x, float y, float z, float dx, float dy, float rotation, float health) {
+        this.x = x;
+        this.y = y;
+        sprite.z = z;
+        this.dx = dx;
+        this.dy = dy;
+        this.health = health;
     }
 
     @Override
@@ -216,5 +242,44 @@ public class Slime implements Enemy{
     public boolean isAggro() {
         return isAgrro;
     }
+
+    @Override
+    public float getX() {
+        return x;
+    }
+
+    @Override
+    public float getY() {
+        return y;
+    }
+
+    @Override
+    public float getZ() {
+        return sprite.z;
+    }
+
+    @Override
+    public float getDX() {
+        return dx;
+    }
+
+    @Override
+    public float getDY() {
+        return dy;
+    }
+
+    @Override
+    public float getRotation() {
+        return 0.0f;
+    }
+
+    @Override
+    public String getName() {
+        return "slime";
+    }
     
+    @Override
+    public float getHealth() {
+        return health;
+    }
 }

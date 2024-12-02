@@ -16,8 +16,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 import game.shootergame.Item.ItemPickup;
-import game.shootergame.Player;
 import game.shootergame.World;
+import game.shootergame.Enemy.Enemy;
 
 public class Server implements Runnable{
 
@@ -25,10 +25,12 @@ public class Server implements Runnable{
     private List<ClientHandler> clients = new CopyOnWriteArrayList<>();
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
+    private ConcurrentHashMap<Integer, Enemy> enemies;
 
-    public Server(ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
+    public Server(ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items, ConcurrentHashMap<Integer, Enemy> enemies) {
         this.remotePlayers = remotePlayers;
         this.items = items;
+        this.enemies = enemies;
     }
 
     public interface RemoveItemHandler {
@@ -176,6 +178,67 @@ public class Server implements Runnable{
                 this.out = out;
             }
 
+            private void writeRemotePlayers() {
+                ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
+                buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
+                buffer.put((byte)(remotePlayers.size() + 1));
+
+                buffer.putInt(0);//server is always player ID 0
+                buffer.putFloat(World.getPlayer().x());
+                buffer.putFloat(World.getPlayer().y());
+                buffer.putFloat(World.getPlayer().dx());
+                buffer.putFloat(World.getPlayer().dy());
+                buffer.putFloat(World.getPlayer().rotation());
+
+                for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
+                    buffer.putInt(entry.getKey());
+                    buffer.putFloat(entry.getValue().x);
+                    buffer.putFloat(entry.getValue().y);
+                    buffer.putFloat(entry.getValue().dx);
+                    buffer.putFloat(entry.getValue().dy);
+                    buffer.putFloat(entry.getValue().rotation);
+                }
+                try {
+                    out.write(buffer.array());
+                    out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            private void writeEnemies() {
+                byte count = 0x00;
+                for (Entry<Integer, Enemy> entry : enemies.entrySet()) {
+                    if(entry.getValue().isAggro()) {
+                        count++;
+                    }
+                }
+                if(count == 0) return;
+
+                ByteBuffer buffer = ByteBuffer.allocate(2 + ((int)count) * 32);
+                buffer.put(PacketInfo.getByte(PacketInfo.ENEMY_UPDATE));
+                buffer.put(count);
+
+                for (Entry<Integer, Enemy> entry : enemies.entrySet()) {
+                    if(entry.getValue().isAggro()) {
+                        buffer.putInt(entry.getKey());
+                        buffer.putFloat(entry.getValue().getX());
+                        buffer.putFloat(entry.getValue().getY());
+                        buffer.putFloat(entry.getValue().getZ());
+                        buffer.putFloat(entry.getValue().getDX());
+                        buffer.putFloat(entry.getValue().getDY());
+                        buffer.putFloat(entry.getValue().getRotation());
+                        buffer.putFloat(entry.getValue().getHealth());
+                    }
+                }
+                try {
+                    out.write(buffer.array());
+                    out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
             @Override
             public void run() {
                 while(true) {
@@ -185,6 +248,7 @@ public class Server implements Runnable{
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+
                     ByteBuffer itemBuffer;
                     while((itemBuffer = outputQueue.poll()) != null) {
                         try {
@@ -195,38 +259,9 @@ public class Server implements Runnable{
                         }
                     }
 
-                    ByteBuffer buffer = ByteBuffer.allocate(2 + (remotePlayers.size()+1) *24);
-                    buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_POSITION));
-                    buffer.put((byte)(remotePlayers.size() + 1));
+                    writeRemotePlayers();
+                    writeEnemies();
 
-                    buffer.putInt(0);//server is always player ID 0
-                    buffer.putFloat(World.getPlayer().x());
-                    buffer.putFloat(World.getPlayer().y());
-                    buffer.putFloat(World.getPlayer().dx());
-                    buffer.putFloat(World.getPlayer().dy());
-                    buffer.putFloat(World.getPlayer().rotation());
-
-                    for (Entry<Integer, RemotePlayer> entry : remotePlayers.entrySet()) {
-                        buffer.putInt(entry.getKey());
-                        buffer.putFloat(entry.getValue().x);
-                        buffer.putFloat(entry.getValue().y);
-                        buffer.putFloat(entry.getValue().dx);
-                        buffer.putFloat(entry.getValue().dy);
-                        buffer.putFloat(entry.getValue().rotation);
-                    }
-                    try {
-                        out.write(buffer.array());
-                        out.flush();
-                    } catch (IOException e) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
-                        System.out.println(e.getMessage());
-                        e.printStackTrace();
-                    }
                 }
             }
             
@@ -295,6 +330,28 @@ public class Server implements Runnable{
         buffer.putFloat(y);
         buffer.putInt(payloadI);
         buffer.putInt(subtypeI);
+        for (ClientHandler client : clients) {
+            client.sendBytes(buffer);
+        }
+    }
+
+    public void broadcastNewEnemy(int id, float x, float y, boolean add, String type) {
+        byte typeB = 0x00;
+        if (type.equals("slime")) {
+            typeB = 0x01;
+        } else if (type.equals("goblin")) {
+            typeB = 0x02;
+        }else if (type.equals("range goblin")) {
+            typeB = 0x03;
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(15);
+        buffer.put(PacketInfo.getByte(PacketInfo.NEW_ENEMY));
+        buffer.put(add ? (byte)0x01 : (byte)0x00);
+        buffer.putInt(id);
+        buffer.putFloat(x);
+        buffer.putFloat(y);
+        buffer.put(typeB);
         for (ClientHandler client : clients) {
             client.sendBytes(buffer);
         }

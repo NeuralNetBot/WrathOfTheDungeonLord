@@ -12,12 +12,16 @@ type add? id
 bytes: 6
 
 -enemies update
-type
-0x02
+type amnt id         x          y          z          dx         dy         rotation   health
+0x02 0x10 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+bytes: 2 + n*32
 
 -new enemy
-type
-0x03
+type add? id         x          y          type
+0x03 0x01 0x00000001 0x00000000 0x00000000 0x00
+     0x01 add                              0x01 slime
+     0x00 remove                           0x02 goblin
+                                           0x03 range goblin
 
 -new item drop
 type add? id         x          y           payload    subtype

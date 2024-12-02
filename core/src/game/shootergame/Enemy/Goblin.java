@@ -51,7 +51,7 @@ public class Goblin implements Enemy{
     Animation<TextureRegion>[] animationsAttackHigh = new Animation[8];
     float animTime = 0.0f;
 
-    public Goblin(float x, float y) {
+    public Goblin(float x, float y, boolean isRemote) {
 
         ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
         ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
@@ -200,6 +200,11 @@ public class Goblin implements Enemy{
     }
 
     @Override
+    public void updateFromNetwork(float x, float y, float z, float dx, float dy, float rotation, float health) {
+
+    }
+
+    @Override
     public void tickPathing() {
         if(currentTargetCollider != null) {
             navPath = World.getNavMesh().pathFind(new Vector2(x, y), new Vector2(currentTargetCollider.x, currentTargetCollider.y));
@@ -231,5 +236,45 @@ public class Goblin implements Enemy{
     public boolean isAggro() {
         return false;
     }
+
+    @Override
+    public float getX() {
+        return x;
+    }
+
+    @Override
+    public float getY() {
+        return y;
+    }
+
+    @Override
+    public String getName() {
+        return "goblin";
+    }
+
+    @Override
+    public float getZ() {
+        return 0;
+    }
+
+    @Override
+    public float getDX() {
+        return dx;
+    }
+
+    @Override
+    public float getDY() {
+        return dy;
+    }
+
+    @Override
+    public float getRotation() {
+        return rotation;
+    }
     
+    @Override
+    public float getHealth() {
+        return health;
+    }
+
 }

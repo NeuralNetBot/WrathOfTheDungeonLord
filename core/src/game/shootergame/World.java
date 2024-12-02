@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -61,7 +62,7 @@ public class World {
 
     ConcurrentHashMap<Integer, ItemPickup> items;
 
-    LinkedList<Enemy> enemies;
+    ConcurrentHashMap<Integer, Enemy> enemies;
     int pathTickIndex = 0;
 
     NavMesh navMesh;
@@ -112,13 +113,13 @@ public class World {
     }
 
     public static void startAsServer() {
-        instance.server = new Server(instance.remotePlayers, instance.items);
+        instance.server = new Server(instance.remotePlayers, instance.items, instance.enemies);
         new Thread(instance.server).start();
         instance.networkMode = NetworkMode.SERVER;
     }
 
     public static void startAsClient() {
-        instance.client = new Client(instance.remotePlayers, instance.items);
+        instance.client = new Client(instance.remotePlayers, instance.items, instance.enemies);
         instance.networkMode = NetworkMode.CLIENT;
     }
 
@@ -154,7 +155,11 @@ public class World {
                 Renderer.inst().buildLightmap(World.getTorches());
                 Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
-                //TODO: broadcast item/enemy data
+                for (Entry<Integer, Enemy> entry : instance.enemies.entrySet()) {
+                    float x = entry.getValue().getX();
+                    float y = entry.getValue().getY();
+                    instance.server.broadcastNewEnemy(entry.getKey(), x, y, true, entry.getValue().getName());
+                }
                 for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
                     String payload = null;
                     String subtype = null;
@@ -240,16 +245,16 @@ public class World {
             entry.getValue().update(delta);
         }
 
-        Iterator<Enemy> it = instance.enemies.iterator();
+        Iterator<Map.Entry<Integer,Enemy>> it = instance.enemies.entrySet().iterator();
         while(it.hasNext()) {
-            Enemy enemy = it.next();
-            enemy.update(delta);
+            Map.Entry<Integer,Enemy> enemy = it.next();
+            enemy.getValue().update(delta);
             if(index == instance.pathTickIndex)
-            enemy.tickPathing();
+            enemy.getValue().tickPathing();
             index++;
 
-            if(!enemy.isAlive()) {
-                enemy.onKill();
+            if(!enemy.getValue().isAlive()) {
+                enemy.getValue().onKill();
                 it.remove();
             }
         }
@@ -320,7 +325,7 @@ public class World {
         torchRegionIndexCuller = new RegionIndexCuller();
         doors = new ArrayList<>();
         items = new ConcurrentHashMap<>();
-        enemies = new LinkedList<>();
+        enemies = new ConcurrentHashMap<>();
         navMesh = new NavMesh();
         remotePlayers = new ConcurrentHashMap<>();
 
@@ -383,7 +388,8 @@ public class World {
                 } else if(type.equals("slime") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
-                    instance.enemies.add(new Slime(x, y));
+                    int id = ThreadLocalRandom.current().nextInt();
+                    instance.enemies.put(id, new Slime(x, y, false));
                 } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);

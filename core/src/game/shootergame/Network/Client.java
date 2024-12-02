@@ -8,6 +8,9 @@ import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.World;
+import game.shootergame.Enemy.Enemy;
+import game.shootergame.Enemy.Goblin;
+import game.shootergame.Enemy.Slime;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -25,6 +28,7 @@ public class Client {
     private Socket socket;
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
+    private ConcurrentHashMap<Integer, Enemy> enemies;
 
     private volatile boolean hasMapLoad = false;
     private volatile String mapName = null;
@@ -38,9 +42,10 @@ public class Client {
     
     private ConcurrentLinkedQueue<ByteBuffer> outputQueue = new ConcurrentLinkedQueue<>();
 
-    public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items) {
+    public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items, ConcurrentHashMap<Integer, Enemy> enemies) {
         this.remotePlayers = remotePlayers;
         this.items = items;
+        this.enemies = enemies;
         try {
             socket = new Socket(hostName, portNumber);
             DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -171,6 +176,42 @@ public class Client {
                 });
             }
         }
+        
+        private void processEnemyUpdate(ByteBuffer buffer) {
+            byte amount = buffer.get();
+            for (int i = 0; i < amount; i++) {
+                int id = buffer.getInt();
+                float x = buffer.getFloat();
+                float y = buffer.getFloat();
+                float z = buffer.getFloat();
+                float dx = buffer.getFloat();
+                float dy = buffer.getFloat();
+                float rotation = buffer.getFloat();
+                float health = buffer.getFloat();
+                Enemy enemy = enemies.get(id);
+                if(enemy == null) continue;
+                enemy.updateFromNetwork(x, y, z, dx, dy, rotation, health);
+            }
+        }
+
+        private void processNewEnemy(ByteBuffer buffer) {
+            byte add = buffer.get();
+            int ID = buffer.getInt();
+            if(add == 0x01) {
+                float x = buffer.getFloat();
+                float y = buffer.getFloat();
+                byte type = buffer.get();
+                if(type == 0x01) {
+                    newItemQueue.add(()->{ enemies.put(ID, new Slime(x, y, true)); });
+                } else if(type == 0x02) {
+                    newItemQueue.add(()->{ enemies.put(ID, new Goblin(x, y, true)); });
+                } else if(type == 0x03) {
+                    newItemQueue.add(()->{ /* ranged goblin */ });
+                }
+            } else {
+                newItemQueue.add(()-> { enemies.remove(ID); });
+            }
+        }
 
         private void processLoadMap(ByteBuffer buffer) {
             byte strLen = buffer.get();
@@ -189,7 +230,7 @@ public class Client {
             try {
                 while(true) {
 
-                    byte[] buf = new byte[1024];
+                    byte[] buf = new byte[2048];
                     int amount = in.read(buf);
                     if(amount <= 0) continue;
 
@@ -200,8 +241,10 @@ public class Client {
                             processPlayerPosition(buffer); break;
                         case NEW_PLAYER:      
                             processNewPlayer(buffer); break;
-                        case ENEMY_UPDATE:    break;
-                        case NEW_ENEMY:       break;
+                        case ENEMY_UPDATE:
+                            processEnemyUpdate(buffer); break;
+                        case NEW_ENEMY:
+                            processNewEnemy(buffer); break;
                         case NEW_ITEM:
                             processNewItem(buffer); break;
                         case PLAYER_UPDATE:   break;

@@ -229,7 +229,6 @@ public class Player {
             regenDelayTimer += delta;
         }
 
-        rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
         x += dx;

@@ -58,6 +58,7 @@ public class RemotePlayer {
 
     public void kill() {
         Renderer.inst().removeSprite(sprite);
+        World.getPhysicsWorld().removeCollider(collider);
     }
 
     public Collider getCollider() {
