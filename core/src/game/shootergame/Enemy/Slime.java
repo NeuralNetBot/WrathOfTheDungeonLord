@@ -57,6 +57,8 @@ public class Slime implements Enemy{
 
     boolean isRemote;
 
+    float recentDamage = 0.0f;
+
     public Slime(float x, float y, boolean isRemote) {
         this.isRemote = isRemote;
         this.x = x; this.y = y;
@@ -93,7 +95,7 @@ public class Slime implements Enemy{
         spriteHealth = new Sprite2_5D(regHealth, x, y, 0.0f, 0.01f, 0.35f);
         Renderer.inst().addSprite(spriteHealth);
         if(isRemote) {
-            collider = new Collider(x, y, 0.5f, null, false, 1.3f);
+            collider = new Collider(x, y, 0.5f, (Collider collider, float newDX, float newDY, float damage)->{ recentDamage += damage; }, false, 1.3f);
         } else {
             collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
                 if(collider == null) { //wall coll
@@ -281,5 +283,17 @@ public class Slime implements Enemy{
     @Override
     public float getHealth() {
         return health;
+    }
+
+    @Override
+    public void doDamage(float damage) {
+        health -= damage;
+    }
+
+    @Override
+    public float getRecentDamage() {
+        float dmg = recentDamage;
+        recentDamage = 0.0f;
+        return dmg;
     }
 }

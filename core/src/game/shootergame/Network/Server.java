@@ -138,7 +138,13 @@ public class Server implements Runnable{
                             case NEW_ENEMY:       break;
                             case NEW_ITEM:        break;
                             case PLAYER_UPDATE:   break;
-                            case PLAYER_ATTACK:   break;
+                            case PLAYER_ATTACK:
+                            {
+                                int id = buffer.getInt();
+                                float damage = buffer.getFloat();
+                                enemies.get(id).doDamage(damage);
+                                break;
+                            }
                             case ITEM_INTERACT:
                                 int id = buffer.getInt();
                                 broadcastNewItem(id, 0, 0, false, null, null, null);

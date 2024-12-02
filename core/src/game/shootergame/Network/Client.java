@@ -90,6 +90,15 @@ public class Client {
         outputQueue.add(buffer);
     }
 
+    public void sendPlayerAttacks(int id, float damage) {
+        ByteBuffer buffer = ByteBuffer.allocate(9);
+        buffer.put(PacketInfo.getByte(PacketInfo.PLAYER_ATTACK));
+        buffer.putInt(id);
+        buffer.putFloat(damage);
+
+        outputQueue.add(buffer);
+    }
+
     private class InputHandler implements Runnable {
         private final DataInputStream in;
         public InputHandler(DataInputStream in) {

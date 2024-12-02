@@ -57,8 +57,9 @@ type x          y          dx         dy         rotation
 bytes: 21
 
 -attacked
-type
-0x06
+type id         damage
+0x06 0x00000000 0x00000000
+bytes: 9
 
 -item interact
 type id

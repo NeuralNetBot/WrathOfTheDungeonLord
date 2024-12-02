@@ -14,5 +14,8 @@ public interface Enemy {
     public float getDY();
     public float getRotation();
     public float getHealth();
+    public void doDamage(float damage);
     public String getName();
+    //only valid for remote enemies
+    public float getRecentDamage();
 }

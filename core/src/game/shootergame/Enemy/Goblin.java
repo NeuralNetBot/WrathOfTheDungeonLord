@@ -276,5 +276,17 @@ public class Goblin implements Enemy{
     public float getHealth() {
         return health;
     }
+    
+    @Override
+    public void doDamage(float damage) {
+        health -= damage;
+    }
+
+    @Override
+    public float getRecentDamage() {
+        //float dmg = recentDamage;
+        //recentDamage = 0.0f;
+        return 0.0f;
+    }
 
 }

@@ -253,6 +253,13 @@ public class World {
             enemy.getValue().tickPathing();
             index++;
 
+            if(instance.networkMode == NetworkMode.CLIENT) {
+                float recentDamage = enemy.getValue().getRecentDamage();
+                if(recentDamage != 0) {
+                    instance.client.sendPlayerAttacks(enemy.getKey(), recentDamage);
+                }
+            }
+
             if(!enemy.getValue().isAlive()) {
                 if(instance.networkMode == NetworkMode.SERVER) {
                     instance.server.broadcastNewEnemy(enemy.getKey(), 0, 0, false, null);
