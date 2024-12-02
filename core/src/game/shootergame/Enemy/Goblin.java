@@ -3,6 +3,7 @@ package game.shootergame.Enemy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,15 +23,17 @@ import game.shootergame.Renderer.Sprite2_5D;
 public class Goblin implements Enemy{
 
     float x, y;
+    final float homeX, homeY;
     float dx, dy;
     float rotation;
-    final float maxHealth = 25.0f;
+    final float maxHealth = 35.0f;
     float health;
     Collider collider;
 
     Collider currentTargetCollider = null;
 
     final float moveSpeed = 1.5f;
+    final float moveSpeedFast = 2.5f;
 
     Sprite2_5D spriteLow;
     Sprite2_5D spriteHigh;
@@ -76,12 +79,21 @@ public class Goblin implements Enemy{
 
     boolean isAttacking = false;
     float attackCooldown = 0.0f;
-    final float attackCooldownMax = 0.5f;
+    final float attackCooldownMax = 0.2f;
     final float damage = 10.0f;
     boolean hasDoneDamage = false;
 
+    final float returnHomeAfterAggroTimeMax = 3.0f;
+    float returnHomeAfterAggroTime = 0.0f;
+
     public Goblin(float x, float y, boolean isRemote) {
+        homeX = x;
+        homeY = y;
         this.isRemote = isRemote;
+        if(!isRemote) {
+            rotation = Objects.hash(x, y);
+            rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+        }
         ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
         ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
         ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
@@ -122,7 +134,7 @@ public class Goblin implements Enemy{
                 for (int j = 0; j < 15; j++) {
                     animFrames[j] = tempFrames[(i*2)+1][j];
                 }
-                animationsAttackLow[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackLow[i] = new Animation<TextureRegion>(0.03f, animFrames);
                 animationsAttackLow[i].setPlayMode(PlayMode.NORMAL);
             }
             for (int i = 0; i < 8; i++) {
@@ -130,7 +142,7 @@ public class Goblin implements Enemy{
                 for (int j = 0; j < 15; j++) {
                     animFrames[j] = tempFrames[i*2][j];
                 }
-                animationsAttackHigh[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationsAttackHigh[i] = new Animation<TextureRegion>(0.03f, animFrames);
                 animationsAttackHigh[i].setPlayMode(PlayMode.NORMAL);
             }
         }
@@ -204,7 +216,7 @@ public class Goblin implements Enemy{
             if(animAttackTime == 0.0f) {
                 attackCooldown = 0.0f;
             }
-            if(animAttackTime >= 0.6f && !hasDoneDamage) {
+            if(animAttackTime >= 0.3f && !hasDoneDamage) {
                 World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation, 10.0f, 1.5f, damage);
                 hasDoneDamage = true;
             }
@@ -251,31 +263,42 @@ public class Goblin implements Enemy{
             if(highest == 0.0f) {
                 isAggro = false;
                 currentTargetCollider = null;
+                returnHomeAfterAggroTime += delta;
             } else {
                 isAggro = true;
+                returnHomeAfterAggroTime = 0.0f;
                 currentTargetCollider = highestHate.collider;
             }
+            float currentMoveSpeed = moveSpeed;
             if(currentTargetCollider != null) {
                 Vector2 targetV = new Vector2(x - currentTargetCollider.x, y - currentTargetCollider.y);
-                Vector2 targetVNorm = targetV.cpy().nor();
-                rotation = (float)Math.atan2(targetVNorm.y, targetVNorm.x);
-                rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
-            
+                if(isAttacking) {
+                    Vector2 targetVNorm = targetV.cpy().nor();
+                    rotation = (float)Math.atan2(targetVNorm.y, targetVNorm.x);
+                    rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+                }
+                
                 float distanceToTarget = targetV.len();
-                System.out.println(distanceToTarget);
                 isAttacking = distanceToTarget < 1.0f;
+                if(distanceToTarget < 5.0f) {
+                    currentMoveSpeed = moveSpeedFast;
+                }
             }
-            if(!isAttacking && currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
+            if(!isAttacking && navPath != null && targetIndex < navPath.size()) {
                 Vector2 targetNode = navPath.get(targetIndex).cpy();
                 Vector2 direction = targetNode.cpy().sub(x, y);
                 float dist = direction.len();
                 
-                if(dist < moveSpeed * delta) {
+                Vector2 targetVNorm = direction.cpy().scl(-1.0f).nor();
+                rotation = (float)Math.atan2(targetVNorm.y, targetVNorm.x);
+                rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+                
+                if(dist < currentMoveSpeed * delta) {
                     x = targetNode.x;
                     y = targetNode.y;
                     targetIndex++;
                 } else {
-                    direction.nor().scl(moveSpeed * delta);
+                    direction.nor().scl(currentMoveSpeed * delta);
                     collider.dx = direction.x;
                     collider.dy = direction.y;
                 }
@@ -313,12 +336,27 @@ public class Goblin implements Enemy{
 
     @Override
     public void tickPathing() {
-        if(currentTargetCollider != null) {
-            navPath = World.getNavMesh().pathFind(new Vector2(x, y), new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+        if(currentTargetCollider != null || returnHomeAfterAggroTime > returnHomeAfterAggroTimeMax)
+        {
+            if(returnHomeAfterAggroTime > returnHomeAfterAggroTimeMax) {
+                Vector2 pos = new Vector2(x, y);
+                Vector2 home = new Vector2(homeX, homeY);
+                if(pos.dst(home) < 1.0f) {
+                    navPath = null;
+                } else {
+                    navPath = World.getNavMesh().pathFind(pos, home);
+                }
+            } else {
+                navPath = World.getNavMesh().pathFind(new Vector2(x, y), new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+            }
             if(navPath == null) { //path find failed, so enter "dumb search" mode i.e. direct light on sight path
                 navPath = new ArrayList<>();
                 navPath.add(new Vector2(x, y));
-                navPath.add(new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+                if(returnHomeAfterAggroTime > returnHomeAfterAggroTimeMax) {
+                    navPath.add(new Vector2(homeX, homeY));
+                } else {
+                    navPath.add(new Vector2(currentTargetCollider.x, currentTargetCollider.y));
+                }
             }
         } else {
             navPath = null;
