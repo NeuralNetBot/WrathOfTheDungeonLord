@@ -254,6 +254,9 @@ public class World {
             index++;
 
             if(!enemy.getValue().isAlive()) {
+                if(instance.networkMode == NetworkMode.SERVER) {
+                    instance.server.broadcastNewEnemy(enemy.getKey(), 0, 0, false, null);
+                }
                 enemy.getValue().onKill();
                 it.remove();
             }

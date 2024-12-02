@@ -197,10 +197,10 @@ public class Client {
         private void processNewEnemy(ByteBuffer buffer) {
             byte add = buffer.get();
             int ID = buffer.getInt();
+            float x = buffer.getFloat();
+            float y = buffer.getFloat();
+            byte type = buffer.get();
             if(add == 0x01) {
-                float x = buffer.getFloat();
-                float y = buffer.getFloat();
-                byte type = buffer.get();
                 if(type == 0x01) {
                     newItemQueue.add(()->{ enemies.put(ID, new Slime(x, y, true)); });
                 } else if(type == 0x02) {
@@ -209,7 +209,13 @@ public class Client {
                     newItemQueue.add(()->{ /* ranged goblin */ });
                 }
             } else {
-                newItemQueue.add(()-> { enemies.remove(ID); });
+                newItemQueue.add(()-> { 
+                    Enemy enemy = enemies.get(ID);
+                    if(enemy != null) {
+                        enemy.onKill();
+                        enemies.remove(ID);
+                    }
+                });
             }
         }
 
@@ -235,8 +241,10 @@ public class Client {
                     if(amount <= 0) continue;
 
                     ByteBuffer buffer = ByteBuffer.wrap(buf, 0, amount);
+
                     while(buffer.hasRemaining()) {
-                        switch (PacketInfo.getType(buffer.get())) {
+                        byte type = buffer.get();
+                        switch (PacketInfo.getType(type)) {
                         case PLAYER_POSITION:
                             processPlayerPosition(buffer); break;
                         case NEW_PLAYER:      

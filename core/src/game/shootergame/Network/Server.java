@@ -8,12 +8,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+
+import com.badlogic.gdx.utils.Array;
 
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.World;
@@ -208,29 +211,33 @@ public class Server implements Runnable{
 
             private void writeEnemies() {
                 byte count = 0x00;
+                ArrayList<Enemy> enemiesToWrite = new ArrayList<>(16);
+                ArrayList<Integer> enemiesToWriteID = new ArrayList<>(16);
                 for (Entry<Integer, Enemy> entry : enemies.entrySet()) {
                     if(entry.getValue().isAggro()) {
                         count++;
+                        enemiesToWrite.add(entry.getValue());
+                        enemiesToWriteID.add(entry.getKey());
                     }
                 }
+                
                 if(count == 0) return;
 
                 ByteBuffer buffer = ByteBuffer.allocate(2 + ((int)count) * 32);
                 buffer.put(PacketInfo.getByte(PacketInfo.ENEMY_UPDATE));
                 buffer.put(count);
-
-                for (Entry<Integer, Enemy> entry : enemies.entrySet()) {
-                    if(entry.getValue().isAggro()) {
-                        buffer.putInt(entry.getKey());
-                        buffer.putFloat(entry.getValue().getX());
-                        buffer.putFloat(entry.getValue().getY());
-                        buffer.putFloat(entry.getValue().getZ());
-                        buffer.putFloat(entry.getValue().getDX());
-                        buffer.putFloat(entry.getValue().getDY());
-                        buffer.putFloat(entry.getValue().getRotation());
-                        buffer.putFloat(entry.getValue().getHealth());
-                    }
+                for (int i = 0; i < enemiesToWrite.size(); i++) {
+                    Enemy enemy = enemiesToWrite.get(i);
+                    buffer.putInt(enemiesToWriteID.get(i));
+                    buffer.putFloat(enemy.getX());
+                    buffer.putFloat(enemy.getY());
+                    buffer.putFloat(enemy.getZ());
+                    buffer.putFloat(enemy.getDX());
+                    buffer.putFloat(enemy.getDY());
+                    buffer.putFloat(enemy.getRotation());
+                    buffer.putFloat(enemy.getHealth());
                 }
+
                 try {
                     out.write(buffer.array());
                     out.flush();
@@ -337,12 +344,14 @@ public class Server implements Runnable{
 
     public void broadcastNewEnemy(int id, float x, float y, boolean add, String type) {
         byte typeB = 0x00;
-        if (type.equals("slime")) {
-            typeB = 0x01;
-        } else if (type.equals("goblin")) {
-            typeB = 0x02;
-        }else if (type.equals("range goblin")) {
-            typeB = 0x03;
+        if(add) {
+            if (type.equals("slime")) {
+                typeB = 0x01;
+            } else if (type.equals("goblin")) {
+                typeB = 0x02;
+            }else if (type.equals("range goblin")) {
+                typeB = 0x03;
+            }
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(15);
