@@ -1,6 +1,10 @@
 package game.shootergame.Enemy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -10,6 +14,7 @@ import com.badlogic.gdx.math.Vector2;
 
 import game.shootergame.ShooterGame;
 import game.shootergame.World;
+import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Physics.Collider;
 import game.shootergame.Renderer.Renderer;
 import game.shootergame.Renderer.Sprite2_5D;
@@ -53,6 +58,20 @@ public class Goblin implements Enemy{
 
     boolean isRemote;
     float recentDamage = 0.0f;
+
+    private class Hate {
+        public Collider collider;
+        public float rangeHate;
+        public float damageHate;
+        public float getTotal() { return rangeHate + damageHate; }
+        public Hate(Collider collider) { this.collider = collider; rangeHate = 0.0f; damageHate = 0.0f; }
+    }
+    HashMap<Integer, Hate> hateMap = new HashMap<>();
+
+    final float damageHateLossPerSecond = 2.0f;
+    final float rangeHateRange = 12.0f;
+
+    boolean isAggro = false;
 
     public Goblin(float x, float y, boolean isRemote) {
         this.isRemote = isRemote;
@@ -111,8 +130,7 @@ public class Goblin implements Enemy{
 
         health = maxHealth;
 
-        //TODO: make dyanmically choose this target
-        currentTargetCollider = World.getPlayerCollider();
+        currentTargetCollider = null;
         navPath = null;
 
         this.x = x; this.y = y;
@@ -136,13 +154,18 @@ public class Goblin implements Enemy{
                     dx = newDX; dy = newDY;
                 }
                 if(damage != 0.0f) {
-                    health -= damage;
+                    doDamage(damage, 0);
                     spriteHealth.width = 0.35f * health/maxHealth;
                     System.out.println(health);
                 }
             }, false, 1.3f);
         }
         World.getPhysicsWorld().addCollider(collider);
+
+        getHateForPlayer(0);
+        for (Entry<Integer, RemotePlayer> player : World.getRemotePlayers().entrySet()) {
+            getHateForPlayer(player.getKey());
+        }
     }
     
     @Override
@@ -174,8 +197,39 @@ public class Goblin implements Enemy{
         spriteHigh.setRegion(animationsAttackHigh[realIndex].getKeyFrame(0.0f));
 
         if(!isRemote) {
-            rotation = (float)Math.atan2(v.y, v.x);
-            rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+            {
+                Hate hate = getHateForPlayer(0);
+                float range = Vector2.dst(x, y, hate.collider.x, hate.collider.y);
+                hate.rangeHate = Math.max((-range * 10.0f / rangeHateRange) + 10.0f, 0.0f);
+                for (Entry<Integer, RemotePlayer> player : World.getRemotePlayers().entrySet()) {
+                    hate = getHateForPlayer(player.getKey());
+                    range = Vector2.dst(x, y, hate.collider.x, hate.collider.y);
+                    hate.rangeHate = Math.max((-range * 10.0f / rangeHateRange) + 10.0f, 0.0f);
+                }
+            }
+            float highest = 0.0f;
+            Hate highestHate = null;
+            for (Entry<Integer, Hate> hate : hateMap.entrySet()) {
+                hate.getValue().damageHate = Math.max(hate.getValue().damageHate - (delta * damageHateLossPerSecond), 0.0f);
+
+                float hateTotal = hate.getValue().getTotal();
+                if(hateTotal > highest) {
+                    highest = hateTotal;
+                    highestHate = hate.getValue();
+                }
+            }
+            if(highest == 0.0f) {
+                isAggro = false;
+                currentTargetCollider = null;
+            } else {
+                isAggro = true;
+                currentTargetCollider = highestHate.collider;
+            }
+            if(currentTargetCollider != null) {
+                Vector2 targetV = new Vector2(x - currentTargetCollider.x, y - currentTargetCollider.y).nor();
+                rotation = (float)Math.atan2(targetV.y, targetV.x);
+                rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
+            }
 
             if(currentTargetCollider != null && navPath != null && targetIndex < navPath.size()) {
                 Vector2 targetNode = navPath.get(targetIndex).cpy();
@@ -251,7 +305,7 @@ public class Goblin implements Enemy{
 
     @Override
     public boolean isAggro() {
-        return true;
+        return isAggro;
     }
 
     @Override
@@ -293,9 +347,23 @@ public class Goblin implements Enemy{
     public float getHealth() {
         return health;
     }
+
+    private Hate getHateForPlayer(int remotePlayerID) {
+        Hate hate = hateMap.get(remotePlayerID);
+        if(hate == null) {
+            if(remotePlayerID == 0) {
+                hate = new Hate(World.getPlayerCollider());
+            } else {
+                hate = new Hate(World.getRemotePlayers().get(remotePlayerID).getCollider());
+            }
+            hateMap.put(remotePlayerID, hate);
+        }
+        return hate;
+    }
     
     @Override
-    public void doDamage(float damage) {
+    public void doDamage(float damage, int remotePlayerID) {
+        getHateForPlayer(remotePlayerID).damageHate += damage;
         health -= damage;
     }
 

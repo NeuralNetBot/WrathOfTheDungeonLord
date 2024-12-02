@@ -142,7 +142,7 @@ public class Server implements Runnable{
                             {
                                 int id = buffer.getInt();
                                 float damage = buffer.getFloat();
-                                enemies.get(id).doDamage(damage);
+                                enemies.get(id).doDamage(damage, remotePlayerID);
                                 break;
                             }
                             case ITEM_INTERACT:

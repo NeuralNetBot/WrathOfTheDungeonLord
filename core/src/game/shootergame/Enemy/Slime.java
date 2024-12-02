@@ -286,7 +286,7 @@ public class Slime implements Enemy{
     }
 
     @Override
-    public void doDamage(float damage) {
+    public void doDamage(float damage, int remotePlayerID) {
         health -= damage;
     }
 
