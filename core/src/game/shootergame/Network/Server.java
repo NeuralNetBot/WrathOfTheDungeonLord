@@ -16,9 +16,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ByteArray;
-
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.World;
 import game.shootergame.Enemy.Enemy;
