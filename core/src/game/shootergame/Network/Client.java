@@ -23,8 +23,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client {
 
-    private final String hostName = "localhost";
-    private final int portNumber = 42069;
     private Socket socket;
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
@@ -42,12 +40,12 @@ public class Client {
     
     private ConcurrentLinkedQueue<ByteBuffer> outputQueue = new ConcurrentLinkedQueue<>();
 
-    public Client (ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items, ConcurrentHashMap<Integer, Enemy> enemies) {
+    public Client (String ip, int port, ConcurrentHashMap<Integer, RemotePlayer> remotePlayers, ConcurrentHashMap<Integer, ItemPickup> items, ConcurrentHashMap<Integer, Enemy> enemies) {
         this.remotePlayers = remotePlayers;
         this.items = items;
         this.enemies = enemies;
         try {
-            socket = new Socket(hostName, portNumber);
+            socket = new Socket(ip, port);
             DataInputStream in = new DataInputStream(socket.getInputStream());
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 

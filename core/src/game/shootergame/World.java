@@ -118,7 +118,7 @@ public class World {
     }
 
     public static void startAsClient() {
-        instance.client = new Client(instance.remotePlayers, instance.items, instance.enemies);
+        instance.client = new Client(instance.mainMenu.getIP(), instance.mainMenu.getPort(), instance.remotePlayers, instance.items, instance.enemies);
         instance.networkMode = NetworkMode.CLIENT;
     }
 
@@ -286,13 +286,19 @@ public class World {
         if(instance.mainMenu.shouldRunGame()) {
             instance.player.render();
         } else {
+            if(instance.networkMode == NetworkMode.SERVER) {
+                instance.mainMenu.setIP(instance.server.getIP());
+                instance.mainMenu.setPort(instance.server.getPort());
+            }
             instance.mainMenu.update();
         }
     }
 
     public static void renderHud() {
-        if(!instance.mainMenu.shouldRunGame())
+        if(!instance.mainMenu.shouldRunGame()) {
+            instance.mainMenu.updateText();
             return;
+        }
 
         if(instance.itemPrompt != null) {
             String name = instance.itemPrompt.getName();

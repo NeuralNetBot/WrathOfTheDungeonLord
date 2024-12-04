@@ -2,9 +2,12 @@ package game.shootergame;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.assets.loaders.TextureLoader.TextureParameter;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -30,6 +33,8 @@ public class MainMenu {
     TextureRegion maceReg;
     TextureRegion brassReg;
 
+    TextureRegion blankReg;
+
     Sprite sprite;
 
     float mouseX;
@@ -43,6 +48,15 @@ public class MainMenu {
 
     boolean clientConnected = false;
 
+    BitmapFont font;
+    GlyphLayout layout = new GlyphLayout();
+    
+    String serverIP;
+    String port;
+
+    boolean selectIPText = false;
+    boolean selectPortText = false;
+
     public MainMenu() {
         currentState = State.MAIN;
 
@@ -52,6 +66,7 @@ public class MainMenu {
         ShooterGame.getInstance().am.load("GUIAtlas.png", Texture.class, param);
         ShooterGame.getInstance().am.finishLoading();
         atlas = ShooterGame.getInstance().am.get("GUIAtlas.png", Texture.class);
+        font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT, BitmapFont.class);
         hostServerReg = new TextureRegion(atlas, 0, 0, 216, 108);
         joinServerReg = new TextureRegion(atlas, 0, 108, 216, 108);
         exitReg = new TextureRegion(atlas, 0, 216, 216, 108);
@@ -62,6 +77,8 @@ public class MainMenu {
         halberdReg = new TextureRegion(atlas, 216, 324, 216, 108);
         maceReg = new TextureRegion(atlas, 0, 432, 216, 108);
         brassReg = new TextureRegion(atlas, 216, 432, 216, 108);
+        
+        blankReg = new TextureRegion(atlas, 216, 216, 216, 108);
 
         sprite = new Sprite(atlas);
     }
@@ -103,9 +120,6 @@ public class MainMenu {
         return pressed;
     }
 
-    private void renderTextBox(TextureRegion reg) {
-    }
-
     public boolean isDone() {
         return isDone;
     }
@@ -119,15 +133,22 @@ public class MainMenu {
     }
 
     public int getPort() {
-        return 42069;
+        return Integer.parseInt(port);
     }
 
     public String getIP() {
-        return "localhost";
+        return serverIP;
+    }
+
+    public void setPort(int port) {
+        this.port = Integer.toString(port);
+    }
+
+    public void setIP(String ip) {
+        serverIP = ip;
     }
 
     public int getSelectedWeapon() {
-        System.out.println(selectedWeaponIndex);
         return selectedWeaponIndex;
     }
 
@@ -135,6 +156,20 @@ public class MainMenu {
         this.clientConnected = connected;
     }
 
+    private void appendToTextInputs(String append) {
+        if(selectIPText) {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(serverIP);
+            stringBuilder.append(append);
+            serverIP = stringBuilder.toString();
+        } else {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(port);
+            stringBuilder.append(append);
+            port = stringBuilder.toString();
+        }
+    }
+    
     public void update() {
         float aspect = (float)Gdx.graphics.getHeight() / (float)Gdx.graphics.getWidth();
         mouseX = (float)Gdx.input.getX() / (float)Gdx.graphics.getWidth() * (2f / aspect) - (1f / aspect);
@@ -144,7 +179,7 @@ public class MainMenu {
         case MAIN:
 
             if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
-            if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f)) { currentState = State.CLIENT_CONNECT; isDone = true; mode = false; }
+            if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f)) { currentState = State.CLIENT_CONNECT; mode = false; }
             if(getAndRenderButton(exitReg, 0, -0.27f, 0.5f, 0.25f)) { /* EXIT */}
             
             break;
@@ -156,14 +191,37 @@ public class MainMenu {
 
             break;
         case CLIENT_CONNECT:
+            if(getAndRenderButton(blankReg, -0.25f, 0.5f, 0.5f, 0.25f, selectIPText))
+            {
+                 selectIPText = true; selectPortText = false;
+                 if(serverIP == null) {
+                    serverIP = new String();
+                 }
+            }
+            if(getAndRenderButton(blankReg, 0.25f, 0.5f, 0.5f, 0.25f, selectPortText))
+            {
+                selectIPText = false; selectPortText = true;
+                if(port == null) {
+                    port = new String();
+                }
+            }
+            if(selectIPText || selectPortText) {
+                int k0 = Keys.NUM_0;
+                int k9 = Keys.NUM_9;
+                for (int i = k0; i <= k9; i++) {
+                    if(Gdx.input.isKeyJustPressed(i)) {
+                        appendToTextInputs(Integer.toString(i - k0));
+                    }
+                }
+                if(Gdx.input.isKeyJustPressed(Keys.PERIOD)) {
+                    appendToTextInputs(".");
+                }
+            }
 
-            if(getAndRenderButton(connectReg, 0, 0, 0.5f, 0.25f)) { currentState = State.CLIENT_WAIT; }
+            if(getAndRenderButton(connectReg, 0, 0, 0.5f, 0.25f)) { if(serverIP == null || port == null) {return;} isDone = true; currentState = State.CLIENT_WAIT; }
 
             break;
         case CLIENT_WAIT:
-
-            renderTextBox(null);
-            renderTextBox(null);
 
             showPlayerList();
             showWeaponSelect();
@@ -176,5 +234,40 @@ public class MainMenu {
         default:
             break;
         }
+    }
+
+    public void updateText() {
+        float h = (float)Gdx.graphics.getHeight();
+        float w = (float)Gdx.graphics.getWidth();
+        float aspect = h / w;
+
+        switch (currentState) {
+            case MAIN:
+                break;
+            case SERVER_HOST:
+                layout.setText(font, "IP: " + serverIP + "  Port: " + port);
+                font.draw(ShooterGame.getInstance().coreBatch, layout, (w / 2.0f) - (layout.width / 2.0f), h - 20.0f);
+                break;
+            case CLIENT_CONNECT:
+                float buttonsY = h - (h / 2.0f) * 0.5f;
+                float buttonsX = aspect * (w / 2.0f) * 0.25f;
+                if(serverIP == null || serverIP.equals("")) {
+                    layout.setText(font, "ENTER IP");
+                } else {
+                    layout.setText(font, serverIP);
+                }
+                font.draw(ShooterGame.getInstance().coreBatch, layout, (w/2.0f) - buttonsX - (layout.width / 2.0f), buttonsY);
+                if(port == null || port.equals("")) {
+                    layout.setText(font, "ENTER PORT");
+                } else {
+                    layout.setText(font, port);
+                }
+                font.draw(ShooterGame.getInstance().coreBatch, layout, (w/2.0f) + buttonsX - (layout.width / 2.0f), buttonsY);
+                break;
+            case CLIENT_WAIT:
+                break;
+            default:
+                break;
+            }
     }
 }

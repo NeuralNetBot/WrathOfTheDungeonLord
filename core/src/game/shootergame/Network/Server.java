@@ -22,7 +22,6 @@ import game.shootergame.Enemy.Enemy;
 
 public class Server implements Runnable{
 
-    private final int port = 42069;
     private List<ClientHandler> clients = new CopyOnWriteArrayList<>();
     private ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
     private ConcurrentHashMap<Integer, ItemPickup> items;
@@ -382,11 +381,22 @@ public class Server implements Runnable{
         }
     }
 
+    String ip;
+    int port;
+    public String getIP() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
     @Override
     public void run() {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            serverSocket.getInetAddress();
-            System.out.println("Server is listening on port: " + port + " IP: " + InetAddress.getLocalHost().getHostAddress());
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            port = serverSocket.getLocalPort();
+            ip = InetAddress.getLocalHost().getHostAddress();
+            System.out.println("Server is listening on port: " + port + " IP: " + ip);
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Client connected");
