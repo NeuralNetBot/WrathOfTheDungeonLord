@@ -10,6 +10,7 @@ import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.World;
 import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
+import game.shootergame.Enemy.GoblinCrossbow;
 import game.shootergame.Enemy.Slime;
 
 import java.io.DataInputStream;
@@ -213,7 +214,7 @@ public class Client {
                 } else if(type == 0x02) {
                     newItemQueue.add(()->{ enemies.put(ID, new Goblin(x, y, true)); });
                 } else if(type == 0x03) {
-                    newItemQueue.add(()->{ /* ranged goblin */ });
+                    newItemQueue.add(()->{ enemies.put(ID, new GoblinCrossbow(x, y, true)); });
                 }
             } else {
                 newItemQueue.add(()-> { 

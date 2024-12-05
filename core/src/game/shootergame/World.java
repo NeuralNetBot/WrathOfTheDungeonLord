@@ -18,6 +18,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
+import game.shootergame.Enemy.GoblinCrossbow;
 import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
@@ -417,6 +418,11 @@ public class World {
                     float y = Float.parseFloat(parts[2]);
                     int id = ThreadLocalRandom.current().nextInt();
                     instance.enemies.put(id, new Goblin(x, y, false));
+                } else if(type.equals("goblincrossbow") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+                    instance.enemies.put(id, new GoblinCrossbow(x, y, false));
                 } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);

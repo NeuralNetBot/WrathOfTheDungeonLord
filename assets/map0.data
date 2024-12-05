@@ -979,6 +979,8 @@ goblin 20.8763 -20.0687
 goblin 32.4579 -19.7177
 goblin -35.0428 -22.5254
 
+goblincrossbow 0.0 0.0
+
 powerup 0.0 0.0 damage
 powerup 0.0 1.0 health
 powerup 1.0 0.0 resist
