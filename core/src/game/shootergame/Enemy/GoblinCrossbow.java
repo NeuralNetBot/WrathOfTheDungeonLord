@@ -2,10 +2,8 @@ package game.shootergame.Enemy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -69,14 +67,14 @@ public class GoblinCrossbow implements Enemy{
     HashMap<Integer, Hate> hateMap = new HashMap<>();
 
     final float damageHateLossPerSecond = 2.0f;
-    final float rangeHateRange = 12.0f;
+    final float rangeHateRange = 16.0f;
 
     boolean isAggro = false;
 
     boolean isAttacking = false;
     float attackCooldown = 0.0f;
-    final float attackCooldownMax = 0.2f;
-    final float damage = 10.0f;
+    final float attackCooldownMax = 3.0f;
+    final float damage = 9.0f;
     boolean hasDoneDamage = false;
 
     final float returnHomeAfterAggroTimeMax = 3.0f;
@@ -158,8 +156,8 @@ public class GoblinCrossbow implements Enemy{
     
     @Override
     public void update(float delta) {
-        //x += dx;
-        //y += dy;
+        x += dx;
+        y += dy;
 
         animTime += delta * 2;
 
@@ -186,13 +184,18 @@ public class GoblinCrossbow implements Enemy{
             if(animAttackTime == 0.0f) {
                 attackCooldown = 0.0f;
             }
-            if(animAttackTime >= 0.3f && !hasDoneDamage) {
-                if(!isRemote)
-                    World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation, 10.0f, 1.5f, damage);
+            if(!hasDoneDamage) {
+                if(!isRemote) {
+                    Vector2 d = new Vector2(-(float)Math.cos(rotation), -(float)Math.sin(rotation)).nor();
+                    Collider hitCollider = World.getPhysicsWorld().rayCast(collider, x, y, d.x, d.y);
+                    if(hitCollider != null) {
+                        hitCollider.Callback(collider, 0, 0, damage);
+                    }
+                }
                 hasDoneDamage = true;
             }
             animAttackTime += delta;
-            if(animAttackTime >= 0.4f) {
+            if(animAttackTime >= 0.1f) {
                 isAttacking = false;
                 hasDoneDamage = false;
                 animAttackTime = 0.0f;
@@ -246,10 +249,7 @@ public class GoblinCrossbow implements Enemy{
                 }
                 
                 float distanceToTarget = targetV.len();
-                isAttacking = distanceToTarget < 1.0f;
-                if(distanceToTarget < 5.0f) {
-                    currentMoveSpeed = moveSpeedFast;
-                }
+                isAttacking = distanceToTarget < 10.0f;
             }
             if(!isAttacking && navPath != null && targetIndex < navPath.size()) {
                 Vector2 targetNode = navPath.get(targetIndex).cpy();

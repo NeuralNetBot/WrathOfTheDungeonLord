@@ -19,7 +19,6 @@ import game.shootergame.Physics.Collider;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Player {
     MeleeWeapon melee;
@@ -70,6 +69,7 @@ public class Player {
 
     Sprite barSprite;
     Sprite powerupSprite;
+    Sprite crosshairSprite;
     Texture tex;
     TextureRegion reg;
 
@@ -97,6 +97,7 @@ public class Player {
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.load("dead.png", Texture.class);
+        ShooterGame.getInstance().am.load("crosshair.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
         tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
@@ -106,6 +107,10 @@ public class Player {
         fullscreenYouDied.setSize(4.0f, 2.0f);
         fullscreenYouDied.setOriginCenter();
         fullscreenYouDied.setOriginBasedPosition(0.0f, 0.0f);
+        crosshairSprite = new Sprite(ShooterGame.getInstance().am.get("crosshair.png", Texture.class));
+        crosshairSprite.setSize(0.11f, 0.11f);
+        crosshairSprite.setOriginCenter();
+        crosshairSprite.setOriginBasedPosition(0.0f, -0.01f);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
@@ -346,6 +351,7 @@ public class Player {
             case 2:
             if(ranged != null) {
                 ranged.renderFirstPerson();
+                crosshairSprite.draw(ShooterGame.getInstance().coreBatch);
             }
             default:
                 break;
