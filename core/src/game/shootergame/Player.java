@@ -13,10 +13,13 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import game.shootergame.Item.MeleeWeapon;
 import game.shootergame.Item.Powerup;
 import game.shootergame.Item.RangedWeapon;
+import game.shootergame.Network.RemotePlayer;
 import game.shootergame.Physics.Collider;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Player {
     MeleeWeapon melee;
@@ -72,6 +75,13 @@ public class Player {
 
     Sound footstepSound;
 
+    Sprite fullscreenYouDied;
+    float respawnTimer = 0.0f;
+    final float respawnTime = 5.0f;
+    float deathPosX = 0.0f;
+    float deathPosY = 0.0f;
+    boolean justDied = false;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
@@ -86,11 +96,16 @@ public class Player {
         ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
+        ShooterGame.getInstance().am.load("dead.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
         tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
+        fullscreenYouDied = new Sprite(ShooterGame.getInstance().am.get("dead.png", Texture.class));
+        fullscreenYouDied.setSize(4.0f, 2.0f);
+        fullscreenYouDied.setOriginCenter();
+        fullscreenYouDied.setOriginBasedPosition(0.0f, 0.0f);
 
         collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
             if(collider == null) { //wall coll
@@ -201,6 +216,39 @@ public class Player {
     public float rotation() { return rotation; }
 
     void update(float delta) {
+
+        if(health <= 0.0f) {
+            if(!justDied) {
+                deathPosX = x;
+                deathPosY = y;
+                justDied = true;
+            }
+            respawnTimer += delta;
+            x = Float.MAX_VALUE;
+            y = Float.MAX_VALUE;
+            dx = 0.0f;
+            dy = 0.0f;
+
+            if(respawnTimer >= respawnTime) {
+                justDied = false;
+                health = maxHealth;
+                
+                x = 0.0f;//if no other players respawn at origin
+                y = 0.0f;
+                float dst = Float.MAX_VALUE;
+                for (Entry<Integer, RemotePlayer> player : World.getRemotePlayers().entrySet()) {
+                    Collider rCollider = player.getValue().getCollider();
+                    float rDst = Vector2.dst(rCollider.x, rCollider.y, deathPosX, deathPosY);
+                    if(rDst < dst) {
+                        dst = rDst;
+                        x = rCollider.x;
+                        y = rCollider.y;
+                    }
+                }
+                respawnTimer = 0.0f;
+            }
+        }
+
         if(isDodging) {
             dodgeTime += delta;
             if(dodgeTime >= maxDodgeTime) {
@@ -259,17 +307,18 @@ public class Player {
 
 
 
-
-        switch (selectedWeapon) {
-        case 1:
-        melee.update(delta);
+        if(health > 0.0f) {
+            switch (selectedWeapon) {
+            case 1:
+            melee.update(delta);
             break;
-        case 2:
-        if(ranged != null) {
-            ranged.update(delta);
-        }
-        default:
-            break;
+            case 2:
+            if(ranged != null) {
+                ranged.update(delta);
+            }
+            default:
+                break;
+            }
         }
 
         collider.x = x;
@@ -287,16 +336,20 @@ public class Player {
     }
 
     void render() {
-        switch (selectedWeapon) {
-        case 1:
-        melee.renderFirstPerson();
+        if(health <= 0.0f) {
+            fullscreenYouDied.draw(ShooterGame.getInstance().coreBatch);
+        } else {
+            switch (selectedWeapon) {
+            case 1:
+            melee.renderFirstPerson();
             break;
-        case 2:
-        if(ranged != null) {
-            ranged.renderFirstPerson();
-        }
-        default:
-            break;
+            case 2:
+            if(ranged != null) {
+                ranged.renderFirstPerson();
+            }
+            default:
+                break;
+            }
         }
 
         Color healthColor = new Color().fromHsv((health / maxHealth) * 120.0f, 1.0f, 1.0f);
