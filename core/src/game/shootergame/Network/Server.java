@@ -74,20 +74,16 @@ public class Server implements Runnable{
                 handleNewPlayer(entry.getKey(), true, out);
             }
 
+
             remotePlayer = new RemotePlayer();
             remotePlayerID = ThreadLocalRandom.current().nextInt();
             remotePlayers.put(remotePlayerID, remotePlayer);
             System.out.println("Added player ID: " + remotePlayerID);
 
-            for (ClientHandler clientHandler : clients) {
-                if(clientHandler == this) continue;
-                clientHandler.handleNewPlayer(remotePlayerID, true, out);
-            }
-
+            broadcastNewPlayer(remotePlayerID, true);
         }
 
         public void handleNewPlayer(int id, boolean add, DataOutputStream out) {
-            System.out.println("writing " + id + " to new client");
             ByteBuffer buffer = ByteBuffer.allocate(6);
             buffer.put(PacketInfo.getByte(PacketInfo.NEW_PLAYER));
             buffer.put(add ? (byte)0x01 : (byte)0x00);
@@ -366,6 +362,18 @@ public class Server implements Runnable{
         buffer.put(typeB);
         for (ClientHandler client : clients) {
             client.sendBytes(buffer);
+        }
+    }
+
+    public void broadcastNewPlayer(int id, boolean add) {
+        ByteBuffer buffer = ByteBuffer.allocate(6);
+        buffer.put(PacketInfo.getByte(PacketInfo.NEW_PLAYER));
+        buffer.put(add ? (byte)0x01 : (byte)0x00);
+        buffer.putInt(id);
+        for (ClientHandler client : clients) {
+            if(client.remotePlayerID == id) continue;
+            client.sendBytes(buffer);
+            System.out.println("sending client " + client.remotePlayerID + " other player id " + id);
         }
     }
 

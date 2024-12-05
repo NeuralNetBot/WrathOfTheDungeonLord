@@ -1,5 +1,7 @@
 package game.shootergame;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
@@ -11,6 +13,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+
+import game.shootergame.Network.RemotePlayer;
 
 public class MainMenu {
     private enum State {
@@ -57,6 +61,8 @@ public class MainMenu {
     boolean selectIPText = false;
     boolean selectPortText = false;
 
+    ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
+
     public MainMenu() {
         currentState = State.MAIN;
 
@@ -84,6 +90,17 @@ public class MainMenu {
     }
 
     private void showPlayerList() {
+        int i = 0;
+        float h = (float)Gdx.graphics.getHeight();
+        float w = (float)Gdx.graphics.getWidth();
+        if(remotePlayers != null) {
+            for (ConcurrentHashMap.Entry<Integer, RemotePlayer> player : remotePlayers.entrySet()) {
+                layout.setText(font, Integer.toString(player.getKey()));
+                
+                font.draw(ShooterGame.getInstance().coreBatch, layout, w - layout.width, h - (i * 15.0f) - 20.0f);
+                i++;
+            }
+        }
     }
 
     private void showWeaponSelect() {
@@ -156,6 +173,10 @@ public class MainMenu {
         this.clientConnected = connected;
     }
 
+    public void setRemotePlayers(ConcurrentHashMap<Integer, RemotePlayer> remotePlayers) {
+        this.remotePlayers = remotePlayers;
+    }
+
     private void appendToTextInputs(String append) {
         if(selectIPText) {
             StringBuilder stringBuilder = new StringBuilder();
@@ -186,7 +207,6 @@ public class MainMenu {
         case SERVER_HOST:
 
             if(getAndRenderButton(startGameReg, -0.7f, 0.7f, 0.5f, 0.25f)) { runGame = true; }
-            showPlayerList();
             showWeaponSelect();
 
             break;
@@ -223,7 +243,6 @@ public class MainMenu {
             break;
         case CLIENT_WAIT:
 
-            showPlayerList();
             showWeaponSelect();
 
             if(clientConnected) {
@@ -247,6 +266,7 @@ public class MainMenu {
             case SERVER_HOST:
                 layout.setText(font, "IP: " + serverIP + "  Port: " + port);
                 font.draw(ShooterGame.getInstance().coreBatch, layout, (w / 2.0f) - (layout.width / 2.0f), h - 20.0f);
+                showPlayerList();
                 break;
             case CLIENT_CONNECT:
                 float buttonsY = h - (h / 2.0f) * 0.5f;
@@ -265,6 +285,7 @@ public class MainMenu {
                 font.draw(ShooterGame.getInstance().coreBatch, layout, (w/2.0f) + buttonsX - (layout.width / 2.0f), buttonsY);
                 break;
             case CLIENT_WAIT:
+                showPlayerList();
                 break;
             default:
                 break;

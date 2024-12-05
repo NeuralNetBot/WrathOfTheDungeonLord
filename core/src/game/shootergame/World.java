@@ -138,6 +138,7 @@ public class World {
             } else {
                 World.startAsClient();
             }
+            instance.mainMenu.setRemotePlayers(instance.remotePlayers);
             instance.doOnce = false;
         }
         if(instance.mainMenu.shouldRunGame() && instance.doOnceLaunch) {
