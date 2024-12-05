@@ -38,6 +38,7 @@ public class MainMenu {
     TextureRegion brassReg;
 
     TextureRegion blankReg;
+    TextureRegion pointReg;
 
     Sprite sprite;
 
@@ -63,6 +64,14 @@ public class MainMenu {
 
     ConcurrentHashMap<Integer, RemotePlayer> remotePlayers;
 
+    private class IsHover {
+        public boolean hover = false;
+    }
+
+    IsHover serverIsHover = new IsHover();
+    IsHover clientIsHover = new IsHover();
+    IsHover exitIsHover = new IsHover();
+
     public MainMenu() {
         currentState = State.MAIN;
 
@@ -85,6 +94,7 @@ public class MainMenu {
         brassReg = new TextureRegion(atlas, 216, 432, 216, 108);
         
         blankReg = new TextureRegion(atlas, 216, 216, 216, 108);
+        pointReg = new TextureRegion(atlas, 433, 395, 108, 145);
 
         sprite = new Sprite(atlas);
     }
@@ -110,11 +120,19 @@ public class MainMenu {
         if(getAndRenderButton(brassReg, -0.2f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 3)) { selectedWeaponIndex = 3; }
     }
 
+    private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height, IsHover isHover) {
+        return getAndRenderButton(reg, x, y, width, height, false, isHover);
+    }
+
     private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height) {
-        return getAndRenderButton(reg, x, y, width, height, false);
+        return getAndRenderButton(reg, x, y, width, height, false, null);
     }
 
     private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height, boolean overrideSelection) {
+        return getAndRenderButton(reg, x, y, width, height, overrideSelection, null);
+    }
+
+    private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height, boolean overrideSelection, IsHover isHover) {
         sprite.setRegion(reg);
         sprite.setSize(width, height);
         sprite.setOriginCenter();
@@ -122,8 +140,14 @@ public class MainMenu {
 
         Rectangle rect = sprite.getBoundingRectangle();
         boolean pressed = false;
+        if(isHover != null) {
+            isHover.hover = false;
+        }
         if(rect.contains(mouseX, mouseY)) {
             sprite.setColor(0.8f, 0.8f, 0.8f, 0.8f);
+            if(isHover != null) {
+                isHover.hover = true;
+            }
             pressed =  Gdx.input.isButtonPressed(Buttons.LEFT);
         } else {
             sprite.setColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -199,9 +223,15 @@ public class MainMenu {
         switch (currentState) {
         case MAIN:
 
-            if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
-            if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f)) { currentState = State.CLIENT_CONNECT; mode = false; }
-            if(getAndRenderButton(exitReg, 0, -0.27f, 0.5f, 0.25f)) { /* EXIT */}
+            if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f, serverIsHover)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
+            if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f, clientIsHover)) { currentState = State.CLIENT_CONNECT; mode = false; }
+            if(getAndRenderButton(exitReg, 0, -0.27f, 0.5f, 0.25f, exitIsHover)) { Gdx.app.exit(); }
+            if(serverIsHover.hover)
+                getAndRenderButton(pointReg, -0.5f, 0.27f - 0.2f, 0.7448f, 1.0f);
+            if(clientIsHover.hover)
+                getAndRenderButton(pointReg, -0.5f, 0 - 0.2f, 0.7448f, 1.0f);
+            if(exitIsHover.hover)
+                getAndRenderButton(pointReg, -0.5f, -0.27f - 0.2f, 0.7448f, 1.0f);
             
             break;
         case SERVER_HOST:
