@@ -49,7 +49,7 @@ public class Player {
     final float maxDodgeTime = 0.3f;
     final float dodgeSpeedMultiplier = 3.0f;
     final float dodgeStaminaCost = 20.0f;
-    final float dodgeStaminaRegenDelay = 0.35f;
+    final float staminaRegenDelayMax = 0.85f;
     boolean isDelaying;
     float dodgeTime;
     float staminaRegenDelay;
@@ -85,8 +85,10 @@ public class Player {
 
         ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
+        ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);
+        footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
+        tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
 
@@ -98,15 +100,32 @@ public class Player {
                 doDamage(damage);
             }
         }, false, 1.3f);
+        collider.isPlayer = true;
         World.getPhysicsWorld().addCollider(collider);
 
         activePowerups = new LinkedList<>();
     }
 
-    void doDamage(float damage) {
-        float damageDone = isDodging ? 0.0f : damage * resistanceMultiplier;
+    public void doDamage(float damage) {
+        float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
+        float blockingMultiplier = melee.getBlockMultiplier();
+        if(blockingMultiplier != 1.0f) {
+            removeStamina(damage * 2.0f);
+        }
+        damageDone *= blockingMultiplier;
         health -= damageDone;
         regenDelayTimer = 0.0f;//reset the timer when taken damage
+    }
+
+    public void removeStamina(float stamina) {
+        this.stamina -= stamina;
+        if(this.stamina <= 0.0f) this.stamina = 0.0f;
+        isDelaying = true;
+        staminaRegenDelay = 0.0f;
+    }
+
+    public float getStamina() {
+        return stamina;
     }
 
     void processInput() {
@@ -148,7 +167,7 @@ public class Player {
             }
         }
 
-        if(Gdx.input.isButtonJustPressed(Buttons.LEFT)) {
+        if(Gdx.input.isButtonJustPressed(Buttons.RIGHT)) {
             switch (selectedWeapon) {
             case 1:
                 melee.attackHeavy();
@@ -158,13 +177,18 @@ public class Player {
             }
         }
 
+        if(Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)) {
+            melee.beginBlock();
+        } else {
+            melee.endBlock();
+        }
+
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             if(!isDodging && (moveDirX != 0.0f || moveDirY != 0.0f)) {
                 if(stamina >= dodgeStaminaCost) {
                     isDodging = true;
                     dodgeTime = 0.0f;
-                    stamina -= dodgeStaminaCost;
-                    isDelaying = false;
+                    removeStamina(dodgeStaminaCost);
                 }
             }
         }
@@ -182,12 +206,11 @@ public class Player {
             if(dodgeTime >= maxDodgeTime) {
                 isDodging = false;
                 isDelaying = true;
-                staminaRegenDelay = 0.0f;
             }
         }
         if(isDelaying) {
             staminaRegenDelay += delta;
-            if(staminaRegenDelay > dodgeStaminaRegenDelay) {
+            if(staminaRegenDelay > staminaRegenDelayMax) {
                 isDelaying = false;
             }
         } else {
@@ -207,7 +230,6 @@ public class Player {
             regenDelayTimer += delta;
         }
 
-        rotation += Gdx.input.getDeltaX() * 0.1f;
         float rotationR = (float)Math.toRadians(rotation);
 
         x += dx;
@@ -335,8 +357,6 @@ public class Player {
             barSprite.draw(ShooterGame.getInstance().coreBatch);
             barSprite.setSize((powerup.getRemainingTime() / powerup.getMaxTime()) * 0.5f, 0.03f);
 
-            tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
-
             switch (powerup.getName()) {
                 case "Attack Speed":
                     reg = new TextureRegion(tex, 0, 0, 256, 256);
@@ -362,11 +382,6 @@ public class Player {
         }
     }
 
-    void applyDamage(float damage) {
-        if(!isDodging)
-            health -= damage * resistanceMultiplier;
-    }
-
     public Collider getCollider() {
         return collider;
     }
@@ -376,6 +391,10 @@ public class Player {
         powerup.onActivate(this);
     }
 
+    public void addRangedWeapon(RangedWeapon weapon) {
+        ranged = weapon;
+    }
+
     public float getHealth() { return health; }
 
     public void addHealth(float health) {
@@ -383,4 +402,16 @@ public class Player {
     }
 
     public LinkedList<Powerup> getActivePowerups() { return activePowerups; }
+
+    public RangedWeapon getRangedWeapon() {
+        return ranged;
+    }
+
+    public void setMeleeWeapon(MeleeWeapon weapon) {
+        this.melee = weapon;
+    }
+
+    public void setRangedWeapon(RangedWeapon weapon) {
+        this.ranged = weapon;
+    }
 }

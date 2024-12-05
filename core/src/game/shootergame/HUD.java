@@ -300,4 +300,8 @@ public class HUD {
             c.vis = v;
         }
     }
+
+    public HashMap<String, HUDViewCommand> getHudData() {
+        return hudData;
+    }
 }

@@ -17,13 +17,17 @@ public class GameScreen extends ScreenAdapter {
 
     private Renderer renderer;
 
+    private MainMenu menu;
+
     public GameScreen() {
+
+        menu = new MainMenu();
 
         renderer = Renderer.createInstance(Gdx.graphics.getWidth());
         World.createInstance();
         renderer.setWalls(World.getWalls());
-        renderer.buildLightmap(World.getTorches());
-        renderer.setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
+
+        World.startMainMenu(menu);
 
         hud = new HUD(ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT));
 
@@ -50,6 +54,24 @@ public class GameScreen extends ScreenAdapter {
             }
         });
 
+        hud.registerAction("stats", new HUDActionCommand() {
+            @Override
+            public String execute(String[] cmd) {
+                HUDViewCommand.Visibility v = hud.getHudData().get("Render stats: ").nextVisiblityState();
+                return "stats visibility: " + v;
+            }
+
+            public String help(String[] cmd) {
+                return "toggle statistics visibility always <-> in console";
+            }
+        });
+        hud.registerView("Render stats: ", new HUDViewCommand(HUDViewCommand.Visibility.WHEN_OPEN) {
+            @Override
+            public String execute(boolean consoleIsOpen) {
+                return Renderer.inst().getRenderStatistics().toString();
+            }
+        });
+
 
 
         // we're adding an input processor AFTER the HUD has been created,
@@ -69,41 +91,45 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-
-        if(Gdx.input.isKeyJustPressed(Keys.T)) {
-            Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
-        }
-
-        if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
-            World.processInput();
-        }
-
-        World.update(delta);
-        renderer.update(World.getPlayer().x(), World.getPlayer().y(), World.getPlayer().rotation(), delta);
-
         ScreenUtils.clear(0, 0, 0, 1);
 
+        if(menu.shouldRunGame()) {
+            if(Gdx.input.isKeyJustPressed(Keys.T)) {
+                Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
+            }
 
-        renderer.render();
+            if (!hud.isOpen() && Gdx.input.isCursorCatched()) {
+                World.processInput();
+            }
+        }
+        
+        World.update(delta);
+            
+        if(menu.shouldRunGame()) {
+            renderer.render();
+        }
 
         SpriteBatch coreBatch = ShooterGame.getInstance().coreBatch;
         ShooterGame.getInstance().coreCamera.update();
         coreBatch.setProjectionMatrix(ShooterGame.getInstance().coreCamera.combined);
         coreBatch.begin();
 
-        renderer.processSpriteDraws();
-
+        if(menu.shouldRunGame()) {
+            renderer.processSpriteDraws();
+        }
         World.render();
 
         coreBatch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
-
+        
         World.renderHud();
 
         //we always want the hud to be visible
         hud.draw(coreBatch);
         coreBatch.end();
 
-        renderer.renderMinimap();
+        if(menu.shouldRunGame()) {
+            renderer.renderMinimap();
+        }
     }
 
 	@Override

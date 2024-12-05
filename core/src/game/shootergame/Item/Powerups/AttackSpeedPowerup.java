@@ -58,9 +58,13 @@ public class AttackSpeedPowerup implements Powerup {
         return isActive;
     }
 
+    public static String getSName() {
+        return "Attack Speed";
+    }
+
     @Override
     public String getName() {
-        return "Attack Speed";
+        return getSName();
     }
 
     @Override
