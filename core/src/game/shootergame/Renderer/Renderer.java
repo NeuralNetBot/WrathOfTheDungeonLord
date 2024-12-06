@@ -45,11 +45,14 @@ public class Renderer {
     float[] rayWallTex;
     float[] rayDoorTex;
 
-    final int MAX_SHADER_TORCHES = 64;
+    final int MAX_SHADER_TORCHES = 32;
     float[] torchData;
     float[] torchWallData;
 
     float[] rayDepth;
+
+    float ceilHeight = 1.0f;
+    float ambient = 0.2f;
 
     
     float camX = 0.0f;
@@ -132,6 +135,14 @@ public class Renderer {
 
     public void setWalls(ArrayList<Wall> walls) {
         this.walls = walls;
+    }
+
+    public void setCeilHeight(float height) {
+        ceilHeight = height;
+    }
+
+    public void setAmbient(float ambient) {
+        this.ambient = ambient;
     }
 
     private Renderer(int screnX) {
@@ -248,6 +259,10 @@ public class Renderer {
         float dUDoor = 0.0f;
 
         int i = 0;
+        boolean passedThroughLowDoor = false;
+        boolean lowDoorTrigger = false;
+        Wall lowDoorHit = null;
+        float lowDoorDU = 0.0f;
         for (Wall wall : walls) {
             Vector2 segDir = new Vector2(wall.a).sub(wall.b);
             Vector2 segToRay = new Vector2(wall.b).sub(rayOrigin);
@@ -258,11 +273,29 @@ public class Renderer {
 
                 float dst = t * rayDir.len();
                 if(wall.transparentDoor) {
-                    if(dst < minDistanceDoor) {
+                    if(passedThroughLowDoor) {
+                        if(dst > minDistanceDoor) {
+                            lowDoorTrigger = true;
+                            hitWallDoor = wall;
+                            hitWallDoorIdx = i;
+                            minDistanceDoor = dst;
+                            dUDoor = u;
+                        } else {
+                            lowDoorHit = wall;
+                            lowDoorDU = u;
+                        }
+                    } else if(dst < minDistanceDoor) {
                         hitWallDoor = wall;
                         hitWallDoorIdx = i;
                         minDistanceDoor = dst;
                         dUDoor = u;
+
+                        lowDoorHit = wall;
+                        lowDoorDU = u;
+                    }
+                    if(wall.yOffset < 0.0) {
+                        lowDoorTrigger = true;
+                        passedThroughLowDoor = true;
                     }
                 } else {
                     if(dst < minDistance) {
@@ -287,6 +320,16 @@ public class Renderer {
             rayDoorData[index * 4] = hitWallDoor.height;
             rayDoorData[index * 4 + 1] = dUDoor * hitWallDoor.widthScaler / 4.0f;
             rayDoorData[index * 4 + 2] = wallTop;
+
+            if(lowDoorTrigger && lowDoorHit != null) {
+                float yOffset2 = lowDoorHit.yOffset;
+                Vector2 hitPos2 = lowDoorHit.b.cpy().lerp(lowDoorHit.a, lowDoorDU);
+                float dst2 = hitPos2.cpy().sub(rayOrigin).dot(forward);
+                float idst2 = 1.0f / dst2;
+                float wallTop2 = (lowDoorHit.height * 2.0f + yOffset2 - 1.0f) * idst2;
+                wallBottom = wallTop2;
+            }
+
             rayDoorData[index * 4 + 3] = wallBottom;
             if(hitWallDoor.yOffset >= 2.0f) {
                 doorBottom = wallBottom;
@@ -435,6 +478,8 @@ public class Renderer {
         floorShader.setUniformf("cameraInfo", camX, camY, yawR, (float)Math.tan(Math.toRadians(fov * 0.5f)));
         Vector2 forward = new Vector2((float)Math.cos(yawR), (float)Math.sin(yawR));
         floorShader.setUniformf("cameraInfo2", forward.x, forward.y);
+
+        floorShader.setUniformf("cHA", ceilHeight, ambient);
         
         meshFull.render(floorShader, GL20.GL_TRIANGLES);
 
@@ -444,7 +489,7 @@ public class Renderer {
         wallShader.setUniformi("texture1", 2);
 
         wallShader.setUniformf("numRays", rayData.length / 4 / 2);
-        wallShader.setUniformf("cameraInfo", camX, camY, aspect, 0);
+        wallShader.setUniformf("cameraInfo", camX, camY, aspect, 1.0f - ambient);
 
         //render the screen one half at a time so we can have more uniform slots
         wallShader.setUniform4fv("rayData", rayData, 0, rayData.length / 2);
@@ -919,7 +964,7 @@ public class Renderer {
             + "uniform vec4 rayData[" + numRayData + "];\n"
             + "uniform vec4 rayTex[" + numRayData + "];\n"
             + "uniform float numRays;\n"
-            + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w tanhalffov
+            + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w ambient
             + "uniform sampler2D texture0;\n"
             + "uniform sampler2D texture1;\n"
             + "void main()\n"
@@ -938,7 +983,7 @@ public class Renderer {
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
-            + "  float lightInfluence = min(length(vec2(rayTexDat.w, 0.5 * (texY - 0.5 + (rayTexDat.y * 0.5)))), 0.8);\n"
+            + "  float lightInfluence = min(length(vec2(rayTexDat.w, 0.5 * (texY - 0.5 + (rayTexDat.y * 0.5)))), cameraInfo.w);\n"
             + "  if(isWall && texColor.a > 0.01) {\n"
             + "      gl_FragColor = vec4(mix(texColor.rgb, vec3(0.0, 0.0, 0.0), lightInfluence), 1.0);\n"
             + "  } else { discard; }\n"
@@ -955,15 +1000,16 @@ public class Renderer {
           + "uniform vec4 cameraInfo;\n"
           + "uniform vec2 cameraInfo2;\n"
           + "uniform sampler2D texture;\n"
+          + "uniform vec2 cHA;\n"
           + "int orientation(vec2 a, vec2 b, vec2 c) { float d = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y); if(d == 0.0) return 0; return d > 0.0 ? 1 : 2; }\n"
           + "bool onSegment(vec2 a, vec2 b, vec2 c) { return c.x >= min(a.x, b.x) && c.x <= max(a.x, b.x) && c.y >= min(a.y, b.y) && c.y <= max(a.y, b.y); }\n"
           + "void main()\n"
           + "{\n"
           + "  vec2 dxdy = vec2(cameraInfo2.x + (v_texCoords.x * cameraInfo2.y * cameraInfo.w), cameraInfo2.y + (v_texCoords.x * -cameraInfo2.x * cameraInfo.w));\n"
-          + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(1.0 / v_texCoords.y);\n"
-          + "  vec2 worldPos = worldDir * 2.0 + (cameraInfo.xy);\n"
-          + "  float dst = 1.0 - abs(v_texCoords.y);\n"
-          + "  float lightValue = 0.2;\n"
+          + "  float fHeight = (v_texCoords.y > 0.0 ? cHA.x : 1.0);\n"
+          + "  vec2 worldDir = vec2(dxdy.x, dxdy.y) * abs(fHeight / v_texCoords.y);\n"
+          + "  vec2 worldPos = worldDir * (1.0 + fHeight) + (cameraInfo.xy);\n"
+          + "  float lightValue = cHA.y;\n"
           + "  for(int i = 0; i < torchCount; i++) {\n"
           + "      vec4 torch = torchData[i];\n"
           + "      bool intersects = false;\n"
@@ -976,7 +1022,7 @@ public class Renderer {
           + "          if(o1 != o2 && o3 != o4) { intersects = true; break; }\n"
           + "      }\n"
           + "      if(intersects) continue;\n"
-          + "      float distToLight2 = dot(worldPos - torch.xy, worldPos - torch.xy);\n"
+          + "      float distToLight2 = dot(worldPos - torch.xy, worldPos - torch.xy) * fHeight;\n"
           + "      if(distToLight2 > torch.z * torch.z) continue;\n"
           + "      lightValue += 1.0 - distToLight2 / (torch.z * torch.z);\n"
           + "  }\n"

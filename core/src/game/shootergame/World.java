@@ -368,7 +368,13 @@ public class World {
 
                 String type = parts[0];
 
-                if(type.equals("wall")) {
+                if(type.equals("height")) {
+                    float h = Float.parseFloat(parts[1]);
+                    Renderer.inst().setCeilHeight(h);
+                } else if(type.equals("ambient")) {
+                    float a = Float.parseFloat(parts[1]);
+                    Renderer.inst().setAmbient(a);
+                } else if(type.equals("wall")) {
                     if(parts.length < 8) {
                         System.err.println("ERROR malformed map wall read");
                     }
