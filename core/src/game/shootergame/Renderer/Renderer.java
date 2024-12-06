@@ -73,6 +73,7 @@ public class Renderer {
     AtomicBoolean running;
 
     Texture tex;
+    Texture tex2;
     Texture floor;
     Texture door;
 
@@ -152,13 +153,16 @@ public class Renderer {
         param.magFilter = TextureFilter.Linear;
 
         ShooterGame.getInstance().am.load("brickwall.jpg", Texture.class, param);
+        ShooterGame.getInstance().am.load("brickwall2.jpg", Texture.class, param);
         ShooterGame.getInstance().am.load("brick.png", Texture.class, param);
         ShooterGame.getInstance().am.load("transparent.png", Texture.class, param);
         ShooterGame.getInstance().am.finishLoading();
         tex = ShooterGame.getInstance().am.get("brickwall.jpg", Texture.class);
+        tex2 = ShooterGame.getInstance().am.get("brickwall2.jpg", Texture.class);
         floor = ShooterGame.getInstance().am.get("brick.png", Texture.class);
         door = ShooterGame.getInstance().am.get("transparent.png", Texture.class);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        tex2.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         floor.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         door.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
 
@@ -466,6 +470,7 @@ public class Renderer {
         tex.bind(0);
         floor.bind(1);
         door.bind(2);
+        tex2.bind(3);
 
         floorShader.bind();
 
@@ -487,6 +492,7 @@ public class Renderer {
 
         wallShader.setUniformi("texture0", 0);
         wallShader.setUniformi("texture1", 2);
+        wallShader.setUniformi("texture2", 3);
 
         wallShader.setUniformf("numRays", rayData.length / 4 / 2);
         wallShader.setUniformf("cameraInfo", camX, camY, aspect, 1.0f - ambient);
@@ -926,8 +932,8 @@ public class Renderer {
     public void resize(int x, int y) {
         aspect = (float)x / (float)y;
         screenX = x;
-        if(screenX > 1020) {
-            screenX = 1020;
+        if(screenX > 1018) {
+            screenX = 1018;
         }
 
         int numRayData = screenX / 2;
@@ -967,6 +973,7 @@ public class Renderer {
             + "uniform vec4 cameraInfo;\n" //x y pos, z aspect, w ambient
             + "uniform sampler2D texture0;\n"
             + "uniform sampler2D texture1;\n"
+            + "uniform sampler2D texture2;\n"
             + "void main()\n"
             + "{\n"
             + "  int index = int(v_texCoords.x * numRays);\n"
@@ -982,6 +989,7 @@ public class Renderer {
             + "  float texID = rayTexDat.x;\n"
             + "  if(texID == 0.0) { texColor = texture2D(texture0, texCoords); }\n"
             + "  else if(texID == 1.0) { texColor = texture2D(texture1, texCoords); }\n"
+            + "  else if(texID == 2.0) { texColor = texture2D(texture2, texCoords); }\n"
             //+ "  float dst = max(1.0 - rayTex[index].y, 0.0);\n"
             + "  float lightInfluence = min(length(vec2(rayTexDat.w, 0.5 * (texY - 0.5 + (rayTexDat.y * 0.5)))), cameraInfo.w);\n"
             + "  if(isWall && texColor.a > 0.01) {\n"
