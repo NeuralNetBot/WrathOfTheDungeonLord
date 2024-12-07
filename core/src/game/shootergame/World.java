@@ -16,6 +16,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
+import game.shootergame.Enemy.DungeonLord;
 import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
 import game.shootergame.Enemy.GoblinCrossbow;
@@ -152,7 +153,7 @@ public class World {
             if(instance.networkMode == NetworkMode.SERVER) {
                 instance.server.broadcastLoadMap("assets/map0.data");
                 
-                World.loadFromFile("assets/map0.data");
+                World.loadFromFile("assets/map1.data");
                 Renderer.inst().buildLightmap(World.getTorches());
                 Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
 
@@ -475,5 +476,7 @@ public class World {
 
         player = new Player(new NullWeapon());
         player.setRangedWeapon(new MusketWeapon());
+
+        enemies.put(254, new DungeonLord(0, 0, false));
     }
 }
