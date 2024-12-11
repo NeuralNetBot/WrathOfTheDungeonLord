@@ -82,6 +82,10 @@ public class Player {
     float deathPosY = 0.0f;
     boolean justDied = false;
 
+    boolean bossBarEnabled = false;
+    float bossBarHealth = 0.0f;
+    float bossBarHealthMax = 0.0f;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
@@ -396,6 +400,16 @@ public class Player {
         barSprite.setColor(Color.GOLDENROD);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
 
+        if(bossBarEnabled) {
+            barSprite.setPosition(-0.5f, 0.95f);
+            barSprite.setSize(1.0f, 0.03f);
+            barSprite.setColor(Color.BLACK);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+            barSprite.setSize(bossBarHealth / bossBarHealthMax, 0.03f);
+            barSprite.setColor(Color.RED);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+        }
+
         int visibleIndex = 0;
 
         for (int i = 0; i < activePowerups.size(); i++) {
@@ -472,5 +486,14 @@ public class Player {
 
     public void setRangedWeapon(RangedWeapon weapon) {
         this.ranged = weapon;
+    }
+
+    public void setBossBarEnabled(boolean enabled) {
+        bossBarEnabled = enabled;
+    }
+
+    public void setBossBarHealth(float current, float max) {
+        bossBarHealth = current;
+        bossBarHealthMax = max;
     }
 }

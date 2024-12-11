@@ -430,6 +430,11 @@ public class World {
                     float y = Float.parseFloat(parts[2]);
                     int id = ThreadLocalRandom.current().nextInt();
                     instance.enemies.put(id, new GoblinCrossbow(x, y, false));
+                } else if(type.equals("boss") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+                    instance.enemies.put(id, new DungeonLord(x, y, false));
                 } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
@@ -476,7 +481,5 @@ public class World {
 
         player = new Player(new NullWeapon());
         player.setRangedWeapon(new MusketWeapon());
-
-        enemies.put(254, new DungeonLord(0, 0, false));
     }
 }

@@ -23,7 +23,7 @@ public class DungeonLord implements Enemy{
     final float homeX, homeY;
     float dx, dy;
     float rotation;
-    final float maxHealth = 35.0f;
+    final float maxHealth = 1000.0f;
     float health;
     Collider collider;
 
@@ -158,6 +158,7 @@ public class DungeonLord implements Enemy{
                     }
                 }
                 animationLungeAttack[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationLungeAttack[i].setPlayMode(PlayMode.LOOP);
             }
         }
 
@@ -208,12 +209,14 @@ public class DungeonLord implements Enemy{
         for (Entry<Integer, RemotePlayer> player : World.getRemotePlayers().entrySet()) {
             getHateForPlayer(player.getKey());
         }
+
+        World.getPlayer().setBossBarEnabled(true);
     }
     
     @Override
     public void update(float delta) {
-        x += dx;
-        y += dy;
+        //x += dx;
+        //y += dy;
 
         animTime += delta * 2;
 
@@ -313,6 +316,7 @@ public class DungeonLord implements Enemy{
                     spriteLunge.forceHide = false;
                     lungeTimer += delta;
                     if(animationLungeAttack[realIndex].isAnimationFinished(lungeTimer)) {
+                        isAttacking = false;
                         lungeTimer = 0.0f;
                         rotation = angleToSprite;
                     }
@@ -329,14 +333,12 @@ public class DungeonLord implements Enemy{
 
         } else {
             if(isAttacking) {
-                System.out.println("ATTACK  " + lungeTimer);
-                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
-                spriteLunge.forceHide = true;
-                lungeTimer += delta;
-            } else {
-                System.out.println("WALK");
                 spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = true;
                 spriteLunge.forceHide = false;
+                lungeTimer += delta;
+            } else {
+                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
+                spriteLunge.forceHide = true;
                 lungeTimer = 0.0f;
             }
         }
@@ -348,6 +350,9 @@ public class DungeonLord implements Enemy{
         spriteLow.y = y;
         spriteHigh.x = x;
         spriteHigh.y = y;
+
+        
+        World.getPlayer().setBossBarHealth(health, maxHealth);
     }
 
     @Override
@@ -372,6 +377,7 @@ public class DungeonLord implements Enemy{
         Renderer.inst().removeSprite(spriteWeapon);
         Renderer.inst().removeSprite(spriteLunge);
         World.getPhysicsWorld().removeCollider(collider);
+        World.getPlayer().setBossBarEnabled(false);
     }
 
     @Override
