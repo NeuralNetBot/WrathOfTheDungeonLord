@@ -167,6 +167,7 @@ public class GoblinCrossbow implements Enemy{
         float relAngle = angleToSprite - rotation;
         relAngle = (relAngle + 2 * 3.141592653f) % (2 * 3.141592653f);
         int index = ((int)Math.floor((Math.toDegrees(relAngle) + 22.5f) / 45.0f)) % 8;
+        if(index < 0) index += 8;
         int realIndex = 0;
         switch (index) {
             case 0: realIndex = 3; break;

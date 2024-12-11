@@ -34,6 +34,7 @@ public class DungeonLord implements Enemy{
 
     Sprite2_5D spriteLow;
     Sprite2_5D spriteHigh;
+    Sprite2_5D spriteWeapon;
     Texture texWalk;
     TextureRegion regLow;
 
@@ -45,6 +46,10 @@ public class DungeonLord implements Enemy{
     TextureRegion[] highRegions = new TextureRegion[8];
     Vector2[] highSizes = new Vector2[8];
     float[] highZ = new float[8];
+    TextureRegion[] weaponRegions = new TextureRegion[8];
+    Vector2[] weaponSizes = new Vector2[8];
+    Vector2[] weaponOffset = new Vector2[8];
+    boolean[] weaponOffsetSide = new boolean[8];
 
     float animTime = 0.0f;
     float animAttackTime = 0.0f;
@@ -109,16 +114,26 @@ public class DungeonLord implements Enemy{
                 animationsWalk[i].setPlayMode(PlayMode.LOOP);
             }
         }
-        {
-            highRegions[0] = new TextureRegion(texWalk, 3200 - 90, 0, 90, 90);      highSizes[0] = new Vector2(2.25f, 2.25f);  highZ[0] = 2.125f;
-            highRegions[1] = new TextureRegion(texWalk, 3200 - 100, 320, 100, 75);  highSizes[1] = new Vector2(3.25f, 2.125f); highZ[1] = 2.0625f;
-            highRegions[2] = new TextureRegion(texWalk, 3200 - 90, 640, 90, 90);    highSizes[2] = new Vector2(2.25f, 2.25f);  highZ[2] = 2.125f;
-            highRegions[3] = new TextureRegion(texWalk, 3200 - 90, 960, 90, 90);    highSizes[3] = new Vector2(2.25f, 2.25f);  highZ[3] = 2.125f;
-            highRegions[4] = new TextureRegion(texWalk, 3200 - 90, 1280, 90, 90);   highSizes[4] = new Vector2(2.25f, 2.25f);  highZ[4] = 2.125f;
-            highRegions[5] = new TextureRegion(texWalk, 3200 - 100, 1600, 100, 75); highSizes[5] = new Vector2(3.25f, 2.125f); highZ[5] = 2.0625f;
-            highRegions[6] = new TextureRegion(texWalk, 3200 - 90, 1920, 90, 90);   highSizes[6] = new Vector2(2.25f, 2.25f);  highZ[6] = 2.125f;
-            highRegions[7] = new TextureRegion(texWalk, 3200 - 90, 2240, 90, 90);   highSizes[7] = new Vector2(2.25f, 2.25f);  highZ[7] = 2.125f;
-        }
+
+        highRegions[0] = new TextureRegion(texWalk, 3200 - 90, 0, 90, 90);      highSizes[0] = new Vector2(2.25f, 2.25f);  highZ[0] = 2.125f;
+        highRegions[1] = new TextureRegion(texWalk, 3200 - 100, 320, 100, 75);  highSizes[1] = new Vector2(3.25f, 2.125f); highZ[1] = 2.0625f;
+        highRegions[2] = new TextureRegion(texWalk, 3200 - 90, 640, 90, 90);    highSizes[2] = new Vector2(2.25f, 2.25f);  highZ[2] = 2.125f;
+        highRegions[3] = new TextureRegion(texWalk, 3200 - 90, 960, 90, 90);    highSizes[3] = new Vector2(2.25f, 2.25f);  highZ[3] = 2.125f;
+        highRegions[4] = new TextureRegion(texWalk, 3200 - 90, 1280, 90, 90);   highSizes[4] = new Vector2(2.25f, 2.25f);  highZ[4] = 2.125f;
+        highRegions[5] = new TextureRegion(texWalk, 3200 - 100, 1600, 100, 75); highSizes[5] = new Vector2(3.25f, 2.125f); highZ[5] = 2.0625f;
+        highRegions[6] = new TextureRegion(texWalk, 3200 - 90, 1920, 90, 90);   highSizes[6] = new Vector2(2.25f, 2.25f);  highZ[6] = 2.125f;
+        highRegions[7] = new TextureRegion(texWalk, 3200 - 90, 2240, 90, 90);   highSizes[7] = new Vector2(2.25f, 2.25f);  highZ[7] = 2.125f;
+
+        
+        weaponRegions[0] = new TextureRegion(texWalk, 3200 - 120, 160, 120, 96);  weaponSizes[0] = new Vector2(2.82f, 2.25f); weaponOffset[0] = new Vector2(1.33f, 0.08f); weaponOffsetSide[0] = true;
+        weaponRegions[1] = new TextureRegion(texWalk, 3200 - 120, 480, 120, 96);  weaponSizes[1] = new Vector2(2.82f, 2.25f); weaponOffset[1] = new Vector2(1.33f, 0.08f); weaponOffsetSide[1] = true;
+        weaponRegions[2] = new TextureRegion(texWalk, 3200 - 96, 800, 96, 120);   weaponSizes[2] = new Vector2(2.25f, 2.82f); weaponOffset[2] = new Vector2(0.9f, -0.32f);   weaponOffsetSide[2] = true;
+        weaponRegions[3] = new TextureRegion(texWalk, 3200 - 120, 1120, 120, 96); weaponSizes[3] = new Vector2(2.82f, 2.25f); weaponOffset[3] = new Vector2(-1.33f, 0.08f);  weaponOffsetSide[3] = true;
+        weaponRegions[4] = new TextureRegion(texWalk, 3200 - 120, 1440, 120, 96); weaponSizes[4] = new Vector2(2.82f, 2.25f); weaponOffset[4] = new Vector2(-1.33f, 0.04f);  weaponOffsetSide[4] = true;
+        weaponRegions[5] = new TextureRegion(texWalk, 3200 - 120, 1760, 120, 96); weaponSizes[5] = new Vector2(2.82f, 2.25f); weaponOffset[5] = new Vector2(-1.33f, 0.08f);  weaponOffsetSide[5] = true;
+        weaponRegions[6] = new TextureRegion(texWalk, 3200 - 96, 2080, 96, 120);  weaponSizes[6] = new Vector2(2.25f, 2.82f); weaponOffset[6] = new Vector2(-0.3f, 0.36f);   weaponOffsetSide[6] = true;
+        weaponRegions[7] = new TextureRegion(texWalk, 3200 - 120, 2400, 120, 96); weaponSizes[7] = new Vector2(2.82f, 2.25f); weaponOffset[7] = new Vector2(-0.1f, 0.65f);  weaponOffsetSide[7] = false;
+
 
         health = maxHealth;
 
@@ -131,6 +146,8 @@ public class DungeonLord implements Enemy{
         Renderer.inst().addSprite(spriteLow);
         spriteHigh = new Sprite2_5D(highRegions[0], x, y, 2.125f, 4.0f, 3.2f);
         Renderer.inst().addSprite(spriteHigh);
+        spriteWeapon = new Sprite2_5D(weaponRegions[0], x, y, 0.08f, 4.0f, 3.2f);
+        Renderer.inst().addSprite(spriteWeapon);
 
         if(isRemote) {
             collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -168,6 +185,7 @@ public class DungeonLord implements Enemy{
         float relAngle = angleToSprite - rotation;
         relAngle = (relAngle + 2 * 3.141592653f) % (2 * 3.141592653f);
         int index = ((int)Math.floor((Math.toDegrees(relAngle) + 22.5f) / 45.0f)) % 8;
+        if(index < 0) index += 8;
         int realIndex = 0;
         switch (index) {
             case 0: realIndex = 3; break;
@@ -180,12 +198,30 @@ public class DungeonLord implements Enemy{
             case 7: realIndex = 4; break;
         }
 
-
         spriteLow.setRegion(animationsWalk[realIndex].getKeyFrame(animTime));
         spriteHigh.setRegion(highRegions[realIndex]);
         spriteHigh.width = highSizes[realIndex].x;
         spriteHigh.height = highSizes[realIndex].y;
         spriteHigh.z = highZ[realIndex];
+        spriteWeapon.setRegion(weaponRegions[realIndex]);
+        float offsetX = weaponOffset[realIndex].x;
+
+        float alignAxisX = -(float)Math.sin(Math.toRadians(World.getPlayer().rotation()));
+        float alignAxisY = (float)Math.cos(Math.toRadians(World.getPlayer().rotation()));
+        float leftRightAlignMul = (offsetX > 0.0f ? 1.0f : -1.0f);
+        if(weaponOffsetSide[realIndex]) {
+            offsetX = Math.abs(offsetX);
+        } else {
+            leftRightAlignMul = 1.0f;
+        }
+        float wx = x + (alignAxisX * 1.6f) * leftRightAlignMul;
+        float wy = y + (alignAxisY * 1.6f) * leftRightAlignMul;
+        spriteWeapon.width = weaponSizes[realIndex].x;
+        spriteWeapon.height = weaponSizes[realIndex].y;
+        spriteWeapon.x = wx + (alignAxisX * offsetX / 2) * leftRightAlignMul;
+        spriteWeapon.y = wy + (alignAxisY * offsetX / 2) * leftRightAlignMul;
+
+        spriteWeapon.z = weaponOffset[realIndex].y;
 
         if(!isRemote) {
             {
@@ -250,6 +286,7 @@ public class DungeonLord implements Enemy{
     public void onKill() {
         Renderer.inst().removeSprite(spriteLow);
         Renderer.inst().removeSprite(spriteHigh);
+        Renderer.inst().removeSprite(spriteWeapon);
         World.getPhysicsWorld().removeCollider(collider);
     }
 
