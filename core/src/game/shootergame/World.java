@@ -151,7 +151,7 @@ public class World {
                 case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
             }
             if(instance.networkMode == NetworkMode.SERVER) {
-                instance.server.broadcastLoadMap("assets/map0.data");
+                instance.server.broadcastLoadMap("assets/map1.data");
                 
                 World.loadFromFile("assets/map1.data");
                 Renderer.inst().buildLightmap(World.getTorches());

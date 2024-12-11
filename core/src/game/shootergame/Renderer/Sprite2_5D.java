@@ -7,6 +7,7 @@ public class Sprite2_5D {
     public float x, y, z;
     public float height;
     public float width;
+    public boolean forceHide = false;
 
     //internal do not change values
     public TextureRegion textureCalc;

@@ -670,6 +670,10 @@ public class Renderer {
         Vector2 lineVec = rightPoint.cpy().sub(leftPoint);
 
         for (Sprite2_5D sprite : sprites2_5d) {
+            if(sprite.forceHide) {
+                sprite.isVis = false;
+                continue;
+            }
 
             //ray intersect sprite back to cameras projected "plane", i.e. the same plane we used to cast the rays for the walls
             Vector2 fromSprite = new Vector2(camX - sprite.x, camY - sprite.y).nor();

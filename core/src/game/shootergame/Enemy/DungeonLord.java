@@ -2,7 +2,6 @@ package game.shootergame.Enemy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Map.Entry;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -30,17 +29,21 @@ public class DungeonLord implements Enemy{
 
     Collider currentTargetCollider = null;
 
-    final float moveSpeed = 1.5f;
+    final float moveSpeed = 2.5f;
 
     Sprite2_5D spriteLow;
     Sprite2_5D spriteHigh;
     Sprite2_5D spriteWeapon;
+    Sprite2_5D spriteLunge;
     Texture texWalk;
+    Texture texLunge;
     TextureRegion regLow;
 
     ArrayList<Vector2> navPath;
     int targetIndex = 0;
 
+
+    //for walk
     @SuppressWarnings("unchecked")
     Animation<TextureRegion>[] animationsWalk = new Animation[8];
     TextureRegion[] highRegions = new TextureRegion[8];
@@ -50,6 +53,11 @@ public class DungeonLord implements Enemy{
     Vector2[] weaponSizes = new Vector2[8];
     Vector2[] weaponOffset = new Vector2[8];
     boolean[] weaponOffsetSide = new boolean[8];
+    
+    //for lunge attack
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationLungeAttack = new Animation[8];
+    float[] lungeAttackSpriteOffset = new float[8];
 
     float animTime = 0.0f;
     float animAttackTime = 0.0f;
@@ -67,7 +75,7 @@ public class DungeonLord implements Enemy{
     HashMap<Integer, Hate> hateMap = new HashMap<>();
 
     final float damageHateLossPerSecond = 2.0f;
-    final float rangeHateRange = 12.0f;
+    final float rangeHateRange = 30.0f;
 
     boolean isAggro = false;
 
@@ -80,17 +88,21 @@ public class DungeonLord implements Enemy{
     final float returnHomeAfterAggroTimeMax = 3.0f;
     float returnHomeAfterAggroTime = 0.0f;
 
+    final float lungeDistance = 8.0f;
+    final float lungeTime = 0.66f;
+    final float lungeBeginTime = 0.54f;
+    float lungeTimer = 0.0f;
+
     public DungeonLord(float x, float y, boolean isRemote) {
         homeX = x;
         homeY = y;
         this.isRemote = isRemote;
-        if(!isRemote) {
-            rotation = Objects.hash(x, y);
-            rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
-        }
+
         ShooterGame.getInstance().am.load("boss_walk.png", Texture.class);
+        ShooterGame.getInstance().am.load("boss_lunge.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         texWalk = ShooterGame.getInstance().am.get("boss_walk.png", Texture.class);
+        texLunge = ShooterGame.getInstance().am.get("boss_lunge.png", Texture.class);
         regLow = new TextureRegion(texWalk, 0, 0, 128, 160);
 
         {
@@ -135,6 +147,29 @@ public class DungeonLord implements Enemy{
         weaponRegions[7] = new TextureRegion(texWalk, 3200 - 120, 2400, 120, 96); weaponSizes[7] = new Vector2(2.82f, 2.25f); weaponOffset[7] = new Vector2(-0.1f, 0.65f);  weaponOffsetSide[7] = false;
 
 
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(texLunge, texLunge.getWidth() / 18, texLunge.getHeight() / (8*2));
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[18 * 2];
+                for (int j = 0; j < 2; j++) {
+                    for (int k = 0; k < 18; k++) {
+                        animFrames[k + (18 * j)] = tempFrames[i * 2 + j][k];
+                    }
+                }
+                animationLungeAttack[i] = new Animation<TextureRegion>(0.06f, animFrames);
+            }
+        }
+
+        lungeAttackSpriteOffset[0] = 1.37f;
+        lungeAttackSpriteOffset[1] = -0.9f;
+        lungeAttackSpriteOffset[2] = 1.45f;
+        lungeAttackSpriteOffset[3] = -1.37f;
+        lungeAttackSpriteOffset[4] = -1.37f;
+        lungeAttackSpriteOffset[5] = -0.1f;
+        lungeAttackSpriteOffset[6] = -1.37f;
+        lungeAttackSpriteOffset[7] = 1.37f;
+
         health = maxHealth;
 
         currentTargetCollider = null;
@@ -148,6 +183,9 @@ public class DungeonLord implements Enemy{
         Renderer.inst().addSprite(spriteHigh);
         spriteWeapon = new Sprite2_5D(weaponRegions[0], x, y, 0.08f, 4.0f, 3.2f);
         Renderer.inst().addSprite(spriteWeapon);
+        
+        spriteLunge = new Sprite2_5D(weaponRegions[0], x, y-1.4f, 1.28f, 8.6588f, 6.9271f);
+        Renderer.inst().addSprite(spriteLunge);
 
         if(isRemote) {
             collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -156,7 +194,7 @@ public class DungeonLord implements Enemy{
         } else {
             collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
                 if(collider == null) { //wall coll
-                    dx = newDX; dy = newDY;
+                    //dx = newDX; dy = newDY;
                 }
                 if(damage != 0.0f && collider.isPlayer) {
                     doDamage(damage, 0);
@@ -223,6 +261,10 @@ public class DungeonLord implements Enemy{
 
         spriteWeapon.z = weaponOffset[realIndex].y;
 
+        spriteLunge.setRegion(animationLungeAttack[realIndex].getKeyFrame(lungeTimer));
+        spriteLunge.x = x + (alignAxisX * lungeAttackSpriteOffset[realIndex]);
+        spriteLunge.y = y + (alignAxisY * lungeAttackSpriteOffset[realIndex]);
+        
         if(!isRemote) {
             {
                 Hate hate = getHateForPlayer(0);
@@ -255,6 +297,48 @@ public class DungeonLord implements Enemy{
                 currentTargetCollider = highestHate.collider;
             }
 
+            if(currentTargetCollider != null) {
+
+                float distanceToTarget = Vector2.dst(x, y, currentTargetCollider.x, currentTargetCollider.y);
+                if(distanceToTarget > lungeDistance && lungeTimer == 0.0f) {
+                    isAttacking = false;
+                    spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
+                    spriteLunge.forceHide = true;
+                    dx = -(float)Math.cos(rotation) * moveSpeed * delta;
+                    dy = -(float)Math.sin(rotation) * moveSpeed * delta;
+                    rotation = angleToSprite;
+                } else {
+                    isAttacking = true;
+                    spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = true;
+                    spriteLunge.forceHide = false;
+                    lungeTimer += delta;
+                    if(animationLungeAttack[realIndex].isAnimationFinished(lungeTimer)) {
+                        lungeTimer = 0.0f;
+                        rotation = angleToSprite;
+                    }
+                    if(lungeTimer < lungeTime + lungeBeginTime && lungeTimer > lungeBeginTime && distanceToTarget > 2.0f) {
+                        float lungeDistPerSecond = lungeDistance / lungeTime;
+                        dx = -(float)Math.cos(rotation) * lungeDistPerSecond * delta;
+                        dy = -(float)Math.sin(rotation) * lungeDistPerSecond * delta;
+                    } else {
+                        dx = 0.0f;
+                        dy = 0.0f;
+                    }
+                }
+            }
+
+        } else {
+            if(isAttacking) {
+                System.out.println("ATTACK  " + lungeTimer);
+                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
+                spriteLunge.forceHide = true;
+                lungeTimer += delta;
+            } else {
+                System.out.println("WALK");
+                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = true;
+                spriteLunge.forceHide = false;
+                lungeTimer = 0.0f;
+            }
         }
 
         collider.x = x;
@@ -274,8 +358,7 @@ public class DungeonLord implements Enemy{
         this.dy = dy;
         this.rotation = rotation;
         this.health = health;
-
-        isAttacking = z != 0.0f;
+        isAttacking = z == 1.0f;
     }
 
     @Override
@@ -287,6 +370,7 @@ public class DungeonLord implements Enemy{
         Renderer.inst().removeSprite(spriteLow);
         Renderer.inst().removeSprite(spriteHigh);
         Renderer.inst().removeSprite(spriteWeapon);
+        Renderer.inst().removeSprite(spriteLunge);
         World.getPhysicsWorld().removeCollider(collider);
     }
 
@@ -312,7 +396,7 @@ public class DungeonLord implements Enemy{
 
     @Override
     public String getName() {
-        return "lord";
+        return "boss";
     }
 
     @Override

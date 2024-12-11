@@ -8,6 +8,7 @@ import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.World;
+import game.shootergame.Enemy.DungeonLord;
 import game.shootergame.Enemy.Enemy;
 import game.shootergame.Enemy.Goblin;
 import game.shootergame.Enemy.GoblinCrossbow;
@@ -215,6 +216,8 @@ public class Client {
                     newItemQueue.add(()->{ enemies.put(ID, new Goblin(x, y, true)); });
                 } else if(type == 0x03) {
                     newItemQueue.add(()->{ enemies.put(ID, new GoblinCrossbow(x, y, true)); });
+                } else if(type == 0x04) {
+                    newItemQueue.add(()->{ enemies.put(ID, new DungeonLord(x, y, true)); });
                 }
             } else {
                 newItemQueue.add(()-> { 

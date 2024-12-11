@@ -348,8 +348,10 @@ public class Server implements Runnable{
                 typeB = 0x01;
             } else if (type.equals("goblin")) {
                 typeB = 0x02;
-            }else if (type.equals("range goblin")) {
+            } else if (type.equals("range goblin")) {
                 typeB = 0x03;
+            } else if (type.equals("boss")) {
+                typeB = 0x04;
             }
         }
 
