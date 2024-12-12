@@ -26,6 +26,7 @@ import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
 import game.shootergame.Item.ItemPickup;
+import game.shootergame.Item.Powerup;
 import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
 import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
 import game.shootergame.Item.MeleeWeapons.MaceWeapon;
@@ -278,6 +279,32 @@ public class World {
                 if(instance.networkMode == NetworkMode.SERVER) {
                     instance.server.broadcastNewEnemy(enemy.getKey(), 0, 0, false, null);
                 }
+                int id = ThreadLocalRandom.current().nextInt();
+                float x = enemy.getValue().getX();
+                float y = enemy.getValue().getY();
+                
+                if(enemy.getValue().getName().equals("slime")) {
+                    if(ShooterGame.getInstance().random.nextInt(6) == 0) {//20% to drop health on slime kill
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, new HealthPowerup()));
+                        instance.server.broadcastNewItem(id, x, y, true, "powerup", "health", null);
+                    }
+                } else {
+                    if(ShooterGame.getInstance().random.nextBoolean()) {//50% to drop powerup
+                        int randomType = ShooterGame.getInstance().random.nextInt(4);
+                        String[] types = { "damage", "health", "resist", "attackspeed" };
+                        Powerup powerup = null;
+                        switch (randomType) {
+                            case 0: powerup = new DamagePowerup(); break;
+                            case 1: powerup = new HealthPowerup(); break;
+                            case 2: powerup = new DamageResistPowerup(); break;
+                            case 3: powerup = new AttackSpeedPowerup(); break;
+                        }
+                        instance.items.put(id, new ItemPickup(x, y, 1.0f, powerup));
+                        instance.server.broadcastNewItem(id, x, y, true, "powerup", types[randomType], null);
+                    }
+                }
+
+
                 enemy.getValue().onKill();
                 it.remove();
             }
