@@ -83,6 +83,7 @@ public class Player {
     boolean justDied = false;
 
     boolean bossBarEnabled = false;
+    boolean bossHitable = false;
     float bossBarHealth = 0.0f;
     float bossBarHealthMax = 0.0f;
 
@@ -406,7 +407,10 @@ public class Player {
             barSprite.setColor(Color.BLACK);
             barSprite.draw(ShooterGame.getInstance().coreBatch);
             barSprite.setSize(bossBarHealth / bossBarHealthMax, 0.03f);
-            barSprite.setColor(Color.RED);
+            if(bossHitable)
+                barSprite.setColor(Color.RED);
+            else
+                barSprite.setColor(Color.GRAY);
             barSprite.draw(ShooterGame.getInstance().coreBatch);
         }
 
@@ -490,6 +494,10 @@ public class Player {
 
     public void setBossBarEnabled(boolean enabled) {
         bossBarEnabled = enabled;
+    }
+
+    public void setBossBarHitable(boolean hit) {
+        bossHitable = hit;
     }
 
     public void setBossBarHealth(float current, float max) {

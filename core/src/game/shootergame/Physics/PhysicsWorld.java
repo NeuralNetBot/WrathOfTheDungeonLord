@@ -162,6 +162,10 @@ public class PhysicsWorld {
     }
 
     public ArrayList<Collider> runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage) {
+        return runAngleSweep(self, x, y, direction, angle, distance, damage, 0.0f);
+    }
+
+    public ArrayList<Collider> runAngleSweep(Collider self, float x, float y, float direction, float angle, float distance, float damage, float minDistance) {
 
         Vector2 leftPoint = new Vector2((float)Math.cos(direction + angle/2), (float)Math.sin(direction + angle/2));
         Vector2 rightPoint = new Vector2((float)Math.cos(direction - angle/2), (float)Math.sin(direction - angle/2));
@@ -170,6 +174,7 @@ public class PhysicsWorld {
         for (Collider collider : colliders) {
             if(collider == self) continue;
             float dst = Vector2.dst(x, y, collider.x, collider.y);
+            if(dst < minDistance) continue;
             if(dst <= distance + collider.radius) {
                 Vector2 colliderVec = new Vector2(collider.x - x, collider.y - y);
                 float crsL = colliderVec.crs(leftPoint);

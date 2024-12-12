@@ -23,7 +23,7 @@ public class DungeonLord implements Enemy{
     final float homeX, homeY;
     float dx, dy;
     float rotation;
-    final float maxHealth = 1000.0f;
+    final float maxHealth = 300.0f;
     float health;
     Collider collider;
 
@@ -35,8 +35,11 @@ public class DungeonLord implements Enemy{
     Sprite2_5D spriteHigh;
     Sprite2_5D spriteWeapon;
     Sprite2_5D spriteLunge;
+    Sprite2_5D spriteSlam;
     Texture texWalk;
     Texture texLunge;
+    Texture texSlam;
+    Texture texRock;
     TextureRegion regLow;
 
     ArrayList<Vector2> navPath;
@@ -58,6 +61,12 @@ public class DungeonLord implements Enemy{
     @SuppressWarnings("unchecked")
     Animation<TextureRegion>[] animationLungeAttack = new Animation[8];
     float[] lungeAttackSpriteOffset = new float[8];
+
+    //for slam attack
+    @SuppressWarnings("unchecked")
+    Animation<TextureRegion>[] animationSlamAttack = new Animation[8];
+
+    TextureRegion[] rockRegions = new TextureRegion[4];
 
     float animTime = 0.0f;
     float animAttackTime = 0.0f;
@@ -93,6 +102,26 @@ public class DungeonLord implements Enemy{
     final float lungeBeginTime = 0.54f;
     float lungeTimer = 0.0f;
 
+    boolean isSlaming = false;
+    float slamTimer = 0.0f;
+    final float slamTimeMaxAir = 1.5f;
+    final float slamTimeMinAir = 0.9f;
+    final float slamHoldTime = 0.8f;
+    float slamHoldTimer = 0.0f;
+    final float baseSlamZ = 1.28f;
+
+    final int slamRockCount = 90;
+    final float slamRockRange = 10.0f;
+
+    int prevRockCount = 0;
+    
+    Sprite2_5D[] rockSprites = new Sprite2_5D[slamRockCount];
+
+    final float slamDamage = 5.0f;
+    final float lungeDamage = 20.0f;
+
+    boolean damageable = false;
+
     public DungeonLord(float x, float y, boolean isRemote) {
         homeX = x;
         homeY = y;
@@ -100,9 +129,13 @@ public class DungeonLord implements Enemy{
 
         ShooterGame.getInstance().am.load("boss_walk.png", Texture.class);
         ShooterGame.getInstance().am.load("boss_lunge.png", Texture.class);
+        ShooterGame.getInstance().am.load("boss_slam.png", Texture.class);
+        ShooterGame.getInstance().am.load("rock.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         texWalk = ShooterGame.getInstance().am.get("boss_walk.png", Texture.class);
         texLunge = ShooterGame.getInstance().am.get("boss_lunge.png", Texture.class);
+        texSlam = ShooterGame.getInstance().am.get("boss_slam.png", Texture.class);
+        texRock = ShooterGame.getInstance().am.get("rock.png", Texture.class);
         regLow = new TextureRegion(texWalk, 0, 0, 128, 160);
 
         {
@@ -171,6 +204,23 @@ public class DungeonLord implements Enemy{
         lungeAttackSpriteOffset[6] = -1.37f;
         lungeAttackSpriteOffset[7] = 1.37f;
 
+        {
+            TextureRegion[][] tempFrames = TextureRegion.split(texSlam, texSlam.getWidth() / 19, texSlam.getHeight() / (8*2));
+            
+            for (int i = 0; i < 8; i++) {
+                TextureRegion[] animFrames = new TextureRegion[19 * 2];
+                for (int j = 0; j < 2; j++) {
+                    for (int k = 0; k < 19; k++) {
+                        animFrames[k + (19 * j)] = tempFrames[i * 2 + j][k];
+                    }
+                }
+                animationSlamAttack[i] = new Animation<TextureRegion>(0.06f, animFrames);
+                animationSlamAttack[i].setPlayMode(PlayMode.LOOP);
+            }
+        }
+
+        rockRegions = TextureRegion.split(texRock, texRock.getWidth() / 4, texRock.getHeight())[0];
+
         health = maxHealth;
 
         currentTargetCollider = null;
@@ -185,8 +235,18 @@ public class DungeonLord implements Enemy{
         spriteWeapon = new Sprite2_5D(weaponRegions[0], x, y, 0.08f, 4.0f, 3.2f);
         Renderer.inst().addSprite(spriteWeapon);
         
-        spriteLunge = new Sprite2_5D(weaponRegions[0], x, y-1.4f, 1.28f, 8.6588f, 6.9271f);
+        spriteLunge = new Sprite2_5D(weaponRegions[0], x, y, 1.28f, 8.6588f, 6.9271f);
         Renderer.inst().addSprite(spriteLunge);
+
+        spriteSlam = new Sprite2_5D(weaponRegions[0], x, y, baseSlamZ, 8.6588f, 8.6588f);
+        Renderer.inst().addSprite(spriteSlam);
+
+        for (int i = 0; i < slamRockCount; i++) {
+            int rockIndex = ShooterGame.getInstance().random.nextInt(4);
+            rockSprites[i] = new Sprite2_5D(rockRegions[rockIndex], x, y, -1.5f, 1.0f, 1.0f);
+            rockSprites[i].forceHide = true;
+            Renderer.inst().addSprite(rockSprites[i]);
+        }
 
         if(isRemote) {
             collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
@@ -215,8 +275,8 @@ public class DungeonLord implements Enemy{
     
     @Override
     public void update(float delta) {
-        //x += dx;
-        //y += dy;
+        x += dx;
+        y += dy;
 
         animTime += delta * 2;
 
@@ -267,6 +327,8 @@ public class DungeonLord implements Enemy{
         spriteLunge.setRegion(animationLungeAttack[realIndex].getKeyFrame(lungeTimer));
         spriteLunge.x = x + (alignAxisX * lungeAttackSpriteOffset[realIndex]);
         spriteLunge.y = y + (alignAxisY * lungeAttackSpriteOffset[realIndex]);
+
+        spriteSlam.setRegion(animationSlamAttack[realIndex].getKeyFrame(slamTimer));
         
         if(!isRemote) {
             {
@@ -303,43 +365,114 @@ public class DungeonLord implements Enemy{
             if(currentTargetCollider != null) {
 
                 float distanceToTarget = Vector2.dst(x, y, currentTargetCollider.x, currentTargetCollider.y);
-                if(distanceToTarget > lungeDistance && lungeTimer == 0.0f) {
+                if(distanceToTarget > lungeDistance && lungeTimer == 0.0f && slamTimer == 0.0f) {
                     isAttacking = false;
+                    isSlaming = false;
                     spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
-                    spriteLunge.forceHide = true;
+                    spriteLunge.forceHide = spriteSlam.forceHide = true;
                     dx = -(float)Math.cos(rotation) * moveSpeed * delta;
                     dy = -(float)Math.sin(rotation) * moveSpeed * delta;
                     rotation = angleToSprite;
                 } else {
-                    isAttacking = true;
-                    spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = true;
-                    spriteLunge.forceHide = false;
-                    lungeTimer += delta;
-                    if(animationLungeAttack[realIndex].isAnimationFinished(lungeTimer)) {
-                        isAttacking = false;
-                        lungeTimer = 0.0f;
-                        rotation = angleToSprite;
+                    //select random attack
+                    if(isAttacking == false && isSlaming == false) {
+                        isAttacking = ShooterGame.getInstance().random.nextBoolean();
+                        isSlaming = !isAttacking;
                     }
-                    if(lungeTimer < lungeTime + lungeBeginTime && lungeTimer > lungeBeginTime && distanceToTarget > 2.0f) {
-                        float lungeDistPerSecond = lungeDistance / lungeTime;
-                        dx = -(float)Math.cos(rotation) * lungeDistPerSecond * delta;
-                        dy = -(float)Math.sin(rotation) * lungeDistPerSecond * delta;
-                    } else {
+                    if(isAttacking) { //lunge
+                        spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = spriteSlam.forceHide = true;
+                        spriteLunge.forceHide = false;
+                        lungeTimer += delta;
+                        if(animationLungeAttack[realIndex].isAnimationFinished(lungeTimer)) {
+                            isAttacking = false;
+                            hasDoneDamage = false;
+                            lungeTimer = 0.0f;
+                            rotation = angleToSprite;
+                            damageable = false;
+                        }
+                        if(!hasDoneDamage && lungeTimer > 1.0f) {
+                            World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation + 3.1415f, 0.34f, 4.0f, lungeDamage);
+                            hasDoneDamage = true;
+                            damageable = true;
+                        }
+                        
+                        if(lungeTimer < lungeTime + lungeBeginTime && lungeTimer > lungeBeginTime && distanceToTarget > 2.0f) {
+                            float lungeDistPerSecond = lungeDistance / lungeTime;
+                            dx = -(float)Math.cos(rotation) * lungeDistPerSecond * delta;
+                            dy = -(float)Math.sin(rotation) * lungeDistPerSecond * delta;
+                        } else {
+                            dx = 0.0f;
+                            dy = 0.0f;
+                        }
+                    } else { //slam
+                        spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = spriteLunge.forceHide = true;
+                        spriteSlam.forceHide = false;
+                        if(slamTimer > slamTimeMaxAir && slamHoldTimer < slamHoldTime) {
+                            damageable = true;
+                            
+                            slamHoldTimer += delta;
+                            float ratio = slamHoldTimer / slamHoldTime;
+                            int count = (int)(ratio * (slamRockCount / 3));
+                            spawnRocks(delta, count);
+                            if(prevRockCount != count) {
+                                float sweepDistance = (float)count * 0.5f;
+                                World.getPhysicsWorld().runAngleSweep(collider, x, y, rotation + 3.1415f, 0.17f, sweepDistance, slamDamage, sweepDistance - 2.0f);
+                            }
+                            prevRockCount = count;
+                        } else {
+                            slamTimer += delta;
+                        }
+                        if(animationSlamAttack[realIndex].isAnimationFinished(slamTimer)) {
+                            isSlaming = false;
+                            slamTimer = 0.0f;
+                            slamHoldTimer = 0.0f;
+                            rotation = angleToSprite;
+                            damageable = false;
+                            for (int i = 0; i < slamRockCount; i++) {
+                                rockSprites[i].forceHide = true;
+                            }
+                        }
+                        updateSlamHeight();
+
                         dx = 0.0f;
                         dy = 0.0f;
                     }
+
                 }
             }
 
         } else {
             if(isAttacking) {
-                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = true;
+                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = spriteSlam.forceHide = true;
                 spriteLunge.forceHide = false;
                 lungeTimer += delta;
+                if(lungeTimer > 1.0f) {
+                    damageable = true;
+                }
+            } else if(isSlaming) {
+                spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = spriteLunge.forceHide = true;
+                spriteSlam.forceHide = false;
+                slamTimer += delta;
+                updateSlamHeight();
+                if(slamTimer > slamTimeMaxAir && slamHoldTimer < slamHoldTime) {
+                    damageable = true;
+                    
+                    slamHoldTimer += delta;
+                    float ratio = slamHoldTimer / slamHoldTime;
+                    int count = (int)(ratio * (slamRockCount / 3));
+                    spawnRocks(delta, count);
+                }
+
             } else {
                 spriteHigh.forceHide = spriteLow.forceHide = spriteWeapon.forceHide = false;
-                spriteLunge.forceHide = true;
+                spriteLunge.forceHide = spriteSlam.forceHide = true;
                 lungeTimer = 0.0f;
+                slamTimer = 0.0f;
+                slamHoldTimer = 0.0f;
+                damageable = false;
+                for (int i = 0; i < slamRockCount; i++) {
+                    rockSprites[i].forceHide = true;
+                }
             }
         }
 
@@ -351,8 +484,43 @@ public class DungeonLord implements Enemy{
         spriteHigh.x = x;
         spriteHigh.y = y;
 
+        spriteSlam.x = x;
+        spriteSlam.y = y;
         
         World.getPlayer().setBossBarHealth(health, maxHealth);
+        World.getPlayer().setBossBarHitable(damageable);
+    }
+
+    private void spawnRocks(float delta, int count) {
+        float rdx = -(float)Math.cos(rotation);
+        float rdy = -(float)Math.sin(rotation);
+        float lrdx = -(float)Math.cos(rotation - 0.17f);
+        float lrdy = -(float)Math.sin(rotation - 0.17f);
+        float rrdx = -(float)Math.cos(rotation + 0.17f);
+        float rrdy = -(float)Math.sin(rotation +- 0.17f);
+        for (int i = 0; i < count; i++) {
+            int idx = i * 3;
+            float dst = ((float)i) * 0.5f;
+            rockSprites[idx].forceHide = false;
+            rockSprites[idx].x = x + (rdx * dst) + (rdx * 3.0f);
+            rockSprites[idx].y = y + (rdy * dst) + (rdy * 3.0f);
+            rockSprites[idx+1].forceHide = false;
+            rockSprites[idx+1].x = x + (lrdx * dst) + (lrdx * 3.0f);
+            rockSprites[idx+1].y = y + (lrdy * dst) + (lrdy * 3.0f);
+            rockSprites[idx+2].forceHide = false;
+            rockSprites[idx+2].x = x + (rrdx * dst) + (rrdx * 3.0f);
+            rockSprites[idx+2].y = y + (rrdy * dst) + (rrdy * 3.0f);
+        }
+    }
+
+    private void updateSlamHeight() {
+        if(slamTimer < slamTimeMaxAir && slamTimer > slamTimeMinAir) {
+            float slamDelta = slamTimer - slamTimeMinAir;
+            float slamMaxDelta = slamTimeMaxAir - slamTimeMinAir;
+            spriteSlam.z = baseSlamZ + 3.0f * (float)Math.sin((slamDelta / slamMaxDelta) * Math.PI);
+        } else {
+            spriteSlam.z = baseSlamZ;
+        }
     }
 
     @Override
@@ -363,7 +531,16 @@ public class DungeonLord implements Enemy{
         this.dy = dy;
         this.rotation = rotation;
         this.health = health;
-        isAttacking = z == 1.0f;
+        if(z == 2.0f) {
+            isSlaming = true;
+            isAttacking = false;
+        } else if(z == 1.0f) {
+            isAttacking = true;
+            isSlaming = false;
+        } else {
+            isAttacking = false;
+            isSlaming = false;
+        }
     }
 
     @Override
@@ -407,7 +584,7 @@ public class DungeonLord implements Enemy{
 
     @Override
     public float getZ() {
-        return isAttacking ? 1.0f : 0.0f;
+        return isSlaming ? 2.0f : (isAttacking ? 1.0f : 0.0f);
     }
 
     @Override
@@ -446,7 +623,8 @@ public class DungeonLord implements Enemy{
     @Override
     public void doDamage(float damage, int remotePlayerID) {
         getHateForPlayer(remotePlayerID).damageHate += damage;
-        health -= damage;
+        if(damageable)
+            health -= damage;
     }
 
     @Override
