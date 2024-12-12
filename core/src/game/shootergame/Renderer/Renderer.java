@@ -80,6 +80,7 @@ public class Renderer {
 
     ArrayList<Wall> walls;
     ArrayList<Torch> torches;
+    ArrayList<Sprite2_5D> torchSprites;
     RegionIndexCuller torchRegionIndexCuller;
 
     private class TorchAndIndex {
@@ -768,6 +769,13 @@ public class Renderer {
     }
 
     public void buildLightmap(ArrayList<Torch> torches) {
+        if(this.torchSprites != null) {
+            for (Sprite2_5D torch : this.torchSprites) {
+                sprites2_5d.remove(torch);
+            }
+        } else {
+            torchSprites = new ArrayList<>();
+        }
         stats.torches = torches.size();
         stats.walls = walls.size();
         this.torches = torches;
@@ -830,7 +838,9 @@ public class Renderer {
         Torch.loadTexture();
         for (Torch torch : torches) {
             //width 0.75f, torch 46px wide on image and image 128 wide, torch apparent width 0.26953125
-            addSprite(new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.4f, 1.5f, 0.75f));
+            Sprite2_5D t = new Sprite2_5D(Torch.getTextureRegion(), torch.x, torch.y, 0.4f, 1.5f, 0.75f);
+            addSprite(t);
+            torchSprites.add(t);
         }
 
         long end = System.nanoTime();

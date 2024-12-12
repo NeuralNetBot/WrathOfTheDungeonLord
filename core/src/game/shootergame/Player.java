@@ -74,6 +74,9 @@ public class Player {
     TextureRegion reg;
 
     Sound footstepSound;
+    Sound dashSound;
+    Sound perfectDodgeSound;
+    Sound damagedSound;
 
     Sprite fullscreenYouDied;
     float respawnTimer = 0.0f;
@@ -81,6 +84,11 @@ public class Player {
     float deathPosX = 0.0f;
     float deathPosY = 0.0f;
     boolean justDied = false;
+
+    boolean bossBarEnabled = false;
+    boolean bossHitable = false;
+    float bossBarHealth = 0.0f;
+    float bossBarHealthMax = 0.0f;
 
     public Player(MeleeWeapon melee) {
         this.melee = melee;
@@ -94,12 +102,18 @@ public class Player {
         attackSpeed = 1.0f;
 
         ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("dash.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("perfect_dodge.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("player_damaged.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.load("dead.png", Texture.class);
         ShooterGame.getInstance().am.load("crosshair.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
+        dashSound = ShooterGame.getInstance().am.get("dash.mp3", Sound.class);   
+        perfectDodgeSound = ShooterGame.getInstance().am.get("perfect_dodge.mp3", Sound.class);   
+        damagedSound = ShooterGame.getInstance().am.get("player_damaged.mp3", Sound.class);   
         tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
@@ -127,6 +141,11 @@ public class Player {
     }
 
     public void doDamage(float damage) {
+        if(isDodging) {
+            perfectDodgeSound.play(0.06f);
+        } else {
+            damagedSound.play();
+        }
         float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
         float blockingMultiplier = melee.getBlockMultiplier();
         if(blockingMultiplier != 1.0f) {
@@ -206,6 +225,7 @@ public class Player {
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             if(!isDodging && (moveDirX != 0.0f || moveDirY != 0.0f)) {
                 if(stamina >= dodgeStaminaCost) {
+                    dashSound.play();
                     isDodging = true;
                     dodgeTime = 0.0f;
                     removeStamina(dodgeStaminaCost);
@@ -396,6 +416,19 @@ public class Player {
         barSprite.setColor(Color.GOLDENROD);
         barSprite.draw(ShooterGame.getInstance().coreBatch);
 
+        if(bossBarEnabled) {
+            barSprite.setPosition(-0.5f, 0.95f);
+            barSprite.setSize(1.0f, 0.03f);
+            barSprite.setColor(Color.BLACK);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+            barSprite.setSize(bossBarHealth / bossBarHealthMax, 0.03f);
+            if(bossHitable)
+                barSprite.setColor(Color.RED);
+            else
+                barSprite.setColor(Color.GRAY);
+            barSprite.draw(ShooterGame.getInstance().coreBatch);
+        }
+
         int visibleIndex = 0;
 
         for (int i = 0; i < activePowerups.size(); i++) {
@@ -472,5 +505,18 @@ public class Player {
 
     public void setRangedWeapon(RangedWeapon weapon) {
         this.ranged = weapon;
+    }
+
+    public void setBossBarEnabled(boolean enabled) {
+        bossBarEnabled = enabled;
+    }
+
+    public void setBossBarHitable(boolean hit) {
+        bossHitable = hit;
+    }
+
+    public void setBossBarHealth(float current, float max) {
+        bossBarHealth = current;
+        bossBarHealthMax = max;
     }
 }
