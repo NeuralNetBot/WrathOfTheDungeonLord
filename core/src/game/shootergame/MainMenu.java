@@ -42,6 +42,7 @@ public class MainMenu {
     TextureRegion pointReg;
 
     Sprite sprite;
+    Sprite titleScreenSprite;
 
     float mouseX;
     float mouseY;
@@ -100,6 +101,11 @@ public class MainMenu {
         pointReg = new TextureRegion(atlas, 433, 395, 108, 145);
 
         sprite = new Sprite(atlas);
+        titleScreenSprite = new Sprite(titleScreen);
+
+        titleScreenSprite.setSize(2.056f, 2f);
+        titleScreenSprite.setOriginCenter();
+        titleScreenSprite.setOriginBasedPosition(0, 0);
     }
 
     private void showPlayerList() {
@@ -226,7 +232,7 @@ public class MainMenu {
         switch (currentState) {
         case MAIN:
 
-            ShooterGame.getInstance().coreBatch.draw(titleScreen, -400.f, -300.f, 200, 100);
+            titleScreenSprite.draw(ShooterGame.getInstance().coreBatch);
 
             if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f, serverIsHover)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
             if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f, clientIsHover)) { currentState = State.CLIENT_CONNECT; mode = false; }
