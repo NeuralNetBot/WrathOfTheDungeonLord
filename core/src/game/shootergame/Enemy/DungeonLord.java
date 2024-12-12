@@ -24,7 +24,7 @@ public class DungeonLord implements Enemy{
     final float homeX, homeY;
     float dx, dy;
     float rotation;
-    final float maxHealth = 300.0f;
+    final float maxHealth = 500.0f;
     float health;
     Collider collider;
 
