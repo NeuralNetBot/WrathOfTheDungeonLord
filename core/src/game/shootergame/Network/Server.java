@@ -352,6 +352,8 @@ public class Server implements Runnable{
                 typeB = 0x03;
             } else if (type.equals("boss")) {
                 typeB = 0x04;
+            } else if (type.equals("werewolf")) {
+                typeB = 0x05;
             }
         }
 

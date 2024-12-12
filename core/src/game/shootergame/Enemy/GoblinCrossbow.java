@@ -369,7 +369,7 @@ public class GoblinCrossbow implements Enemy{
 
     @Override
     public String getName() {
-        return "goblin";
+        return "range goblin";
     }
 
     @Override

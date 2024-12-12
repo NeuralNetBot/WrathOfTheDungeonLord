@@ -1,5 +1,6 @@
 package game.shootergame.Network;
 
+import game.shootergame.Enemy.*;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.Powerups.AttackSpeedPowerup;
 import game.shootergame.Item.Powerups.DamagePowerup;
@@ -8,11 +9,6 @@ import game.shootergame.Item.Powerups.HealthPowerup;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
 import game.shootergame.World;
-import game.shootergame.Enemy.DungeonLord;
-import game.shootergame.Enemy.Enemy;
-import game.shootergame.Enemy.Goblin;
-import game.shootergame.Enemy.GoblinCrossbow;
-import game.shootergame.Enemy.Slime;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -218,6 +214,8 @@ public class Client {
                     newItemQueue.add(()->{ enemies.put(ID, new GoblinCrossbow(x, y, true)); });
                 } else if(type == 0x04) {
                     newItemQueue.add(()->{ enemies.put(ID, new DungeonLord(x, y, true)); });
+                } else if (type == 0x05) {
+                    newItemQueue.add(()->{ enemies.put(ID, new Werewolf(x, y, true)); });
                 }
             } else {
                 newItemQueue.add(()-> { 
