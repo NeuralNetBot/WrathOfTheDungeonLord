@@ -84,6 +84,8 @@ public class World {
     }
     NetworkMode networkMode;
 
+    boolean onBossMap = false;
+
     public static void createInstance() {
         instance = new World();
         instance.init();
@@ -289,8 +291,9 @@ public class World {
         Renderer.inst().update(instance.player.x(), instance.player.y(), instance.player.rotation(), delta);
 
         if(instance.networkMode == NetworkMode.SERVER) {
-            if(instance.enemies.size() == 0) {
+            if(instance.enemies.size() == 0 && !instance.onBossMap) {
                 instance.serverLoadNewMap("assets/map1.data");
+                instance.onBossMap = true;
             }
         }
     }
