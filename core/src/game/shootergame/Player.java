@@ -90,6 +90,8 @@ public class Player {
     float bossBarHealth = 0.0f;
     float bossBarHealthMax = 0.0f;
 
+    boolean isInvincible = false;
+
     public Player(MeleeWeapon melee) {
         this.melee = melee;
         ranged = null;
@@ -141,19 +143,22 @@ public class Player {
     }
 
     public void doDamage(float damage) {
-        if(isDodging) {
-            perfectDodgeSound.play(0.06f);
-        } else {
-            damagedSound.play();
+
+        if (!isInvincible) {
+            if (isDodging) {
+                perfectDodgeSound.play(0.06f);
+            } else {
+                damagedSound.play();
+            }
+            float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
+            float blockingMultiplier = melee.getBlockMultiplier();
+            if (blockingMultiplier != 1.0f) {
+                removeStamina(damage * 2.0f);
+            }
+            damageDone *= blockingMultiplier;
+            health -= damageDone;
+            regenDelayTimer = 0.0f;//reset the timer when taken damage
         }
-        float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
-        float blockingMultiplier = melee.getBlockMultiplier();
-        if(blockingMultiplier != 1.0f) {
-            removeStamina(damage * 2.0f);
-        }
-        damageDone *= blockingMultiplier;
-        health -= damageDone;
-        regenDelayTimer = 0.0f;//reset the timer when taken damage
     }
 
     public void removeStamina(float stamina) {
@@ -310,7 +315,7 @@ public class Player {
 
         float dst = Vector2.dst(dx, dy, 0, 0);
         distanceMoved += dst;
-        if(distanceMoved > 1.75f) {
+        if(distanceMoved > 1.75f && !isDodging) {
             footstepSound.play(0.05f, 0.75f, 0.0f);
             distanceMoved = 0.0f;
         }
@@ -518,5 +523,13 @@ public class Player {
     public void setBossBarHealth(float current, float max) {
         bossBarHealth = current;
         bossBarHealthMax = max;
+    }
+
+    public void setInvincibility() {
+        isInvincible = !isInvincible;
+    }
+
+    public boolean getInvincibility() {
+        return isInvincible;
     }
 }

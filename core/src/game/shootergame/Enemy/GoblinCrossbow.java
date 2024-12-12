@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Map.Entry;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
@@ -80,6 +81,8 @@ public class GoblinCrossbow implements Enemy{
     final float returnHomeAfterAggroTimeMax = 3.0f;
     float returnHomeAfterAggroTime = 0.0f;
 
+    Sound soundFire;
+
     public GoblinCrossbow(float x, float y, boolean isRemote) {
         homeX = x;
         homeY = y;
@@ -91,6 +94,7 @@ public class GoblinCrossbow implements Enemy{
         ShooterGame.getInstance().am.load("goblin_crossbow.png", Texture.class);
         ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
+        ShooterGame.getInstance().am.load("crossbow_fire.mp3", Sound.class);
         ShooterGame.getInstance().am.finishLoading();
         texFull = ShooterGame.getInstance().am.get("goblin_crossbow.png", Texture.class);
         texHealth = ShooterGame.getInstance().am.get("red_bar.png", Texture.class);
@@ -99,6 +103,7 @@ public class GoblinCrossbow implements Enemy{
         regHigh = new TextureRegion(texFull, 0, 0, 128, 80);
         regHealth = new TextureRegion(texHealth, 0, 0, 64, 64);
         regHealthBase = new TextureRegion(texHealthBase, 0, 0, 64, 64);
+        soundFire = ShooterGame.getInstance().am.get("crossbow_fire.mp3", Sound.class);
 
         {
             TextureRegion[][] tempFrames = TextureRegion.split(texFull, texFull.getWidth() / 27, texFull.getHeight() / 8);
@@ -186,6 +191,7 @@ public class GoblinCrossbow implements Enemy{
                 attackCooldown = 0.0f;
             }
             if(!hasDoneDamage) {
+                soundFire.play();
                 if(!isRemote) {
                     Vector2 d = new Vector2(-(float)Math.cos(rotation), -(float)Math.sin(rotation)).nor();
                     Collider hitCollider = World.getPhysicsWorld().rayCast(collider, x, y, d.x, d.y);

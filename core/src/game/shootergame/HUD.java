@@ -9,6 +9,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.TimeUtils;
+import game.shootergame.Item.RangedWeapon;
+import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
+import game.shootergame.Item.RangedWeapons.MusketWeapon;
+import org.w3c.dom.ranges.Range;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -134,6 +138,43 @@ public class HUD {
 
             public String help(String[] cmd) {
                 return "list all commands";
+            }
+        });
+
+        registerAction("musket", new HUDActionCommand() {
+            @Override
+            public String execute(String[] cmd) {
+                World.getPlayer().setRangedWeapon(new MusketWeapon());
+                return "musket equipped";
+            }
+
+            public String help(String[] cmd) {
+                return "equip musket";
+            }
+        });
+
+        registerAction("crossbow", new HUDActionCommand() {
+            @Override
+            public String execute(String[] cmd) {
+                World.getPlayer().setRangedWeapon(new CrossbowWeapon());
+                return "crossbow equipped";
+            }
+
+            public String help(String[] cmd) {
+                return "equip crossbow";
+            }
+        });
+
+        registerAction("god", new HUDActionCommand() {
+            @Override
+            public String execute(String[] cmd) {
+                World.getPlayer().setInvincibility();
+                if (World.getPlayer().getInvincibility()) return "god mode activated";
+                else { return "god mode deactivated"; }
+            }
+
+            public String help(String[] cmd) {
+                return "equip crossbow";
             }
         });
 

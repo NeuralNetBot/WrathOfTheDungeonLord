@@ -26,6 +26,7 @@ public class MainMenu {
     
     State currentState;
     Texture atlas;
+    Texture titleScreen;
     TextureRegion hostServerReg;
     TextureRegion joinServerReg;
     TextureRegion exitReg;
@@ -79,8 +80,10 @@ public class MainMenu {
         param.minFilter = TextureFilter.Linear;
         param.magFilter = TextureFilter.Linear;
         ShooterGame.getInstance().am.load("GUIAtlas.png", Texture.class, param);
+        ShooterGame.getInstance().am.load("title_screen.png", Texture.class, param);
         ShooterGame.getInstance().am.finishLoading();
         atlas = ShooterGame.getInstance().am.get("GUIAtlas.png", Texture.class);
+        titleScreen = ShooterGame.getInstance().am.get("title_screen.png", Texture.class);
         font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT, BitmapFont.class);
         hostServerReg = new TextureRegion(atlas, 0, 0, 216, 108);
         joinServerReg = new TextureRegion(atlas, 0, 108, 216, 108);
@@ -223,6 +226,8 @@ public class MainMenu {
         switch (currentState) {
         case MAIN:
 
+            ShooterGame.getInstance().coreBatch.draw(titleScreen, -400.f, -300.f, 200, 100);
+
             if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f, serverIsHover)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
             if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f, clientIsHover)) { currentState = State.CLIENT_CONNECT; mode = false; }
             if(getAndRenderButton(exitReg, 0, -0.27f, 0.5f, 0.25f, exitIsHover)) { Gdx.app.exit(); }
@@ -232,7 +237,7 @@ public class MainMenu {
                 getAndRenderButton(pointReg, -0.5f, 0 - 0.2f, 0.7448f, 1.0f);
             if(exitIsHover.hover)
                 getAndRenderButton(pointReg, -0.5f, -0.27f - 0.2f, 0.7448f, 1.0f);
-            
+
             break;
         case SERVER_HOST:
 
