@@ -71,6 +71,18 @@ public class GameScreen extends ScreenAdapter {
                 return Renderer.inst().getRenderStatistics().toString();
             }
         });
+        
+        hud.registerAction("killall", new HUDActionCommand() {
+            @Override
+            public String execute(String[] cmd) {
+                World.killAll();
+                return "killing all enemies";
+            }
+
+            public String help(String[] cmd) {
+                return "kills all enemies on the map";
+            }
+        });
 
 
 

@@ -1,8 +1,10 @@
 package game.shootergame;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -128,6 +130,54 @@ public class World {
         instance.mainMenu = menu;
     }
 
+    private void serverLoadNewMap(String map) {
+        instance.server.broadcastLoadMap(map);
+                
+        World.loadFromFile(map);
+        Renderer.inst().buildLightmap(World.getTorches());
+        Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
+
+        for (Entry<Integer, Enemy> entry : instance.enemies.entrySet()) {
+            float x = entry.getValue().getX();
+            float y = entry.getValue().getY();
+            instance.server.broadcastNewEnemy(entry.getKey(), x, y, true, entry.getValue().getName());
+        }
+        for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
+            String payload = null;
+            String subtype = null;
+            if(entry.getValue().getPayloadType() == ItemPickup.Payload.POWERUP) {
+                String name = entry.getValue().getPowerup().getName();
+                payload = "powerup";
+                if(name.equals(AttackSpeedPowerup.getSName())) {
+                    subtype = "attackspeed";
+                } else if(name.equals(DamagePowerup.getSName())) {
+                    subtype = "damage";
+                } else if(name.equals(HealthPowerup.getSName())) {
+                    subtype = "health";
+                } else if(name.equals(DamageResistPowerup.getSName())) {
+                    subtype = "resist";
+                } else {
+                    subtype = "";
+                }
+            } else if(entry.getValue().getPayloadType() == ItemPickup.Payload.RANGED_WEAPON) {
+                String name = entry.getValue().getRangedWeapon().getName();
+                payload = "weapon";
+                if(name.equals("Crossbow")) {
+                    subtype = "crossbow";
+                } else if(name.equals("Musket")) {
+                    subtype = "musket";
+                } else {
+                    subtype = "";
+                }
+            }
+            float x = entry.getValue().collider.x;
+            float y = entry.getValue().collider.y;
+            instance.server.broadcastNewItem(entry.getKey(), x, y, true, payload, subtype, null);
+        }
+
+        instance.server.broadcastReadyPlay();
+    }
+
     float wx = 0.0f;
     
     boolean doOnce = true;
@@ -151,53 +201,7 @@ public class World {
                 case 3: World.getPlayer().setMeleeWeapon(new BrassKnucklesWeapon()); break;
             }
             if(instance.networkMode == NetworkMode.SERVER) {
-                instance.server.broadcastLoadMap("assets/map1.data");
-                
-                World.loadFromFile("assets/map1.data");
-                Renderer.inst().buildLightmap(World.getTorches());
-                Renderer.inst().setTorchRegionIndexCuller(World.getTorchRegionIndexCuller());
-
-                for (Entry<Integer, Enemy> entry : instance.enemies.entrySet()) {
-                    float x = entry.getValue().getX();
-                    float y = entry.getValue().getY();
-                    instance.server.broadcastNewEnemy(entry.getKey(), x, y, true, entry.getValue().getName());
-                }
-                for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {
-                    String payload = null;
-                    String subtype = null;
-                    if(entry.getValue().getPayloadType() == ItemPickup.Payload.POWERUP) {
-                        String name = entry.getValue().getPowerup().getName();
-                        payload = "powerup";
-                        if(name.equals(AttackSpeedPowerup.getSName())) {
-                            subtype = "attackspeed";
-                        } else if(name.equals(DamagePowerup.getSName())) {
-                            subtype = "damage";
-                        } else if(name.equals(HealthPowerup.getSName())) {
-                            subtype = "health";
-                        } else if(name.equals(DamageResistPowerup.getSName())) {
-                            subtype = "resist";
-                        } else {
-                            subtype = "";
-                        }
-                    } else if(entry.getValue().getPayloadType() == ItemPickup.Payload.RANGED_WEAPON) {
-                        String name = entry.getValue().getRangedWeapon().getName();
-                        payload = "weapon";
-                        if(name.equals("Crossbow")) {
-                            subtype = "crossbow";
-                        } else if(name.equals("Musket")) {
-                            subtype = "musket";
-                        } else {
-                            subtype = "";
-                        }
-                    }
-                    float x = entry.getValue().collider.x;
-                    float y = entry.getValue().collider.y;
-                    instance.server.broadcastNewItem(entry.getKey(), x, y, true, payload, subtype, null);
-                }
-        
-
-                instance.server.broadcastReadyPlay();
-
+                instance.serverLoadNewMap("assets/map0.data");
             } else if(instance.networkMode == NetworkMode.CLIENT) {
                 //nothing happens until client recieves packets from server
             }
@@ -283,6 +287,12 @@ public class World {
         }
 
         Renderer.inst().update(instance.player.x(), instance.player.y(), instance.player.rotation(), delta);
+
+        if(instance.networkMode == NetworkMode.SERVER) {
+            if(instance.enemies.size() == 0) {
+                instance.serverLoadNewMap("assets/map1.data");
+            }
+        }
     }
 
     public static void render() {
@@ -362,7 +372,42 @@ public class World {
     }
 
     public static void loadFromFile(String mapName) {
-        try (BufferedReader br = new BufferedReader(new FileReader(mapName))) {
+
+        instance.player.x = 0.0f;
+        instance.player.y = 0.0f;
+
+        instance.walls.clear();
+        instance.torches.clear();
+
+        if(instance.torchRegionIndexCuller != null)
+            instance.torchRegionIndexCuller = new RegionIndexCuller();
+
+        instance.doors.clear();
+
+        for (Entry<Integer, ItemPickup> item : instance.items.entrySet()) {
+            item.getValue().removeFromWorld();
+        }
+        instance.items.clear();
+    
+        for (Entry<Integer, Enemy> enemy : instance.enemies.entrySet()) {
+            enemy.getValue().onKill();
+        }
+        instance.enemies.clear();
+
+        if(instance.navMesh != null)
+            instance.navMesh = new NavMesh();
+
+        Reader file = null;
+        try {
+            file = new FileReader(mapName);
+        } catch (FileNotFoundException e) {
+            try {
+                file = new FileReader(mapName.split("/")[1]);
+            } catch (FileNotFoundException e1) {
+                e1.printStackTrace();
+            }
+        }
+        try (BufferedReader br = new BufferedReader(file)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
@@ -481,5 +526,13 @@ public class World {
 
         player = new Player(new NullWeapon());
         player.setRangedWeapon(new MusketWeapon());
+    }
+
+    public static boolean killAll() {
+        if(instance.networkMode != NetworkMode.SERVER) return false;
+        for (Entry<Integer, Enemy> enemy : instance.enemies.entrySet()) {
+            enemy.getValue().doDamage(Float.MAX_VALUE, 0);
+        }
+        return true;
     }
 }
