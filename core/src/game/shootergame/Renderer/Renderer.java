@@ -698,7 +698,7 @@ public class Renderer {
             float left = sprite.scrX - sprite.visWidth / 2.0f;
             float right = sprite.scrX + sprite.visWidth / 2.0f;
 
-            sprite.isVis = !(Math.abs(left) > aspect && Math.abs(right) > aspect);
+            sprite.isVis = !((left > aspect && right > aspect) || (left < -aspect && right < -aspect));
             
             if(sprite.isVis) {
                 int leftRayIndex = (int)((left + aspect) / (aspect * 2) * (screenX - 1));
