@@ -22,15 +22,15 @@ public class RemotePlayer {
     float recentDamage = 0.0f;
 
     public static void initTextures() {
-        ShooterGame.getInstance().am.load("debugtex.png", Texture.class);
+        ShooterGame.getInstance().am.load("player.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        tex = ShooterGame.getInstance().am.get("debugtex.png", Texture.class);
+        tex = ShooterGame.getInstance().am.get("player.png", Texture.class);
     }
 
     RemotePlayer() {
-        TextureRegion reg = new TextureRegion(tex, 0, 0, 1024, 1024);
+        TextureRegion reg = new TextureRegion(tex, 0, 0, 256, 512);
 
-        sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 0.5f);
+        sprite = new Sprite2_5D(reg, x, y, -1.0f, 3.0f, 1.5f);
         Renderer.inst().addSprite(sprite);
 
         collider = new Collider(x, y, 0.5f, (Collider collider, float newDX, float newDY, float damage)->{
