@@ -74,6 +74,9 @@ public class Player {
     TextureRegion reg;
 
     Sound footstepSound;
+    Sound dashSound;
+    Sound perfectDodgeSound;
+    Sound damagedSound;
 
     Sprite fullscreenYouDied;
     float respawnTimer = 0.0f;
@@ -99,12 +102,18 @@ public class Player {
         attackSpeed = 1.0f;
 
         ShooterGame.getInstance().am.load("footstep.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("dash.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("perfect_dodge.mp3", Sound.class);
+        ShooterGame.getInstance().am.load("player_damaged.mp3", Sound.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.load("powerups.png", Texture.class);
         ShooterGame.getInstance().am.load("dead.png", Texture.class);
         ShooterGame.getInstance().am.load("crosshair.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
         footstepSound = ShooterGame.getInstance().am.get("footstep.mp3", Sound.class);   
+        dashSound = ShooterGame.getInstance().am.get("dash.mp3", Sound.class);   
+        perfectDodgeSound = ShooterGame.getInstance().am.get("perfect_dodge.mp3", Sound.class);   
+        damagedSound = ShooterGame.getInstance().am.get("player_damaged.mp3", Sound.class);   
         tex = ShooterGame.getInstance().am.get("powerups.png", Texture.class);
         barSprite = new Sprite(ShooterGame.getInstance().am.get("bar.png", Texture.class));
         barSprite.setOrigin(0, 0);
@@ -132,6 +141,11 @@ public class Player {
     }
 
     public void doDamage(float damage) {
+        if(isDodging) {
+            perfectDodgeSound.play(0.06f);
+        } else {
+            damagedSound.play();
+        }
         float damageDone = isDodging ? 0.0f : damage / resistanceMultiplier;
         float blockingMultiplier = melee.getBlockMultiplier();
         if(blockingMultiplier != 1.0f) {
@@ -211,6 +225,7 @@ public class Player {
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             if(!isDodging && (moveDirX != 0.0f || moveDirY != 0.0f)) {
                 if(stamina >= dodgeStaminaCost) {
+                    dashSound.play();
                     isDodging = true;
                     dodgeTime = 0.0f;
                     removeStamina(dodgeStaminaCost);

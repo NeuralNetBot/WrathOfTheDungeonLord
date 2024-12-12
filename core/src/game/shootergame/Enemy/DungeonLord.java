@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
@@ -45,6 +46,8 @@ public class DungeonLord implements Enemy{
     ArrayList<Vector2> navPath;
     int targetIndex = 0;
 
+
+    Sound damaged;
 
     //for walk
     @SuppressWarnings("unchecked")
@@ -131,11 +134,13 @@ public class DungeonLord implements Enemy{
         ShooterGame.getInstance().am.load("boss_lunge.png", Texture.class);
         ShooterGame.getInstance().am.load("boss_slam.png", Texture.class);
         ShooterGame.getInstance().am.load("rock.png", Texture.class);
+        ShooterGame.getInstance().am.load("boss_damaged.mp3", Sound.class);
         ShooterGame.getInstance().am.finishLoading();
         texWalk = ShooterGame.getInstance().am.get("boss_walk.png", Texture.class);
         texLunge = ShooterGame.getInstance().am.get("boss_lunge.png", Texture.class);
         texSlam = ShooterGame.getInstance().am.get("boss_slam.png", Texture.class);
         texRock = ShooterGame.getInstance().am.get("rock.png", Texture.class);
+        damaged = ShooterGame.getInstance().am.get("boss_damaged.mp3", Sound.class);
         regLow = new TextureRegion(texWalk, 0, 0, 128, 160);
 
         {
@@ -625,6 +630,8 @@ public class DungeonLord implements Enemy{
         getHateForPlayer(remotePlayerID).damageHate += damage;
         if(damageable)
             health -= damage;
+
+        damaged.play(0.3f);
     }
 
     @Override
