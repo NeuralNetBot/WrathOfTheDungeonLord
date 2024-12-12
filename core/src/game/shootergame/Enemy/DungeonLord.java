@@ -254,11 +254,11 @@ public class DungeonLord implements Enemy{
         }
 
         if(isRemote) {
-            collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
+            collider = new Collider(x, y, 1.0f,  (Collider collider, float newDX, float newDY, float damage)->{
                 recentDamage += damage;
             }, false, 1.3f);
         } else {
-            collider = new Collider(x, y, 0.5f,  (Collider collider, float newDX, float newDY, float damage)->{
+            collider = new Collider(x, y, 1.0f,  (Collider collider, float newDX, float newDY, float damage)->{
                 if(collider == null) { //wall coll
                     //dx = newDX; dy = newDY;
                 }
