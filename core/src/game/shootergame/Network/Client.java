@@ -302,7 +302,7 @@ public class Client {
             try {
                 while (true) {
                     try {
-                        Thread.sleep(16);
+                        Thread.sleep(32);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
