@@ -243,7 +243,7 @@ public class World {
 
         instance.player.update(delta);
 
-        instance.wx += 1.0f / 144.0f;
+        instance.wx += delta;
 
         for (Integer door : instance.doors) {
             instance.walls.get(door).yOffset = (float)Math.sin(instance.wx) + 1.0f;
