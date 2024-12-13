@@ -125,8 +125,8 @@ public class MainMenu {
     private void showWeaponSelect() {
         if(getAndRenderButton(swordReg, -0.7f, -0.45f, 0.5f, 0.25f, selectedWeaponIndex == 0)) { selectedWeaponIndex = 0; }
         if(getAndRenderButton(halberdReg, -0.2f, -0.45f, 0.5f, 0.25f, selectedWeaponIndex == 1)) { selectedWeaponIndex = 1; }
-        if(getAndRenderButton(maceReg, -0.7f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 2)) { selectedWeaponIndex = 2; }
-        if(getAndRenderButton(brassReg, -0.2f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 3)) { selectedWeaponIndex = 3; }
+        if(getAndRenderButton(maceReg, 0.3f, -0.45f, 0.5f, 0.25f, selectedWeaponIndex == 2)) { selectedWeaponIndex = 2; }
+        //if(getAndRenderButton(brassReg, -0.2f, -0.7f, 0.5f, 0.25f, selectedWeaponIndex == 3)) { selectedWeaponIndex = 3; }
     }
 
     private boolean getAndRenderButton(TextureRegion reg, float x, float y, float width, float height, IsHover isHover) {
