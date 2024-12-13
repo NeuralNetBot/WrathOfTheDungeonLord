@@ -101,6 +101,18 @@ public class World {
     public static void processInput() {
         if(instance.itemPrompt != null) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                if(instance.itemPrompt.getName().equals("Crossbow Ammo")) {
+                    if(World.getPlayer().getRangedWeapon() == null) return;
+                    if(!World.getPlayer().getRangedWeapon().getName().equals("Crossbow")) {
+                        return;
+                    }
+                }
+                if(instance.itemPrompt.getName().equals("Musket Ammo")) {
+                    if(World.getPlayer().getRangedWeapon() == null) return;
+                    if(!World.getPlayer().getRangedWeapon().getName().equals("Musket")) {
+                        return;
+                    }
+                }
                 instance.itemPrompt.addAndRemoveFromWorld();
                 int key = 0;
                 for (Entry<Integer, ItemPickup> entry : instance.items.entrySet()) {

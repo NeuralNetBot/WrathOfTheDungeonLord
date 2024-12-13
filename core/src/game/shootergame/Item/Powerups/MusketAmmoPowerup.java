@@ -29,7 +29,7 @@ public class MusketAmmoPowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        World.getPlayer().getRangedWeapon().setAmmo(10);
+        World.getPlayer().getRangedWeapon().setAmmo(3);
         onTimeout(player);
         System.out.println("Current Musket Ammo: " + World.getPlayer().getRangedWeapon().getAmmo());
     }

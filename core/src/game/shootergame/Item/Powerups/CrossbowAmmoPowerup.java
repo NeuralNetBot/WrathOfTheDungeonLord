@@ -27,7 +27,7 @@ public class CrossbowAmmoPowerup implements Powerup {
 
     @Override
     public void onActivate(Player player) {
-        World.getPlayer().getRangedWeapon().setAmmo(10);
+        World.getPlayer().getRangedWeapon().setAmmo(5);
         onTimeout(player);
         System.out.println("Current Crossbow Ammo: " + World.getPlayer().getRangedWeapon().getAmmo());
     }
