@@ -234,15 +234,15 @@ public class MainMenu {
 
             titleScreenSprite.draw(ShooterGame.getInstance().coreBatch);
 
-            if(getAndRenderButton(hostServerReg, 0, 0.27f, 0.5f, 0.25f, serverIsHover)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
-            if(getAndRenderButton(joinServerReg, 0, 0, 0.5f, 0.25f, clientIsHover)) { currentState = State.CLIENT_CONNECT; mode = false; }
-            if(getAndRenderButton(exitReg, 0, -0.27f, 0.5f, 0.25f, exitIsHover)) { Gdx.app.exit(); }
+            if(getAndRenderButton(hostServerReg, 0, 0.27f - 0.6f, 0.5f, 0.25f, serverIsHover)) { currentState = State.SERVER_HOST; isDone = true; mode = true; }
+            if(getAndRenderButton(joinServerReg, 0, 0 - 0.6f, 0.5f, 0.25f, clientIsHover)) { currentState = State.CLIENT_CONNECT; mode = false; }
+            if(getAndRenderButton(exitReg, 0, -0.27f - 0.6f, 0.5f, 0.25f, exitIsHover)) { Gdx.app.exit(); }
             if(serverIsHover.hover)
-                getAndRenderButton(pointReg, -0.5f, 0.27f - 0.2f, 0.7448f, 1.0f);
+                getAndRenderButton(pointReg, -0.5f, 0.27f - 0.2f - 0.6f, 0.7448f, 1.0f);
             if(clientIsHover.hover)
-                getAndRenderButton(pointReg, -0.5f, 0 - 0.2f, 0.7448f, 1.0f);
+                getAndRenderButton(pointReg, -0.5f, 0 - 0.2f - 0.6f, 0.7448f, 1.0f);
             if(exitIsHover.hover)
-                getAndRenderButton(pointReg, -0.5f, -0.27f - 0.2f, 0.7448f, 1.0f);
+                getAndRenderButton(pointReg, -0.5f, -0.27f - 0.2f - 0.6f, 0.7448f, 1.0f);
 
             break;
         case SERVER_HOST:
