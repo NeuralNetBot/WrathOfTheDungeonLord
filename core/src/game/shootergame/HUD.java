@@ -9,10 +9,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.TimeUtils;
-import game.shootergame.Item.RangedWeapon;
 import game.shootergame.Item.RangedWeapons.CrossbowWeapon;
 import game.shootergame.Item.RangedWeapons.MusketWeapon;
-import org.w3c.dom.ranges.Range;
 
 import java.util.ArrayDeque;
 import java.util.Collections;

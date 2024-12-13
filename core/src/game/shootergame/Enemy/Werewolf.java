@@ -21,7 +21,7 @@ public class Werewolf implements Enemy {
     final float homeX, homeY;
     float dx, dy;
     float rotation;
-    final float maxHealth = 35.0f;
+    final float maxHealth = 55.0f;
     float health;
     Collider collider;
 
@@ -48,6 +48,7 @@ public class Werewolf implements Enemy {
 
     @SuppressWarnings("unchecked")
     Animation<TextureRegion>[] animationsWalk = new Animation[8];
+    @SuppressWarnings("unchecked")
     Animation<TextureRegion>[] animationLungeAttack = new Animation[8];
 
     float[] lungeAttackSpriteOffset = new float[8];
@@ -93,13 +94,13 @@ public class Werewolf implements Enemy {
             rotation = Objects.hash(x, y);
             rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
         }
-        ShooterGame.getInstance().am.load("goblin_walk_low.png", Texture.class);
-        ShooterGame.getInstance().am.load("goblin_attack_lowhigh.png", Texture.class);
+        ShooterGame.getInstance().am.load("werewolf_walk.png", Texture.class);
+        ShooterGame.getInstance().am.load("werewolf_attack.png", Texture.class);
         ShooterGame.getInstance().am.load("red_bar.png", Texture.class);
         ShooterGame.getInstance().am.load("bar.png", Texture.class);
         ShooterGame.getInstance().am.finishLoading();
-        texWalk = ShooterGame.getInstance().am.get("goblin_walk_low.png", Texture.class);
-        texLunge = ShooterGame.getInstance().am.get("goblin_attack_lowhigh.png", Texture.class);
+        texWalk = ShooterGame.getInstance().am.get("werewolf_walk.png", Texture.class);
+        texLunge = ShooterGame.getInstance().am.get("werewolf_attack.png", Texture.class);
         texHealth = ShooterGame.getInstance().am.get("red_bar.png", Texture.class);
         texHealthBase = ShooterGame.getInstance().am.get("bar.png", Texture.class);
         reg = new TextureRegion(texWalk, 0, 0, 128, 80);
@@ -109,16 +110,16 @@ public class Werewolf implements Enemy {
 
         {
             //walk anims
-            //13 wide
+            //20 wide
             //2 tall
             //8 sides stacked
-            TextureRegion[][] tempFrames = TextureRegion.split(texWalk, texWalk.getWidth() / 13, texWalk.getHeight() / (8*2));
+            TextureRegion[][] tempFrames = TextureRegion.split(texWalk, texWalk.getWidth() / 20, texWalk.getHeight() / (8*2));
 
             for (int i = 0; i < 8; i++) {
-                TextureRegion[] animFrames = new TextureRegion[13 * 2];
+                TextureRegion[] animFrames = new TextureRegion[20 * 2];
                 for (int j = 0; j < 2; j++) {
-                    for (int k = 0; k < 13; k++) {
-                        animFrames[k + (13 * j)] = tempFrames[i * 2 + j][k];
+                    for (int k = 0; k < 20; k++) {
+                        animFrames[k + (20 * j)] = tempFrames[i * 2 + j][k];
                     }
                 }
                 animationsWalk[i] = new Animation<TextureRegion>(0.06f, animFrames);
@@ -127,12 +128,12 @@ public class Werewolf implements Enemy {
         }
 
         {
-            TextureRegion[][] tempFrames = TextureRegion.split(texLunge, texLunge.getWidth() / 15, texLunge.getHeight() / 16);
+            TextureRegion[][] tempFrames = TextureRegion.split(texLunge, texLunge.getWidth() / 22, texLunge.getHeight() / 8);
 
             for (int i = 0; i < 8; i++) {
-                TextureRegion[] animFrames = new TextureRegion[15];
-                for (int j = 0; j < 15; j++) {
-                    animFrames[j] = tempFrames[i*2][j];
+                TextureRegion[] animFrames = new TextureRegion[22];
+                for (int j = 0; j < 22; j++) {
+                    animFrames[j] = tempFrames[i][j];
                 }
                 animationLungeAttack[i] = new Animation<TextureRegion>(0.06f, animFrames);
             }
@@ -145,7 +146,7 @@ public class Werewolf implements Enemy {
 
         this.x = x; this.y = y;
         dx = 0; dy = 0;
-        sprite = new Sprite2_5D(reg, x, y, -1.35f, 1.25f, 2.0f);
+        sprite = new Sprite2_5D(reg, x, y, -0.35f, 3.5f, 1.75f);
         Renderer.inst().addSprite(sprite);
         spriteHealthBase = new Sprite2_5D(regHealthBase, x, y, 0.1f, 0.01f, 0.35f);
         Renderer.inst().addSprite(spriteHealthBase);
@@ -215,6 +216,7 @@ public class Werewolf implements Enemy {
             }
 
             sprite.setRegion(animationLungeAttack[realIndex].getKeyFrame(lungeTimer));
+            sprite.width = 3.0625f;
 
             if (animationLungeAttack[realIndex].isAnimationFinished(lungeTimer)) {
                 hasDoneDamage = false;
@@ -225,9 +227,11 @@ public class Werewolf implements Enemy {
         } else if(dx != 0.0f || dy != 0.0f) {
             attackCooldown += delta;
             sprite.setRegion(animationsWalk[realIndex].getKeyFrame(animTime));
+            sprite.width = 1.75f;
         } else {
             attackCooldown += delta;
             sprite.setRegion(animationsWalk[realIndex].getKeyFrame(0.0f));
+            sprite.width = 1.75f;
         }
 
         if(!isRemote) {
@@ -292,7 +296,7 @@ public class Werewolf implements Enemy {
                 Vector2 direction = targetNode.cpy().sub(x, y);
                 float dist = direction.len();
 
-                Vector2 targetVNorm = direction.cpy().scl(-1.0f).nor();
+                //Vector2 targetVNorm = direction.cpy().scl(-1.0f).nor();
                 //rotation = (float)Math.atan2(targetVNorm.y, targetVNorm.x);
                 //rotation = (rotation + 2 * 3.141592653f) % (2 * 3.141592653f);
 

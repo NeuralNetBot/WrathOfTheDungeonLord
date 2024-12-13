@@ -25,6 +25,7 @@ import game.shootergame.Enemy.GoblinCrossbow;
 import game.shootergame.Enemy.NavMesh;
 import game.shootergame.Enemy.NavMesh.Triangle;
 import game.shootergame.Enemy.Slime;
+import game.shootergame.Enemy.Werewolf;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.Powerup;
 import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
@@ -510,6 +511,11 @@ public class World {
                     float y = Float.parseFloat(parts[2]);
                     int id = ThreadLocalRandom.current().nextInt();
                     instance.enemies.put(id, new DungeonLord(x, y, false));
+                } else if(type.equals("werewolf") && instance.networkMode == NetworkMode.SERVER) {
+                    float x = -Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    int id = ThreadLocalRandom.current().nextInt();
+                    instance.enemies.put(id, new Werewolf(x, y, false));
                 } else if(type.equals("powerup") && instance.networkMode == NetworkMode.SERVER) {
                     float x = -Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
