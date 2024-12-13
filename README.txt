@@ -12,6 +12,7 @@ Commands:
 - Space Bar: Dash (must be moving)
 - Left Shift: Blocking
 - E: pickup Item/open door when prompted
+- T: toggle lock cursor to screen
 
 Cheat Codes:
 - god: Gives the player invincibility.
