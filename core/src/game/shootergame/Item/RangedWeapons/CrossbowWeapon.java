@@ -29,7 +29,7 @@ public class CrossbowWeapon implements RangedWeapon {
     boolean reloading = false;
     boolean held = false;
 
-    int ammo = 10;
+    int ammo = 5;
 
     final float damage = 30.0f;
 

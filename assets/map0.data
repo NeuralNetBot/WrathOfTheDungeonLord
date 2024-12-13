@@ -981,12 +981,14 @@ goblin -35.0428 -22.5254
 
 goblincrossbow 0.0 0.0
 
-powerup 0.0 0.0 damage
-powerup 0.0 1.0 health
-powerup 1.0 0.0 resist
-powerup 1.0 1.0 attackspeed
+weapon 26.1201 23.4807 musketammo
+weapon 21.5405 -23.1382 musketammo
+weapon -34.4161 -23.4973 crossbowammo
+weapon 19.0634 -19.4815 crossbowammo
 
-weapon 0.5 0.0 crossbow
-weapon 0.0 -1.0 musket
-weapon -1.0 0.0 crossbowammo
-weapon -1.0 -1.0 musketammo
+weapon -13.9575 73.2902 crossbow
+weapon -0.107045 33.1866 crossbow
+weapon 40.2408 18.6203 crossbow
+weapon -39.614 72.5824 musket
+weapon -2.61952 34.3717 musket
+weapon -38.5675 2.62583 musket

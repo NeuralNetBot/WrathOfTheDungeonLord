@@ -29,7 +29,7 @@ public class MusketWeapon implements RangedWeapon {
     boolean reloading = false;
     boolean held = false;
 
-    int ammo = 10;
+    int ammo = 3;
 
     final float damage = 50.0f;
 

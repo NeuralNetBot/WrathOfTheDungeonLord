@@ -289,7 +289,7 @@ public class World {
                         instance.server.broadcastNewItem(id, x, y, true, "powerup", "health", null);
                     }
                 } else {
-                    if(ShooterGame.getInstance().random.nextBoolean()) {//50% to drop powerup
+                    if(ShooterGame.getInstance().random.nextInt(4) == 0) {//25% to drop powerup
                         int randomType = ShooterGame.getInstance().random.nextInt(4);
                         String[] types = { "damage", "health", "resist", "attackspeed" };
                         Powerup powerup = null;
@@ -555,7 +555,6 @@ public class World {
         itemPrompt = null;
 
         player = new Player(new NullWeapon());
-        player.setRangedWeapon(new MusketWeapon());
     }
 
     public static boolean killAll() {
