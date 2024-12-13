@@ -28,6 +28,7 @@ import game.shootergame.Enemy.Slime;
 import game.shootergame.Enemy.Werewolf;
 import game.shootergame.Item.ItemPickup;
 import game.shootergame.Item.Powerup;
+import game.shootergame.Item.RangedWeapon;
 import game.shootergame.Item.MeleeWeapons.BrassKnucklesWeapon;
 import game.shootergame.Item.MeleeWeapons.HalberdWeapon;
 import game.shootergame.Item.MeleeWeapons.MaceWeapon;
@@ -349,6 +350,13 @@ public class World {
             BitmapFont font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT);
             GlyphLayout layout = new GlyphLayout(font, "Press (E) to pickup: " + name);
             font.draw(ShooterGame.getInstance().coreBatch, layout, (Gdx.graphics.getWidth() / 2) - (layout.width / 2), 100.0f);
+        }
+
+        RangedWeapon wep = World.getPlayer().getRangedWeapon();
+        if(wep != null) {
+            BitmapFont font = ShooterGame.getInstance().am.get(ShooterGame.RSC_MONO_FONT);
+            GlyphLayout layout = new GlyphLayout(font, "Ammo: " + wep.getAmmo());
+            font.draw(ShooterGame.getInstance().coreBatch, layout, (Gdx.graphics.getWidth() * 0.9f) - (layout.width / 2), 100.0f);
         }
     }
 
